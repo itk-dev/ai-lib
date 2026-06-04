@@ -50,12 +50,6 @@ docker compose --profile dev run --rm markdownlint markdownlint '**/*.md'
 itkdev-docker-compose composer normalize
 ```
 
-## Conventions
-
-- Controllers stay thin — route handling and template rendering only. Business logic lives in services.
-- Service classes and methods carry PHPDoc with summary, description, `@param`, `@return`, and `@throws`.
-- All execution goes through containers; do not invoke language runtimes or package managers on the host.
-
 ## References
 
 - [ITK Dev Docker templates](https://github.com/itk-dev/devops_itkdev-docker)
