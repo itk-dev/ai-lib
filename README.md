@@ -1,6 +1,6 @@
 # ai-lib
 
-A Symfony 8 application built on the ITK Dev Docker development setup.
+A Symfony 8 application built on top of the ITK Dev Docker development setup.
 
 ## Requirements
 
