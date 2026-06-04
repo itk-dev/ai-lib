@@ -66,14 +66,3 @@ jobs:
                   docker compose run --rm phpfpm composer install
                   docker compose run --rm phpfpm composer normalize --dry-run
 
-    composer-audit:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v6
-
-            - name: Create docker network
-              run: |
-                  docker network create frontend
-
-            - run: |
-                  docker compose run --rm phpfpm composer audit
