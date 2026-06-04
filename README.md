@@ -21,9 +21,9 @@ docker compose up --detach
 itkdev-docker-compose open
 ```
 
-The site is served at `https://ai-lib.local.itkdev.dk`. Mail is captured by
+The site is served at <https://ai-lib.local.itkdev.dk>. Mail is captured by
 [Mailpit](https://github.com/axllent/mailpit) and available at
-`https://mail-ai-lib.local.itkdev.dk`.
+<https://mail-ai-lib.local.itkdev.dk>.
 
 ## Common commands
 
