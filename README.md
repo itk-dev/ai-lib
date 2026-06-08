@@ -54,3 +54,10 @@ itkdev-docker-compose composer normalize
 
 - [ITK Dev Docker templates](https://github.com/itk-dev/devops_itkdev-docker)
 - [Symfony documentation](https://symfony.com/doc)
+
+## License
+
+ai-lib is released under the [Mozilla Public License 2.0](LICENSE)
+(SPDX identifier: `MPL-2.0`). See the [`LICENSE`](LICENSE) file for the
+full text, and [`docs/adr/002-project-license-mpl-2.md`](docs/adr/002-project-license-mpl-2.md)
+for the rationale behind the choice.
