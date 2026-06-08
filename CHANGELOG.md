@@ -19,3 +19,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (compose helpers, composer, console, coding-standards family).
 - README documents [Task](https://taskfile.dev) as a host requirement and
   uses `task` targets in the *Common commands* section.
+- `CONTRIBUTING.md` documenting branching, Conventional Commits, coding
+  standards, changelog expectations and the pull-request workflow.
