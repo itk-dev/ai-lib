@@ -50,6 +50,39 @@ docker compose --profile dev run --rm markdownlint markdownlint '**/*.md'
 itkdev-docker-compose composer normalize
 ```
 
+## Frontend assets
+
+The project uses [Tailwind CSS](https://tailwindcss.com/) on top of
+Symfony's [AssetMapper](https://symfony.com/doc/current/frontend/asset_mapper.html),
+with [Stimulus](https://stimulus.hotwired.dev/) for behaviour. There is
+no Node toolchain — the Tailwind binary is managed by
+[`symfonycasts/tailwind-bundle`](https://github.com/SymfonyCasts/tailwind-bundle).
+See [ADR 002](docs/adr/002-frontend-tooling.md) for the rationale.
+
+```sh
+# One-time: download the Tailwind binary (also runs lazily on first build)
+itkdev-docker-compose php bin/console tailwind:build
+
+# Build the compiled stylesheet
+itkdev-docker-compose php bin/console tailwind:build
+
+# Watch source files and rebuild on change (development)
+itkdev-docker-compose php bin/console tailwind:build --watch
+
+# Compile and version the full importmap + assets (production)
+itkdev-docker-compose php bin/console asset-map:compile
+
+# Inspect what AssetMapper sees
+itkdev-docker-compose php bin/console debug:asset-map
+```
+
+Source files live under [`assets/`](assets):
+
+- `assets/app.js` — JavaScript entrypoint, boots Stimulus.
+- `assets/styles/app.css` — Tailwind entrypoint (`@import "tailwindcss";`).
+- `assets/controllers/` — Stimulus controllers, auto-registered by
+  filename (`hello_controller.js` → `data-controller="hello"`).
+
 ## References
 
 - [ITK Dev Docker templates](https://github.com/itk-dev/devops_itkdev-docker)

@@ -14,3 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dev dependencies for coding standards and composer normalization:
   `ergebnis/composer-normalize`, `friendsofphp/php-cs-fixer`, `vincentlanglet/twig-cs-fixer`.
 - Project README with local development instructions.
+- Frontend tooling: Tailwind CSS (via `symfonycasts/tailwind-bundle`),
+  Symfony AssetMapper, and Stimulus (via `symfony/stimulus-bundle`).
+  Decision recorded in [ADR 002](docs/adr/002-frontend-tooling.md).
+- Base Twig layout (`templates/base.html.twig`) and frontend asset
+  entrypoints (`assets/app.js`, `assets/styles/app.css`).
