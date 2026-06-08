@@ -139,9 +139,16 @@ Add an entry to `## [Unreleased]` under the right section (`Added`, `Changed`,
 
 ## GitHub issue types and labels
 
-Set the native **issue type** to one of **Task / Feature / Bug** based on
-the work the issue describes. Documentation-only issues are an exception:
-**do not set an issue type — use the `documentation` label instead.**
+Every issue **must** have its native **issue type** set to one of:
+
+- **Bug** — something is broken.
+- **Feature** — new user-visible capability.
+- **Task** — everything else: chores, tooling, documentation, infrastructure,
+  refactors, ADRs, etc.
+
+Documentation-only work is tracked as a **`Task`** type plus the
+`documentation` **label**. The type classifies the nature of the work,
+labels add orthogonal context.
 
 The current `gh` CLI (≤ 2.92) does not expose `--type`. To set a type,
 fall back to the REST API (`PATCH /repos/{owner}/{repo}/issues/{n}` with
