@@ -137,13 +137,16 @@ Keep subject lines under ~70 characters. Use the body for the *why*.
 Add an entry to `## [Unreleased]` under the right section (`Added`, `Changed`,
 `Fixed`, `Removed`, `Deprecated`, `Security`) for every meaningful change.
 
-## GitHub issue types
+## GitHub issue types and labels
 
-When creating issues, set the native **issue type** (Task / Feature / Bug) in
-addition to labels. The current `gh` CLI (≤ 2.92) does not expose `--type`;
-fall back to setting type via the REST API (`POST/PATCH
-/repos/{owner}/{repo}/issues`) when available, otherwise ask the user to set
-it in the UI.
+Set the native **issue type** to one of **Task / Feature / Bug** based on
+the work the issue describes. Documentation-only issues are an exception:
+**do not set an issue type — use the `documentation` label instead.**
+
+The current `gh` CLI (≤ 2.92) does not expose `--type`. To set a type,
+fall back to the REST API (`PATCH /repos/{owner}/{repo}/issues/{n}` with
+`type=<Name>`) when available, otherwise ask the user to set it in the
+UI. Labels can always be set with `gh issue create --label`.
 
 ## Pushing
 
