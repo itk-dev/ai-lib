@@ -43,8 +43,8 @@ tasks:
       - task composer-install
     silent: true
 
-  stop:
-    desc: 'Stop the stack (containers are removed, volumes are kept).'
+  down:
+    desc: 'Tear the stack down (containers are removed, volumes are kept).'
     cmds:
       - task compose -- down
     silent: true
