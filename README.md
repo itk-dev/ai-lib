@@ -1,6 +1,17 @@
 # ai-lib
 
-A Symfony 8 application built on top of the ITK Dev Docker development setup.
+A shared catalog of AI assistants for the Danish public sector. `ai-lib`
+lets contributors export, share, search, and import assistants — using the
+OpenWebUI JSON format as the interchange — and provides moderation and
+metadata around what ends up in the catalog.
+
+## Tech stack
+
+- PHP 8.4 / Symfony 8
+- Nginx + Traefik
+- MariaDB
+- Mailpit (outbound mail capture, local only)
+- ITK Dev Docker development setup (`symfony-8` template)
 
 ## Requirements
 
@@ -25,32 +36,15 @@ The site is served at <https://ai-lib.local.itkdev.dk>. Mail is captured by
 [Mailpit](https://github.com/axllent/mailpit) and available at
 <https://mail-ai-lib.local.itkdev.dk>.
 
-## Common commands
+## Contributing
 
-```sh
-# Run Composer inside the phpfpm container
-itkdev-docker-compose composer <command>
-
-# Run any PHP command inside the phpfpm container
-itkdev-docker-compose php <command>
-
-# Apply PHP coding standards
-itkdev-docker-compose vendor/bin/php-cs-fixer fix
-
-# Lint Twig templates
-itkdev-docker-compose vendor/bin/twig-cs-fixer lint
-
-# Format YAML
-docker compose --profile dev run --rm prettier '**/*.{yml,yaml}' --write
-
-# Lint Markdown
-docker compose --profile dev run --rm markdownlint markdownlint '**/*.md'
-
-# Normalize composer.json
-itkdev-docker-compose composer normalize
-```
+Branching, commits, CHANGELOG, and PR conventions for this project will be
+documented in `CONTRIBUTING.md` (tracked in
+[#9](https://github.com/itk-dev/ai-lib/issues/9)). Until then, follow the
+patterns visible in existing branches and PRs.
 
 ## References
 
 - [ITK Dev Docker templates](https://github.com/itk-dev/devops_itkdev-docker)
 - [Symfony documentation](https://symfony.com/doc)
+- [OpenWebUI](https://openwebui.com/)
