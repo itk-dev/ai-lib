@@ -17,3 +17,6 @@
 ###> vincentlanglet/twig-cs-fixer ###
 /.twig-cs-fixer.cache
 ###< vincentlanglet/twig-cs-fixer ###
+
+# Claude Code local-only overrides (do not commit secrets or per-user tweaks)
+/.claude/settings.local.json
