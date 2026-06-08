@@ -43,33 +43,47 @@ All language/build tooling runs inside containers. Never invoke `php`,
 
 Preferred order:
 
-1. `task <name>` — once a `Taskfile.yml` lands (tracked in #29).
-2. `itkdev-docker-compose <command>` — for the project's PHP/Composer/Symfony work.
-3. `docker compose --profile dev run --rm <service> <args>` — for the dev-only
-   tooling (`prettier`, `markdownlint`).
-4. `docker compose run --rm <service> <command>` — generic fallback.
+1. `task <name>` — the project's `Taskfile.yml` is the entry point for
+   everyday commands. Run `task --list` to see what's available.
+2. `task compose -- <args>` / `task compose-exec -- <args>` — pass-through
+   helpers when no dedicated target exists.
+3. `itkdev-docker-compose <command>` — for cross-project ITK Dev tooling
+   not wrapped by the project Taskfile (e.g. `traefik:start`).
+4. `docker compose --profile dev run --rm <service> <args>` — direct fallback
+   for the dev-only tooling (`prettier`, `markdownlint`) when going around
+   the Taskfile is justified.
 
 ## Common commands
 
 ```sh
-# Composer inside phpfpm
-itkdev-docker-compose composer <command>
+# Lifecycle
+task start                          # pull, up, composer install
+task down                           # tear the stack down
 
-# Arbitrary PHP inside phpfpm
-itkdev-docker-compose php <command>
+# Composer / PHP / Symfony console
+task composer -- <command>          # e.g. task composer -- require foo/bar
+task compose-exec -- phpfpm php <command>
+task console -- <command>           # e.g. task console -- cache:clear
 
-# Symfony console
-itkdev-docker-compose console <command>
+# Coding standards (check / apply pairs)
+task coding-standards-php-check
+task coding-standards-php-apply
+task coding-standards-twig-check
+task coding-standards-twig-apply
+task coding-standards-yaml-check
+task coding-standards-yaml-apply
+task coding-standards-markdown-check
+task coding-standards-markdown-apply
+task coding-standards-composer-check
+task coding-standards-composer-apply
 
-# Coding standards
-itkdev-docker-compose vendor/bin/php-cs-fixer fix
-itkdev-docker-compose vendor/bin/twig-cs-fixer lint
-docker compose --profile dev run --rm prettier '**/*.{yml,yaml}' --check
-docker compose --profile dev run --rm markdownlint markdownlint '**/*.md'
-itkdev-docker-compose composer normalize
+# Run every check at once
+task coding-standards-check
 ```
 
-Run the matching check before committing changes in that area.
+Run the matching check before committing changes in that area. For
+commands without a dedicated task, fall back to `task compose -- <args>`
+or `itkdev-docker-compose <args>`.
 
 ## Coding standards
 
