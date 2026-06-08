@@ -14,5 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dev dependencies for coding standards and composer normalization:
   `ergebnis/composer-normalize`, `friendsofphp/php-cs-fixer`, `vincentlanglet/twig-cs-fixer`.
 - Project README with local development instructions.
+- Added develop branch
 - `CONTRIBUTING.md` documenting branching, Conventional Commits, coding
   standards, changelog expectations and the pull-request workflow.
