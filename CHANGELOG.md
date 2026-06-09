@@ -19,3 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Decision recorded in [ADR 002](docs/adr/002-frontend-tooling.md).
 - Base Twig layout (`templates/base.html.twig`) and frontend asset
   entrypoints (`assets/app.js`, `assets/styles/app.css`).
+- Placeholder frontpage at `/` (`App\Controller\FrontpageController`)
+  extending the base layout. Identifies the project and signals that
+  the application is under construction.
+- Functional smoke test for the frontpage
+  (`tests/Controller/FrontpageControllerTest.php`); will start running
+  once PHPUnit lands (#31).
+- GitHub Action `block-on-label` that fails the check while a
+  `do-not-merge` label is applied to a pull request, providing a
+  per-PR merge gate for dependencies (e.g. another PR that must land
+  first).
