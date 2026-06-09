@@ -5,115 +5,56 @@
 {% block body %}
     <div class="view-root grid gap-12">
 
-        {# Hero #}
-        <section class="max-w-3xl">
-            <p class="eyebrow mb-4">Del &amp; hjemtag · dansk offentlig AI</p>
-            <h1 class="mb-4 font-display text-[clamp(2rem,3vw,2.6rem)] font-medium leading-tight tracking-tight text-ink">
+        <twig:Hero eyebrow="Del &amp; hjemtag · dansk offentlig AI">
+            <twig:block name="heading">
                 Et fælles bibliotek over <em class="italic text-primary">kommunale</em> AI-assistenter.
-            </h1>
-            <p class="max-w-[60ch] text-lg leading-relaxed text-text">
+            </twig:block>
+            <twig:block name="lead">
                 Find, del og hjemtag AI-assistenter bygget af danske myndigheder. Når én kommune løser
                 en opgave, kan resten hjemtage assistenten, eksportere konfigurationen og køre den
                 lokalt — så gode løsninger skalerer nationalt.
-            </p>
-            <dl class="mt-8 grid grid-cols-3 gap-6 sm:max-w-md">
-                <div class="flex flex-col gap-1">
-                    <dt class="text-xs uppercase tracking-widest text-text-muted">Assistenter</dt>
-                    <dd class="font-display text-3xl font-semibold text-ink">{{ stats.assistants }}</dd>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <dt class="text-xs uppercase tracking-widest text-text-muted">Kommuner</dt>
-                    <dd class="font-display text-3xl font-semibold text-ink">{{ stats.kommuner }}</dd>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <dt class="text-xs uppercase tracking-widest text-text-muted">Sprogmodeller</dt>
-                    <dd class="font-display text-3xl font-semibold text-ink">{{ stats.models }}</dd>
-                </div>
-            </dl>
-        </section>
+            </twig:block>
 
-        {# Search #}
-        <section aria-label="Søg i kataloget">
-            <p class="eyebrow mb-3">Find en assistent</p>
-            <form class="flex w-full max-w-2xl flex-col gap-3 rounded-xl border border-line bg-surface p-2 shadow-sm sm:flex-row sm:items-center"
-                  role="search"
-                  action="#"
-                  method="get">
-                <label for="frontpage-search" class="sr-only">Søg</label>
-                <input id="frontpage-search"
-                       class="flex-1 rounded-lg border-0 bg-transparent px-3 py-2 text-base text-ink placeholder:italic placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
-                       type="search"
-                       name="q"
-                       placeholder="Søg efter borgerservice, referat, journalisering…"
-                       autocomplete="off"
-                       aria-label="Søg">
-                <button class="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-ink transition-colors hover:bg-primary-hover"
-                        type="submit">
-                    Søg
-                </button>
-            </form>
-        </section>
+            <twig:Stats:List>
+                <twig:Stats:Item label="Assistenter"   value="{{ stats.assistants }}" />
+                <twig:Stats:Item label="Kommuner"      value="{{ stats.kommuner }}" />
+                <twig:Stats:Item label="Sprogmodeller" value="{{ stats.models }}" />
+            </twig:Stats:List>
+        </twig:Hero>
 
-        {# Recent assistants rail #}
-        <section>
-            <div class="mb-4 flex items-end justify-between gap-4">
-                <p class="eyebrow">Forhåndsvisning</p>
-                <a class="text-sm font-medium text-text-muted no-underline hover:text-primary"
-                   href="#">Kataloget kommer →</a>
-            </div>
-            <div class="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-4"
-                 role="list"
-                 aria-label="Eksempler på assistenter">
-                {% for a in assistants %}
-                    <a class="group flex min-w-[260px] max-w-[300px] flex-1 snap-start flex-col gap-2 rounded-xl border border-line bg-surface p-5 no-underline shadow-sm transition-transform hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
-                       href="#"
-                       role="listitem">
-                        <span class="text-xs uppercase tracking-widest text-text-muted">{{ a.kommune }} · {{ a.model }}</span>
-                        <span class="font-display text-lg font-semibold text-ink group-hover:text-primary">{{ a.name }}</span>
-                        <span class="text-sm leading-relaxed text-text">{{ a.summary }}</span>
-                    </a>
-                {% endfor %}
-            </div>
-        </section>
+        <twig:SearchBox placeholder="Søg efter borgerservice, referat, journalisering…" />
 
-        {# How it works #}
-        <section class="rounded-xl border border-line bg-surface p-6 shadow-sm sm:p-8">
-            <p class="eyebrow mb-4">Sådan virker det</p>
-            <ol class="m-0 list-none divide-y divide-line p-0">
-                {% set steps = [
-                    {lead: 'Opret bruger', body: ' og log ind som repræsentant for din myndighed.'},
-                    {lead: 'Find en assistent', body: ' – søg og filtrér på kommune, sprogmodel og datafølsomhed.'},
-                    {lead: 'Hjemtag', body: ' – eksportér assistentens JSON og følg vidensopskriften, der beskriver hvilke data du selv skal levere.'},
-                    {lead: 'Tilpas lokalt', body: ' – importér i din egen OpenWebUI, tilføj kommunens viden og tag den i brug.'},
-                ] %}
+        <twig:CardRail:Container eyebrow="Forhåndsvisning" linkLabel="Kataloget kommer →">
+            {% for a in assistants %}
+                <twig:CardRail:Card
+                    kommune="{{ a.kommune }}"
+                    model="{{ a.model }}"
+                    name="{{ a.name }}"
+                    summary="{{ a.summary }}" />
+            {% endfor %}
+        </twig:CardRail:Container>
+
+        <twig:Box eyebrow="Sådan virker det">
+            {% set steps = [
+                {lead: 'Opret bruger', body: ' og log ind som repræsentant for din myndighed.'},
+                {lead: 'Find en assistent', body: ' – søg og filtrér på kommune, sprogmodel og datafølsomhed.'},
+                {lead: 'Hjemtag', body: ' – eksportér assistentens JSON og følg vidensopskriften, der beskriver hvilke data du selv skal levere.'},
+                {lead: 'Tilpas lokalt', body: ' – importér i din egen OpenWebUI, tilføj kommunens viden og tag den i brug.'},
+            ] %}
+            <twig:StepList:List>
                 {% for step in steps %}
-                    <li class="flex items-start gap-4 py-4">
-                        <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft font-display text-sm font-semibold text-accent-deep">{{ loop.index }}</span>
-                        <span class="block text-base leading-relaxed text-text">
-                            <strong class="text-ink">{{ step.lead }}</strong>{{ step.body }}
-                        </span>
-                    </li>
+                    <twig:StepList:Item index="{{ loop.index }}" lead="{{ step.lead }}" body="{{ step.body }}" />
                 {% endfor %}
-            </ol>
-        </section>
+            </twig:StepList:List>
+        </twig:Box>
 
-        {# Coming soon #}
-        <section class="rounded-xl border border-line bg-surface p-6 shadow-sm sm:p-8">
-            <p class="eyebrow mb-2">Kommer snart</p>
-            <p class="mt-1 mb-4 text-sm text-text-muted">
-                Funktioner vi arbejder på til kommende versioner. De er ikke aktive endnu.
-            </p>
-            <div class="flex flex-wrap gap-2" aria-label="Kommende funktioner">
+        <twig:Box eyebrow="Kommer snart" lead="Funktioner vi arbejder på til kommende versioner. De er ikke aktive endnu.">
+            <twig:TagList:List label="Kommende funktioner">
                 {% for label in coming_soon %}
-                    <span class="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text"
-                          aria-disabled="true"
-                          title="Kommer snart">
-                        {{ label }}
-                        <span class="rounded-full bg-accent-soft px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-widest text-accent-deep">snart</span>
-                    </span>
+                    <twig:TagList:Tag label="{{ label }}" />
                 {% endfor %}
-            </div>
-        </section>
+            </twig:TagList:List>
+        </twig:Box>
 
     </div>
 {% endblock %}

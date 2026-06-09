@@ -1,0 +1,11 @@
+{% props eyebrow %}
+<section class="max-w-3xl">
+    <twig:Eyebrow class="mb-4">{{ eyebrow|raw }}</twig:Eyebrow>
+    <h1 class="mb-4 font-display text-[clamp(2rem,3vw,2.6rem)] font-medium leading-tight tracking-tight text-ink">
+        {% block heading %}{% endblock %}
+    </h1>
+    <p class="max-w-[60ch] text-lg leading-relaxed text-text">
+        {% block lead %}{% endblock %}
+    </p>
+    {% block content %}{% endblock %}
+</section>

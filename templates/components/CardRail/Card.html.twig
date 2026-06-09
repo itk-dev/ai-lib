@@ -1,0 +1,8 @@
+{% props kommune, model, name, summary, href = '#' %}
+<a class="group flex min-w-[260px] max-w-[300px] flex-1 snap-start flex-col gap-2 rounded-xl border border-line bg-surface p-5 no-underline shadow-sm transition-transform hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
+   href="{{ href }}"
+   role="listitem">
+    <span class="text-xs uppercase tracking-widest text-text-muted">{{ kommune }} · {{ model }}</span>
+    <span class="font-display text-lg font-semibold text-ink group-hover:text-primary">{{ name }}</span>
+    <span class="text-sm leading-relaxed text-text">{{ summary }}</span>
+</a>

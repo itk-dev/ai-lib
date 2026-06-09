@@ -1,0 +1,13 @@
+{% props eyebrow, linkHref = '#', linkLabel, listLabel = 'Eksempler på assistenter' %}
+<section>
+    <div class="mb-4 flex items-end justify-between gap-4">
+        <twig:Eyebrow>{{ eyebrow }}</twig:Eyebrow>
+        <a class="text-sm font-medium text-text-muted no-underline hover:text-primary"
+           href="{{ linkHref }}">{{ linkLabel }}</a>
+    </div>
+    <div class="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-4"
+         role="list"
+         aria-label="{{ listLabel }}">
+        {% block content %}{% endblock %}
+    </div>
+</section>

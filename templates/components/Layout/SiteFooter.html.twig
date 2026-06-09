@@ -1,0 +1,7 @@
+{% props linkHref, linkLabel %}
+<footer class="border-t border-line bg-surface-2 py-6">
+    <div class="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-[clamp(20px,4vw,56px)] text-sm text-text-muted">
+        <p class="m-0">{% block content %}{% endblock %}</p>
+        <a class="text-text-muted no-underline hover:text-ink" href="{{ linkHref }}">{{ linkLabel }}</a>
+    </div>
+</footer>
