@@ -1,30 +1,24 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}AI Bibliotek – forhåndsvisning{% endblock %}
+{% block title %}{{ 'frontpage.title'|trans({'%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
     <div class="view-root grid gap-12">
 
-        <twig:Hero eyebrow="Del &amp; hjemtag · dansk offentlig AI">
-            <twig:block name="heading">
-                Et fælles bibliotek over <em class="italic text-primary">kommunale</em> AI-assistenter.
-            </twig:block>
-            <twig:block name="lead">
-                Find, del og hjemtag AI-assistenter bygget af danske myndigheder. Når én kommune løser
-                en opgave, kan resten hjemtage assistenten, eksportere konfigurationen og køre den
-                lokalt — så gode løsninger skalerer nationalt.
-            </twig:block>
+        <twig:Hero eyebrow="frontpage.hero.eyebrow">
+            <twig:block name="heading">{{ 'frontpage.hero.heading_html'|trans|raw }}</twig:block>
+            <twig:block name="lead">{{ 'frontpage.hero.lead'|trans }}</twig:block>
 
             <twig:Stats:List>
-                <twig:Stats:Item label="Assistenter"   value="{{ stats.assistants }}" />
-                <twig:Stats:Item label="Kommuner"      value="{{ stats.kommuner }}" />
-                <twig:Stats:Item label="Sprogmodeller" value="{{ stats.models }}" />
+                <twig:Stats:Item label="frontpage.stats.assistants" value="{{ stats.assistants }}" />
+                <twig:Stats:Item label="frontpage.stats.kommuner"   value="{{ stats.kommuner }}" />
+                <twig:Stats:Item label="frontpage.stats.models"     value="{{ stats.models }}" />
             </twig:Stats:List>
         </twig:Hero>
 
-        <twig:SearchBox placeholder="Søg efter borgerservice, referat, journalisering…" />
+        <twig:SearchBox placeholder="search.placeholder" />
 
-        <twig:CardRail:Container eyebrow="Forhåndsvisning" linkLabel="Kataloget kommer →">
+        <twig:CardRail:Container eyebrow="frontpage.rail.eyebrow" linkLabel="frontpage.rail.link">
             {% for a in assistants %}
                 <twig:CardRail:Card
                     kommune="{{ a.kommune }}"
@@ -34,12 +28,12 @@
             {% endfor %}
         </twig:CardRail:Container>
 
-        <twig:Box eyebrow="Sådan virker det">
+        <twig:Box eyebrow="frontpage.steps.eyebrow">
             {% set steps = [
-                {lead: 'Opret bruger', body: ' og log ind som repræsentant for din myndighed.'},
-                {lead: 'Find en assistent', body: ' – søg og filtrér på kommune, sprogmodel og datafølsomhed.'},
-                {lead: 'Hjemtag', body: ' – eksportér assistentens JSON og følg vidensopskriften, der beskriver hvilke data du selv skal levere.'},
-                {lead: 'Tilpas lokalt', body: ' – importér i din egen OpenWebUI, tilføj kommunens viden og tag den i brug.'},
+                {lead: 'frontpage.steps.1.lead', body: 'frontpage.steps.1.body'},
+                {lead: 'frontpage.steps.2.lead', body: 'frontpage.steps.2.body'},
+                {lead: 'frontpage.steps.3.lead', body: 'frontpage.steps.3.body'},
+                {lead: 'frontpage.steps.4.lead', body: 'frontpage.steps.4.body'},
             ] %}
             <twig:StepList:List>
                 {% for step in steps %}

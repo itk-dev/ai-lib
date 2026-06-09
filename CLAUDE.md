@@ -110,6 +110,89 @@ Self-close (`<twig:Foo … />`) when the component has no slot content.
 A component earns its place when it has a name, a contract (props /
 slots), and at least one reason to be reused or replaced in isolation.
 
+### Translations
+
+The default locale is `da`. All user-facing strings (labels, buttons,
+ARIA labels, placeholders, page titles, copy) live in a single file:
+
+```
+translations/messages.da.yaml
+```
+
+Keys are hierarchical dot-notation, grouped by area (`nav.*`, `frontpage.*`,
+`search.*`, `layout.*`, …). Conventions:
+
+1. **Components translate text props internally.** Each text-bearing
+   prop defaults to a translation key, and the component applies `|trans`
+   itself. Call sites pass keys, not Danish strings:
+
+   ```twig
+   {# Stats/Item.html.twig — component #}
+   {% props label, value %}
+   <div>
+       <dt>{{ label|trans }}</dt>
+       <dd>{{ value }}</dd>
+   </div>
+
+   {# Call site #}
+   <twig:Stats:Item label="frontpage.stats.assistants" value="{{ stats.assistants }}" />
+   ```
+
+   Defaults that hold a translation key let a call site omit the prop:
+
+   ```twig
+   {% props label = 'nav.menu_label' %}
+   <nav aria-label="{{ label|trans }}">…</nav>
+   ```
+
+2. **HTML in translations.** Keys whose value contains HTML get the
+   `_html` suffix and are rendered with `|trans|raw` at the call site
+   (the translation source is trusted YAML, no XSS risk):
+
+   ```yaml
+   frontpage:
+       hero:
+           heading_html: 'Et fælles bibliotek over <em class="italic text-primary">kommunale</em> AI-assistenter.'
+   ```
+
+3. **Placeholders use `%name%` syntax** and are filled at call time:
+
+   ```yaml
+   frontpage:
+       title: '%brand% – forhåndsvisning'
+   ```
+   ```twig
+   {{ 'frontpage.title'|trans({'%brand%': brand_name}) }}
+   ```
+
+4. **`SAMPLE_ASSISTANTS` and other placeholder content data is NOT
+   translated** — only chrome and copy strings are. Sample data will be
+   replaced by real persistence soon and isn't worth extracting.
+
+5. `bin/console debug:translation da` reports keys passed as props as
+   `unused` because the static scanner can't see dynamic |trans calls
+   inside components. Verify usage by inspecting the rendered HTML
+   instead.
+
+### Brand identity (env-driven, not translated)
+
+The brand name, tagline, and logo initials come from environment
+variables, exposed as Twig globals:
+
+| Env var | Twig global | Default (in `config/services.yaml`) |
+|---|---|---|
+| `BRAND_NAME` | `brand_name` | `AI Bibliotek` |
+| `BRAND_TAGLINE` | `brand_tagline` | `del & hjemtag assistenter · prototype` |
+| `BRAND_INITIALS` | `brand_initials` | `AI` |
+
+Wiring lives in `config/packages/twig.yaml` (globals block, with
+`default:` env processor) and `config/services.yaml` (parameter
+defaults). Set the env vars in `.env` for committed defaults, or in
+`.env.local` for per-machine overrides.
+
+Use `{{ brand_name }}` directly in templates; do not look it up via
+`|trans`. Brand identity is configuration, not localization.
+
 ### Stimulus + CSS hooks
 
 When a component carries a `data-controller=`, `data-action=`,

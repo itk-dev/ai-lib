@@ -7,6 +7,10 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Brand identity defaults — overridden by BRAND_* environment variables.
+    brand.default_name: 'AI Bibliotek'
+    brand.default_tagline: 'del & hjemtag assistenter · prototype'
+    brand.default_initials: 'AI'
 
 services:
     # default configuration for services in *this* file

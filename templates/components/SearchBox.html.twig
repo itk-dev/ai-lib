@@ -1,21 +1,21 @@
-{% props legend = 'Find en assistent', placeholder, submitLabel = 'Søg', action = '#', name = 'q', inputId = 'frontpage-search' %}
-<section aria-label="Søg i kataloget">
-    <twig:Eyebrow class="mb-3">{{ legend }}</twig:Eyebrow>
+{% props legend = 'search.legend', placeholder, submitLabel = 'search.submit', action = '#', name = 'q', inputId = 'frontpage-search' %}
+<section aria-label="{{ 'search.legend'|trans }}">
+    <twig:Eyebrow class="mb-3">{{ legend|trans }}</twig:Eyebrow>
     <form class="flex w-full max-w-2xl flex-col gap-3 rounded-xl border border-line bg-surface p-2 shadow-sm sm:flex-row sm:items-center"
           role="search"
           action="{{ action }}"
           method="get">
-        <label for="{{ inputId }}" class="sr-only">{{ submitLabel }}</label>
+        <label for="{{ inputId }}" class="sr-only">{{ submitLabel|trans }}</label>
         <input id="{{ inputId }}"
                class="flex-1 rounded-lg border-0 bg-transparent px-3 py-2 text-base text-ink placeholder:italic placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
                type="search"
                name="{{ name }}"
-               placeholder="{{ placeholder }}"
+               placeholder="{{ placeholder|trans }}"
                autocomplete="off"
-               aria-label="{{ submitLabel }}">
+               aria-label="{{ submitLabel|trans }}">
         <button class="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-ink transition-colors hover:bg-primary-hover"
                 type="submit">
-            {{ submitLabel }}
+            {{ submitLabel|trans }}
         </button>
     </form>
 </section>

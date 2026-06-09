@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title %}AI Bibliotek{% endblock %}</title>
+        <title>{% block title %}{{ brand_name }}{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,11 +23,11 @@
 
         <twig:Layout:SiteHeader>
             <twig:Nav:Menu>
-                <twig:Nav:Link href="#">Katalog</twig:Nav:Link>
-                <twig:Nav:Link href="#">Del assistent</twig:Nav:Link>
-                <twig:Nav:Link href="#">Mine assistenter</twig:Nav:Link>
-                <twig:Nav:Link href="#">Favoritter</twig:Nav:Link>
-                <twig:Nav:Link href="#">Samlinger</twig:Nav:Link>
+                <twig:Nav:Link href="#">{{ 'nav.links.catalog'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="#">{{ 'nav.links.share'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="#">{{ 'nav.links.mine'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="#">{{ 'nav.links.favorites'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="#">{{ 'nav.links.collections'|trans }}</twig:Nav:Link>
             </twig:Nav:Menu>
         </twig:Layout:SiteHeader>
 
@@ -37,8 +37,8 @@
             {% block body %}{% endblock %}
         </main>
 
-        <twig:Layout:SiteFooter linkHref="https://github.com/itk-dev/ai-lib" linkLabel="Om projektet">
-            Forhåndsvisning · ingen data endnu · designet følger <a class="text-primary no-underline hover:text-primary-hover" href="https://itk-dev.github.io/research-projects/projects/ai-bibliotek/mocks/index.html#/">prototype-mockuppet</a>
+        <twig:Layout:SiteFooter linkHref="https://github.com/itk-dev/ai-lib" linkLabel="layout.footer.about_link">
+            {{ 'layout.footer.caption_html'|trans({'%link%': 'https://itk-dev.github.io/research-projects/projects/ai-bibliotek/mocks/index.html#/'})|raw }}
         </twig:Layout:SiteFooter>
     </body>
 </html>
