@@ -193,6 +193,29 @@ defaults). Set the env vars in `.env` for committed defaults, or in
 Use `{{ brand_name }}` directly in templates; do not look it up via
 `|trans`. Brand identity is configuration, not localization.
 
+### Rebuilding Tailwind after edits
+
+The project compiles Tailwind via `symfonycasts/tailwind-bundle`. There is
+**no live watcher** by default — `cache:clear` does not rebuild CSS, and
+new utility classes added to templates will not apply until Tailwind
+recompiles `var/tailwind/app.built.css`.
+
+After editing templates or component classes (especially when adding a
+utility that wasn't already in use, e.g. `pt-2`, `grid-cols-1`), run:
+
+```sh
+docker compose exec phpfpm bin/console tailwind:build
+```
+
+For active styling work, keep a watcher open in a side terminal:
+
+```sh
+docker compose exec phpfpm bin/console tailwind:build --watch
+```
+
+AssetMapper picks up the rebuilt file on the next request — no separate
+asset-map step needed in dev.
+
 ### Stimulus + CSS hooks
 
 When a component carries a `data-controller=`, `data-action=`,
