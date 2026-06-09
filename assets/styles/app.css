@@ -72,10 +72,14 @@
  */
 @layer components {
     /* Eyebrow label with leading decorative rule, used as a section kicker. */
+    /* font-family is set explicitly so an <h2 class="eyebrow"> renders in */
+    /* the sans body font instead of the serif `--font-display` that the   */
+    /* @layer base { h1..h4 } rule above otherwise applies to headings.    */
     .eyebrow {
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
+        font-family: var(--font-sans);
         font-size: 0.78rem;
         font-weight: 600;
         letter-spacing: 0.16em;

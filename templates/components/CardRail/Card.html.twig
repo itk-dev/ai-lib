@@ -5,6 +5,9 @@
    href="{{ href }}"
    role="listitem">
     <span class="text-xs uppercase tracking-widest text-text-muted">{{ kommune }} · {{ model }}</span>
-    <span class="font-display text-lg font-semibold text-ink group-hover:text-primary">{{ name }}</span>
+    {# tracking-normal cancels the -0.01em letter-spacing that the #}
+    {# @layer base rule applies to every heading, so the visual matches #}
+    {# the previous <span>. #}
+    <h3 class="font-display text-lg font-semibold tracking-normal text-ink group-hover:text-primary">{{ name }}</h3>
     <span class="text-sm leading-relaxed text-text">{{ summary }}</span>
 </a>
