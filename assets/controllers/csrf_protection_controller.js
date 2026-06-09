@@ -1,3 +1,19 @@
+/*
+ * Stateless CSRF protection — client side.
+ *
+ * Installed by the `symfony/stimulus-bundle` Flex recipe (see
+ * https://github.com/symfony/recipes). Pairs with Symfony's
+ * `SameOriginCsrfTokenManager` server side: on form submit, this script
+ * writes a random token into a `__Host-` cookie and the form's hidden
+ * `_csrf_token` field, then the server checks that the two match
+ * (double-submit cookie pattern). Also forwards the token as a header
+ * for Turbo-driven submissions.
+ *
+ * Edits to this file are preserved across `composer install`; Flex only
+ * re-applies the recipe on `composer recipes:update` / `--force`, and
+ * will prompt before overwriting local changes.
+ */
+
 const nameCheck = /^[-_a-zA-Z0-9]{4,22}$/;
 const tokenCheck = /^[-_/+a-zA-Z0-9]{24,}$/;
 
