@@ -1,3 +1,4 @@
+{% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
 {% props eyebrow, linkHref = '#', linkLabel, listLabel = 'Eksempler på assistenter' %}
 <section>
     <div class="mb-4 flex items-end justify-between gap-4">
@@ -11,3 +12,4 @@
         {% block content %}{% endblock %}
     </div>
 </section>
+{% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}

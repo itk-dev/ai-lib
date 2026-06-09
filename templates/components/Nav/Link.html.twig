@@ -1,2 +1,4 @@
+{% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
 {% props href %}
 <a class="text-text-muted no-underline hover:text-ink" href="{{ href }}">{% block content %}{% endblock %}</a>
+{% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}

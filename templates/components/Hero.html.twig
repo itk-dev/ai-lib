@@ -1,3 +1,4 @@
+{% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
 {% props eyebrow %}
 <section class="max-w-3xl">
     <twig:Eyebrow class="mb-4">{{ eyebrow|raw }}</twig:Eyebrow>
@@ -9,3 +10,4 @@
     </p>
     {% block content %}{% endblock %}
 </section>
+{% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}

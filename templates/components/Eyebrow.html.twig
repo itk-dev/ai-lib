@@ -1,2 +1,4 @@
+{% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
 {% props class = '' %}
 <p class="eyebrow{{ class ? ' ' ~ class : '' }}">{% block content %}{% endblock %}</p>
+{% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}

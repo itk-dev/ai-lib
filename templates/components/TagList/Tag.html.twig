@@ -1,3 +1,4 @@
+{% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
 {% props label, badge = 'snart', title = 'Kommer snart' %}
 <span class="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text"
       aria-disabled="true"
@@ -5,3 +6,4 @@
     {{ label }}
     <span class="rounded-full bg-accent-soft px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-widest text-accent-deep">{{ badge }}</span>
 </span>
+{% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}
