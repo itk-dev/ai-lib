@@ -20,8 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Base Twig layout (`templates/base.html.twig`) and frontend asset
   entrypoints (`assets/app.js`, `assets/styles/app.css`).
 - Placeholder frontpage at `/` (`App\Controller\FrontpageController`)
-  extending the base layout. Identifies the project and signals that
-  the application is under construction.
+  that previews the AI Bibliotek design with hardcoded sample data:
+  hero, search prompt, sample-assistant rail, "Sådan virker det"
+  steps, and "Kommer snart" chips. Follows the prototype mock at
+  `itk-dev/research-projects/docs/public/projects/ai-bibliotek/mocks`.
+- Site chrome (header with brand + nav, footer) in
+  `templates/base.html.twig`, with the Fraunces/Geist font stack
+  preloaded from Google Fonts.
+- Tailwind v4 design tokens (`@theme` in `assets/styles/app.css`)
+  matching the prototype palette and typography.
+- Stimulus controller `nav_toggle_controller` driving the mobile
+  navigation menu.
 - Functional smoke test for the frontpage
   (`tests/Controller/FrontpageControllerTest.php`); will start running
   once PHPUnit lands (#31).

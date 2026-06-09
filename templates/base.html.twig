@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="da">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title %}ai-lib{% endblock %}</title>
+        <title>{% block title %}AI Bibliotek{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400;9..144,500;9..144,600;9..144,700&family=Geist:wght@400;500;600;700&display=swap">
+
         {% block stylesheets %}
             <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
         {% endblock %}
@@ -13,7 +18,57 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body>
-        {% block body %}{% endblock %}
+    <body class="flex min-h-screen flex-col bg-bg text-text antialiased">
+        <a class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-ink focus:px-3 focus:py-2 focus:text-primary-ink" href="#main">
+            Spring til indhold
+        </a>
+
+        <header class="border-b border-line bg-surface">
+            <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-8 gap-y-3 px-[clamp(20px,4vw,56px)] py-4"
+                 data-controller="nav-toggle">
+                <a class="flex items-center gap-3 no-underline" href="{{ path('app_frontpage') }}" aria-label="Til forsiden">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-ink font-display text-base font-semibold text-primary-ink" aria-hidden="true">AI</span>
+                    <span class="flex flex-col leading-tight">
+                        <span class="font-display text-base font-semibold text-ink">AI Bibliotek</span>
+                        <span class="text-[0.78rem] uppercase tracking-[0.16em] text-text-muted">del &amp; hjemtag assistenter · prototype</span>
+                    </span>
+                </a>
+
+                <button class="nav-toggle ml-auto flex h-10 w-10 flex-col items-center justify-center gap-[3px] rounded-md border border-line bg-surface md:hidden"
+                        type="button"
+                        aria-expanded="false"
+                        aria-controls="primary-nav"
+                        aria-label="Vis menu"
+                        data-action="click->nav-toggle#toggle">
+                    <span class="nav-toggle-bar"></span>
+                    <span class="nav-toggle-bar"></span>
+                    <span class="nav-toggle-bar"></span>
+                </button>
+
+                <nav class="order-last hidden w-full items-center gap-6 text-sm font-medium md:order-none md:ml-auto md:flex md:w-auto"
+                     id="primary-nav"
+                     aria-label="Hovedmenu"
+                     data-nav-toggle-target="menu">
+                    <a class="text-text-muted no-underline hover:text-ink" href="#">Katalog</a>
+                    <a class="text-text-muted no-underline hover:text-ink" href="#">Del assistent</a>
+                    <a class="text-text-muted no-underline hover:text-ink" href="#">Mine assistenter</a>
+                    <a class="text-text-muted no-underline hover:text-ink" href="#">Favoritter</a>
+                    <a class="text-text-muted no-underline hover:text-ink" href="#">Samlinger</a>
+                </nav>
+            </div>
+        </header>
+
+        <main id="main"
+              class="mx-auto w-full max-w-[1600px] flex-1 px-[clamp(20px,4vw,56px)] py-[clamp(24px,4vw,56px)]"
+              tabindex="-1">
+            {% block body %}{% endblock %}
+        </main>
+
+        <footer class="border-t border-line bg-surface-2 py-6">
+            <div class="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-[clamp(20px,4vw,56px)] text-sm text-text-muted">
+                <p class="m-0">Forhåndsvisning · ingen data endnu · designet følger <a class="text-primary no-underline hover:text-primary-hover" href="https://itk-dev.github.io/research-projects/projects/ai-bibliotek/mocks/index.html#/">prototype-mockuppet</a></p>
+                <a class="text-text-muted no-underline hover:text-ink" href="https://github.com/itk-dev/ai-lib">Om projektet</a>
+            </div>
+        </footer>
     </body>
 </html>

@@ -25,6 +25,7 @@ class FrontpageControllerTest extends WebTestCase
         $client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'ai-lib');
+        self::assertSelectorTextContains('body', 'AI Bibliotek');
+        self::assertSelectorTextContains('h1', 'kommunale');
     }
 }
