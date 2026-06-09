@@ -5,7 +5,10 @@
         <a class="text-sm font-medium text-text-muted no-underline hover:text-primary"
            href="{{ linkHref }}">{{ linkLabel|trans }}</a>
     </div>
-    <div class="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-4"
+    {# pt-2: overflow-x:auto forces overflow-y:auto per CSS spec, which #}
+    {# clips the card's `-translate-y-0.5` hover lift. Top padding gives #}
+    {# the lifted card + its shadow-md room before the clipping edge. #}
+    <div class="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pt-2 pb-4"
          role="list"
          aria-label="{{ listLabel|trans }}">
         {% block content %}{% endblock %}
