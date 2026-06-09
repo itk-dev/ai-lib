@@ -1,4 +1,3 @@
-{% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
 {# Header shell. Default slot receives the nav menu. #}
 <header class="border-b border-line bg-surface">
     <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-8 gap-y-3 px-[clamp(20px,4vw,56px)] py-4"
@@ -8,4 +7,3 @@
         {% block content %}{% endblock %}
     </div>
 </header>
-{% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}

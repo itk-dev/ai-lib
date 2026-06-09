@@ -3,7 +3,6 @@
 {% block title %}AI Bibliotek – forhåndsvisning{% endblock %}
 
 {% block body %}
-    {% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
     <div class="view-root grid gap-12">
 
         <twig:Hero eyebrow="Del &amp; hjemtag · dansk offentlig AI">
@@ -50,5 +49,4 @@
         </twig:Box>
 
     </div>
-    {% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}
 {% endblock %}

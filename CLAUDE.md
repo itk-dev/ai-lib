@@ -39,52 +39,49 @@ or a single item (`Item`).
 Every component template has this shape:
 
 ```twig
-{% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
 {% props label, value, href = '#' %}
 <a class="…" href="{{ href }}">
     <span class="…">{{ label }}</span>
     <span class="…">{{ value }}</span>
     {% block content %}{% endblock %}
 </a>
-{% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}
 ```
 
 Rules:
 
-1. **Always add the dev markers** — one at the very top, one at the very
-   end. They emit `<!-- components/Foo.html.twig -->` and
-   `<!-- /components/Foo.html.twig -->` in dev only, so the rendered HTML
-   in DevTools tells you which template produced any region. The path comes
-   from `{{ _self }}` automatically — never hardcode it.
-2. **Declare props** with `{% props … %}` right after the opening marker.
-   Required props have no default; optional props use `prop = 'value'`.
-3. **Default slot** is `{% block content %}{% endblock %}` — content placed
+1. **Declare props** with `{% props … %}` on the first line. Required
+   props have no default; optional props use `prop = 'value'`.
+2. **Default slot** is `{% block content %}{% endblock %}` — content placed
    between `<twig:Foo>…</twig:Foo>` lands here.
-4. **Named slots** use `{% block <name> %}{% endblock %}` and are filled
+3. **Named slots** use `{% block <name> %}{% endblock %}` and are filled
    from the call site with `<twig:block name="<name>">…</twig:block>`.
    Prefer named slots over `|raw` string props whenever the value contains
    HTML (e.g. an inline `<em>`).
-5. Keep Tailwind utility classes inline. Design tokens (`text-ink`,
+4. Keep Tailwind utility classes inline. Design tokens (`text-ink`,
    `bg-surface`, `font-display`, …) come from the `@theme` block in
    `assets/styles/app.css`; do not introduce new CSS files for one-off
    styles.
 
-### Templates that `extends` a layout
+### Dev-mode template markers
 
-Twig forbids any content outside `{% block %}` in an extending template.
-Put the dev markers **inside** an existing block (typically `body`):
+In the `dev` environment, every project template is wrapped at compile
+time with HTML comments showing its path:
 
-```twig
-{% extends 'base.html.twig' %}
-
-{% block body %}
-    {% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
-    <div class="view-root grid gap-12">
-        …
-    </div>
-    {% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}
-{% endblock %}
+```html
+<!-- components/Hero.html.twig -->
+…component output…
+<!-- /components/Hero.html.twig -->
 ```
+
+This is automatic — do **not** add `{% if app.environment == 'dev' %}<!-- … -->{% endif %}`
+lines inside templates. The injection is done by
+`App\Twig\DevTemplateMarkerNodeVisitor` (in `src/Twig/`), registered
+only in dev so prod output is unchanged.
+
+For templates that `extends` another, the visitor wraps the content of
+the `body` block specifically (the template's top-level content never
+renders in that case). Page templates should therefore put their content
+inside `{% block body %}…{% endblock %}` if they want the auto-marker.
 
 ### Calling components
 

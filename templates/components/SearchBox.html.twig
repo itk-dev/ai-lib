@@ -1,4 +1,3 @@
-{% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
 {% props legend = 'Find en assistent', placeholder, submitLabel = 'Søg', action = '#', name = 'q', inputId = 'frontpage-search' %}
 <section aria-label="Søg i kataloget">
     <twig:Eyebrow class="mb-3">{{ legend }}</twig:Eyebrow>
@@ -20,4 +19,3 @@
         </button>
     </form>
 </section>
-{% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}

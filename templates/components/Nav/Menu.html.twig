@@ -1,4 +1,3 @@
-{% if app.environment == 'dev' %}<!-- {{ _self }} -->{% endif %}
 {% props id = 'primary-nav', label = 'Hovedmenu' %}
 <nav class="order-last hidden w-full items-center gap-6 text-sm font-medium md:order-none md:ml-auto md:flex md:w-auto"
      id="{{ id }}"
@@ -6,4 +5,3 @@
      data-nav-toggle-target="menu">
     {% block content %}{% endblock %}
 </nav>
-{% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}
