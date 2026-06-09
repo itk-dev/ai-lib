@@ -49,14 +49,6 @@
             </twig:StepList:List>
         </twig:Box>
 
-        <twig:Box eyebrow="Kommer snart" lead="Funktioner vi arbejder på til kommende versioner. De er ikke aktive endnu.">
-            <twig:TagList:List label="Kommende funktioner">
-                {% for label in coming_soon %}
-                    <twig:TagList:Tag label="{{ label }}" />
-                {% endfor %}
-            </twig:TagList:List>
-        </twig:Box>
-
     </div>
     {% if app.environment == 'dev' %}<!-- /{{ _self }} -->{% endif %}
 {% endblock %}

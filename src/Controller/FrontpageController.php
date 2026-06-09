@@ -50,24 +50,15 @@ class FrontpageController extends AbstractController
         ],
     ];
 
-    private const COMING_SOON = [
-        'Deling af tools',
-        'Deling af skills',
-        'Ratings',
-        'API',
-        'Abonnér på ændringer',
-        'Testcases',
-    ];
-
     /**
      * Render the placeholder frontpage.
      *
      * Anonymous visitors to `/` receive a design-preview landing page
      * that mirrors the AI Bibliotek prototype. Hero, search prompt,
-     * sample-assistant rail, "Sådan virker det" steps, and "Kommer
-     * snart" chips are rendered with hardcoded sample data — the
-     * point is to convey what the catalogue will feel like before
-     * the persistence and search layers land.
+     * sample-assistant rail, and "Sådan virker det" steps are rendered
+     * with hardcoded sample data — the point is to convey what the
+     * catalogue will feel like before the persistence and search
+     * layers land.
      *
      * @return Response the rendered `frontpage/index.html.twig` template
      */
@@ -84,7 +75,6 @@ class FrontpageController extends AbstractController
                 'kommuner' => count($kommuner),
                 'models' => count($models),
             ],
-            'coming_soon' => self::COMING_SOON,
         ]);
     }
 }
