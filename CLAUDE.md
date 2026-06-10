@@ -5,7 +5,7 @@ repository. Audience is the agent, not human contributors — for human-facing
 documentation see [README.md](README.md).
 
 When the instructions here conflict with the user's global `~/.claude/CLAUDE.md`,
-the user's global rules win.
+this file wins — project-specific rules override the global defaults.
 
 ## Project overview
 
