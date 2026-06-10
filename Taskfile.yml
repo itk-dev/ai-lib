@@ -35,18 +35,12 @@ tasks:
 
   # ---- Lifecycle --------------------------------------------------------
 
-  start:
+  site-install:
     desc: 'Pull images, start the stack, and install Composer dependencies.'
     cmds:
       - task compose -- pull
       - task compose -- up --detach --remove-orphans --wait
       - task composer-install
-    silent: true
-
-  down:
-    desc: 'Tear the stack down (containers are removed, volumes are kept).'
-    cmds:
-      - task compose -- down
     silent: true
 
   # ---- Composer ---------------------------------------------------------

@@ -17,7 +17,7 @@ A Symfony 8 application built on top of the ITK Dev Docker development setup.
 itkdev-docker-compose traefik:start
 
 # Pull images, bring the stack up, and install Composer dependencies
-task start
+task site-install
 
 # Open the site
 task site-open
