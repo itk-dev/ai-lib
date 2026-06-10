@@ -24,3 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project license declared as **MPL-2.0** (Mozilla Public License 2.0); the
   `license` field in `composer.json` updated from the Symfony skeleton
   default `proprietary` to the SPDX identifier `MPL-2.0`.
+- Added develop branch
+- `docs/adr/` with index (`docs/adr/README.md`) and ADR `001-tech-stack-docker-symfony`
+  documenting the choice of Symfony 8 on the ITK Dev Docker `symfony-8` template.
+- `CONTRIBUTING.md` documenting branching, Conventional Commits, coding
+  standards, changelog expectations and the pull-request workflow.
+- Rewrite the project README around the AI Bibliotek catalog: adds project
+  description, status banner, feature list, tech stack, Task-based local
+  development workflow, contributing pointers, and prototype references.
+
