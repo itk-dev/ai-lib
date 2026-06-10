@@ -192,6 +192,12 @@ that:
 
 Small implementation choices belong in code review, not in an ADR.
 
+Do not include a "Follow-up Actions" (or similarly named) checklist
+inside an ADR. Track follow-up work as GitHub issues and reference the
+ADR from each issue, not the other way around. The ADR records the
+decision; the issues track the work derived from it. The one-time
+cleanup of existing sections is tracked in #44.
+
 ## Domain glossary
 
 - **Assistant** — a configured AI persona/prompt bundle that can be exported,
