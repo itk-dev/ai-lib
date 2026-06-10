@@ -1,9 +1,18 @@
 # AI Bibliotek (ai-lib)
 
-A shared catalog where Danish public-sector organisations can discover, share
-and re-use AI assistants. Municipalities can browse pre-configured assistants,
-inspect their configuration, and import/export them using
-[OpenWebUI](https://openwebui.com/)'s export format as a starting point.
+A shared catalog of AI assistants for the Danish public sector. `ai-lib`
+lets contributors export, share, search, and import assistants — using the
+OpenWebUI JSON format as the interchange — and provides moderation and
+metadata around what ends up in the catalog.
+
+## Tech stack
+
+- PHP 8.4 / Symfony 8
+- Nginx + Traefik
+- MariaDB
+- Mailpit (outbound mail capture, local only)
+- ITK Dev Docker development setup (`symfony-8` template)
+- Taskrunner [Task](https://taskfile.dev/) (`Taskfile.yml`)
 
 > **Status:** early development. The application is being scaffolded — see the
 > [Base setup milestone](https://github.com/itk-dev/ai-lib/milestone/1) and
@@ -21,14 +30,6 @@ The platform is built up across milestones:
   assistant, with validation and optional moderation.
 - **User management** — login, roles/permissions, and profiles.
 - **OpenWebUI tag/workflow** — AI-generated tags and OpenWebUI round-trip.
-
-## Tech stack
-
-- **Backend:** [Symfony](https://symfony.com/) (PHP)
-- **Local environment:** Docker via the ITK Dev Docker setup
-  ([itkdev-docker-compose](https://github.com/itk-dev/devops_itkdev-docker)),
-  fronted by Traefik
-- **Task runner:** [Task](https://taskfile.dev/) (`Taskfile.yml`)
 
 ## Local development
 
@@ -64,31 +65,6 @@ task open
 The site is served through Traefik on a `*.local.itkdev.dk` domain (the exact
 URL is printed by the start task).
 
-### Common tasks
-
-```sh
-task                 # List all available tasks with descriptions
-task --list-all      # Include tasks without descriptions
-task dev:down        # Stop the site
-task coding-standards:check   # Run coding-standards checks
-task test            # Run the test suite
-```
-
-> Always prefer `task` over raw `itkdev-docker-compose` commands — tasks chain
-> the right steps and handle edge cases.
-
-## Contributing
-
-- Follow [Conventional Commits](https://www.conventionalcommits.org/) and the
-  branch strategy `feature/issue-{number}-{short-description}`.
-- Never commit directly to `main` — open a pull request.
-- Update [`CHANGELOG.md`](CHANGELOG.md) (Keep a Changelog format) with every
-  meaningful change.
-- Architectural decisions are recorded as ADRs in `docs/adr/`.
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for details (added in
-[#9](https://github.com/itk-dev/ai-lib/issues/9)).
-
 ## References
 
 - **Estimation note:** <https://itk-dev.github.io/research-projects/projects/ai-bibliotek/estimeringsnotat>
@@ -109,7 +85,3 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for details (added in
 
 > The prototype is a client-side mock (data stored locally in the browser),
 > not production code.
-
-## License
-
-To be determined.
