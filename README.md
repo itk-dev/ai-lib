@@ -12,6 +12,7 @@ metadata around what ends up in the catalog.
 - MariaDB
 - Mailpit (outbound mail capture, local only)
 - ITK Dev Docker development setup (`symfony-8` template)
+- Taskrunner [Task](https://taskfile.dev/) (`Taskfile.yml`)
 
 > **Status:** early development. The application is being scaffolded — see the
 > [Base setup milestone](https://github.com/itk-dev/ai-lib/milestone/1) and
@@ -29,14 +30,6 @@ The platform is built up across milestones:
   assistant, with validation and optional moderation.
 - **User management** — login, roles/permissions, and profiles.
 - **OpenWebUI tag/workflow** — AI-generated tags and OpenWebUI round-trip.
-
-## Tech stack
-
-- **Backend:** [Symfony](https://symfony.com/) (PHP)
-- **Local environment:** Docker via the ITK Dev Docker setup
-  ([itkdev-docker-compose](https://github.com/itk-dev/devops_itkdev-docker)),
-  fronted by Traefik
-- **Task runner:** [Task](https://taskfile.dev/) (`Taskfile.yml`)
 
 ## Local development
 
