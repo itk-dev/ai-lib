@@ -7,6 +7,9 @@ metadata around what ends up in the catalog.
 
 ## Tech stack
 
+- [Docker](https://www.docker.com/) and Docker Compose v2
+- [`itkdev-docker-compose`](https://github.com/itk-dev/devops_itkdev-docker) on your `PATH`
+- A working [Traefik](https://github.com/itk-dev/devops_itkdev-docker?tab=readme-ov-file#traefik) reverse proxy
 - PHP 8.4 / Symfony 8
 - Nginx + Traefik
 - MariaDB
@@ -17,8 +20,6 @@ metadata around what ends up in the catalog.
 > **Status:** early development. The application is being scaffolded — see the
 > [Base setup milestone](https://github.com/itk-dev/ai-lib/milestone/1) and
 > [open issues](https://github.com/itk-dev/ai-lib/issues).
-
-## Features
 
 The platform is built up across milestones:
 
@@ -32,6 +33,40 @@ The platform is built up across milestones:
 - **OpenWebUI tag/workflow** — AI-generated tags and OpenWebUI round-trip.
 
 ## Local development
+
+Run `task` (or `task --list`) to see every available target.
+
+## Common commands
+
+```sh
+# Run Composer inside the phpfpm container
+task composer -- <command>
+
+# Run a Symfony console command
+task console -- <command>
+
+# Apply PHP coding standards
+task coding-standards-php-apply
+
+# Lint Twig templates
+task coding-standards-twig-check
+
+# Format YAML
+task coding-standards-yaml-apply
+
+# Lint Markdown
+task coding-standards-markdown-check
+
+# Normalize composer.json
+task coding-standards-composer-apply
+
+# Run every coding-standards check
+task coding-standards-check
+```
+
+For one-off commands without a dedicated task, fall back to the underlying
+tools, e.g. `docker compose --profile dev run --rm prettier <args>` or
+`itkdev-docker-compose <args>`.
 
 > The commands below describe the intended ITK Dev standard setup. The actual
 > Docker + Symfony scaffolding is added in
@@ -55,8 +90,8 @@ cd ai-lib
 # List all available tasks
 task
 
-# Start the site (build containers, install dependencies, run migrations)
-task dev:up
+# Install site
+task site-install
 
 # Open the site
 task open
