@@ -22,3 +22,4 @@ See [adr.github.io](https://adr.github.io/) for background on the format.
 | Number                                       | Title                                  | Status   | Date       |
 | -------------------------------------------- | -------------------------------------- | -------- | ---------- |
 | [001](001-tech-stack-docker-symfony.md)      | Tech stack: Docker + Symfony           | Accepted | 2026-06-08 |
+| [002](002-project-license-mpl-2.md)          | Project license: MPL-2.0               | Accepted | 2026-06-08 |
