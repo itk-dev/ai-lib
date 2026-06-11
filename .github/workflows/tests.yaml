@@ -19,6 +19,9 @@ jobs:
             - name: Install dependencies
               run: docker compose run --rm phpfpm composer install
 
+            - name: Build Tailwind CSS
+              run: docker compose run --rm phpfpm bin/console tailwind:build
+
             - name: Run PHPUnit with coverage
               run: docker compose run -e XDEBUG_MODE=coverage --rm phpfpm vendor/bin/phpunit --coverage-clover=coverage/clover.xml
 
