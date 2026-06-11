@@ -36,11 +36,12 @@ tasks:
   # ---- Lifecycle --------------------------------------------------------
 
   site-install:
-    desc: 'Pull images, start the stack, and install Composer dependencies.'
+    desc: 'Pull images, start the stack, install Composer dependencies, and apply database migrations.'
     cmds:
       - task compose -- pull
       - task compose -- up --detach --remove-orphans --wait
       - task composer-install
+      - task console -- doctrine:migrations:migrate --no-interaction
     silent: true
 
   # ---- Composer ---------------------------------------------------------
@@ -91,15 +92,27 @@ tasks:
 
   # ---- Tests ------------------------------------------------------------
 
+  db-prepare-test:
+    desc: 'Ensure the test database exists and the app user can write to it (idempotent).'
+    cmds:
+      # Re-apply the init SQL on every invocation so local devs whose
+      # mariadb data volume predates the init mount also pick up the
+      # CREATE DATABASE + GRANT. The script is IF-NOT-EXISTS / additive
+      # only — no row data is read or written.
+      - cat .docker/mariadb/init/01-grant-test-databases.sql | task compose-exec -- mariadb mariadb -uroot -ppassword
+    silent: true
+
   test:
     desc: 'Run the PHPUnit test suite (no coverage).'
     cmds:
+      - task: db-prepare-test
       - task compose-exec -- phpfpm vendor/bin/phpunit
     silent: true
 
   test-coverage:
     desc: 'Run PHPUnit with coverage and enforce the 100% gate.'
     cmds:
+      - task: db-prepare-test
       - task compose -- exec -e XDEBUG_MODE=coverage phpfpm vendor/bin/phpunit --coverage-clover=coverage/clover.xml
       - task compose-exec -- phpfpm vendor/bin/coverage-check coverage/clover.xml 100
     silent: true

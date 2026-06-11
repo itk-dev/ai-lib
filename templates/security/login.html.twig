@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'security.login.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <section class="max-w-md">
+        <twig:Eyebrow as="p" class="mb-4">{{ 'security.login.eyebrow'|trans }}</twig:Eyebrow>
+        <h1 class="mb-6 font-display text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-tight tracking-tight text-ink">
+            {{ 'security.login.heading'|trans }}
+        </h1>
+
+        {% if error %}
+            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+        <form action="{{ path('app_login') }}" method="post" class="grid gap-4">
+            <label class="grid gap-1 text-sm" for="inputEmail">
+                <span class="font-medium text-ink">{{ 'security.login.email_label'|trans }}</span>
+                <input id="inputEmail"
+                       name="_username"
+                       type="email"
+                       value="{{ last_username }}"
+                       autocomplete="email"
+                       required
+                       autofocus
+                       class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+            </label>
+
+            <label class="grid gap-1 text-sm" for="inputPassword">
+                <span class="font-medium text-ink">{{ 'security.login.password_label'|trans }}</span>
+                <input id="inputPassword"
+                       name="_password"
+                       type="password"
+                       autocomplete="current-password"
+                       required
+                       class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+            </label>
+
+            <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
+
+            <button type="submit"
+                    class="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-ink transition-colors hover:bg-primary-hover">
+                {{ 'security.login.submit'|trans }}
+            </button>
+        </form>
+    </section>
+{% endblock %}

@@ -7,6 +7,9 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "doctrine/doctrine-bundle": "^3.2",
+        "doctrine/doctrine-migrations-bundle": "^4.0",
+        "doctrine/orm": "^3.6",
         "symfony/asset": "^8.1",
         "symfony/asset-mapper": "^8.1",
         "symfony/console": "~8.1.0",
@@ -14,6 +17,7 @@
         "symfony/flex": "^2",
         "symfony/framework-bundle": "~8.1.0",
         "symfony/runtime": "~8.1.0",
+        "symfony/security-bundle": "~8.1.0",
         "symfony/stimulus-bundle": "^3.1",
         "symfony/translation": "~8.1.0",
         "symfony/twig-bundle": "~8.1.0",
@@ -24,12 +28,14 @@
         "twig/twig": "^2.12 || ^3.0"
     },
     "require-dev": {
+        "doctrine/doctrine-fixtures-bundle": "^4.3",
         "ergebnis/composer-normalize": "^2.52",
         "friendsofphp/php-cs-fixer": "^3.95.5",
         "phpunit/phpunit": "^11.5",
         "rregeer/phpunit-coverage-check": "^0.3.1",
         "symfony/browser-kit": "~8.1.0",
         "symfony/css-selector": "~8.1.0",
+        "symfony/maker-bundle": "^1.67",
         "symfony/phpunit-bridge": "~8.1.0",
         "vincentlanglet/twig-cs-fixer": "^3.14"
     },

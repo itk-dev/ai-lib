@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHPUnit test harness with 100% coverage gate enforced in CI via
   `rregeer/phpunit-coverage-check`
   ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
+- User authentication: `User` Doctrine entity (email, hashed password,
+  roles), `UserRepository` (with `PasswordUpgraderInterface`), the
+  `UserManager` service that hides persistence + hashing, form-login
+  firewall + `/login` + `/logout`, fixtures for two baseline users
+  (`alice@example.test`, `bob@example.test` — password `password`),
+  console commands `app:user:create` and `app:user:change-password`,
+  and end-to-end functional + unit tests
+  ([#2](https://github.com/itk-dev/ai-lib/issues/2)).
 
 ### Changed
 
