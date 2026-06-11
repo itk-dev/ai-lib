@@ -25,6 +25,11 @@ services:
             - MYSQL_PASSWORD=db
             - MYSQL_DATABASE=db
             #- ENCRYPT=1 # Uncomment to enable database encryption.
+        volumes:
+            # Grant the application user access to the `db_test*` databases
+            # Symfony creates in the test environment. See the file for
+            # details.
+            - ./.docker/mariadb/init:/docker-entrypoint-initdb.d:ro
 
     phpfpm:
         image: itkdev/php8.4-fpm:latest
