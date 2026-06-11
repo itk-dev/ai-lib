@@ -31,6 +31,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Decision recorded in [ADR 002](docs/adr/002-frontend-tooling.md).
 - Base Twig layout (`templates/base.html.twig`) and frontend asset
   entrypoints (`assets/app.js`, `assets/styles/app.css`).
+- Placeholder frontpage at `/` (`App\Controller\FrontpageController`)
+  that previews the AI Bibliotek design with hardcoded sample data:
+  hero, search prompt, sample-assistant rail, "Sådan virker det"
+  steps, and "Kommer snart" chips. Follows the prototype mock at
+  `itk-dev/research-projects/docs/public/projects/ai-bibliotek/mocks`.
+- Site chrome (header with brand + nav, footer) in
+  `templates/base.html.twig`, with the Fraunces/Geist font stack
+  preloaded from Google Fonts.
+- Tailwind v4 design tokens (`@theme` in `assets/styles/app.css`)
+  matching the prototype palette and typography.
+- Stimulus controller `nav_toggle_controller` driving the mobile
+  navigation menu.
+- GitHub Action `block-on-label` that fails the check while a
+  `do-not-merge` label is applied to a pull request, providing a
+  per-PR merge gate for dependencies (e.g. another PR that must land
+  first).
 - `LICENSE` file at repo root containing the full Mozilla Public License 2.0 text.
 - ADR `docs/adr/002-project-license-mpl-2.md` recording the MPL-2.0 license
   decision and its rationale.

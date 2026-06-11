@@ -1,0 +1,63 @@
+# Danish UI strings. Hierarchical dot-notation keys.
+#
+# - Brand identity (name, tagline, initials) is NOT here — see BRAND_*
+#   env vars in .env and the Twig globals in config/packages/twig.yaml.
+# - Keys ending in `_html` carry HTML and must be rendered with |raw at
+#   the call site.
+# - Components apply |trans on text props themselves; call sites pass
+#   keys, not literal strings.
+
+layout:
+    skip_link: "Spring til indhold"
+    brand_aria_label: "Til forsiden"
+    footer:
+        caption_html: 'Forhåndsvisning · ingen data endnu · designet følger <a class="text-primary no-underline hover:text-primary-hover" href="%link%">prototype-mockuppet</a>'
+        about_link: "Om projektet"
+
+nav:
+    menu_label: "Hovedmenu"
+    toggle_label: "Vis menu"
+    links:
+        catalog: "Katalog"
+        share: "Del assistent"
+        mine: "Mine assistenter"
+        favorites: "Favoritter"
+        collections: "Samlinger"
+
+search:
+    legend: "Find en assistent"
+    submit: "Søg"
+    placeholder: "Søg efter borgerservice, referat, journalisering…"
+
+tag:
+    badge_default: "snart"
+    title_default: "Kommer snart"
+
+frontpage:
+    title: "%brand% – forhåndsvisning"
+    hero:
+        eyebrow: "Del & hjemtag · dansk offentlig AI"
+        heading_html: 'Et fælles bibliotek over <em class="italic text-primary">kommunale</em> AI-assistenter.'
+        lead: "Find, del og hjemtag AI-assistenter bygget af danske myndigheder. Når én kommune løser en opgave, kan resten hjemtage assistenten, eksportere konfigurationen og køre den lokalt — så gode løsninger skalerer nationalt."
+    stats:
+        assistants: "Assistenter"
+        kommuner: "Kommuner"
+        models: "Sprogmodeller"
+    rail:
+        eyebrow: "Forhåndsvisning"
+        link: "Kataloget kommer →"
+        list_label: "Eksempler på assistenter"
+    steps:
+        eyebrow: "Sådan virker det"
+        "1":
+            lead: "Opret bruger"
+            body: " og log ind som repræsentant for din myndighed."
+        "2":
+            lead: "Find en assistent"
+            body: " – søg og filtrér på kommune, sprogmodel og datafølsomhed."
+        "3":
+            lead: "Hjemtag"
+            body: " – eksportér assistentens JSON og følg vidensopskriften, der beskriver hvilke data du selv skal levere."
+        "4":
+            lead: "Tilpas lokalt"
+            body: " – importér i din egen OpenWebUI, tilføj kommunens viden og tag den i brug."

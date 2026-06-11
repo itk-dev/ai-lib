@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="da">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title %}ai-lib{% endblock %}</title>
+        <title>{% block title %}{{ brand_name }}{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400;9..144,500;9..144,600;9..144,700&family=Geist:wght@400;500;600;700&display=swap">
+
         {% block stylesheets %}
             <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
         {% endblock %}
@@ -13,7 +18,27 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body>
-        {% block body %}{% endblock %}
+    <body class="flex min-h-screen flex-col bg-bg text-text antialiased">
+        <twig:Layout:SkipLink />
+
+        <twig:Layout:SiteHeader>
+            <twig:Nav:Menu>
+                <twig:Nav:Link href="#">{{ 'nav.links.catalog'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="#">{{ 'nav.links.share'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="#">{{ 'nav.links.mine'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="#">{{ 'nav.links.favorites'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="#">{{ 'nav.links.collections'|trans }}</twig:Nav:Link>
+            </twig:Nav:Menu>
+        </twig:Layout:SiteHeader>
+
+        <main id="main"
+              class="mx-auto w-full max-w-[1600px] flex-1 px-[clamp(20px,4vw,56px)] py-[clamp(24px,4vw,56px)]"
+              tabindex="-1">
+            {% block body %}{% endblock %}
+        </main>
+
+        <twig:Layout:SiteFooter linkHref="#" linkLabel="layout.footer.about_link">
+            {{ 'layout.footer.caption_html'|trans({'%link%': '#'})|raw }}
+        </twig:Layout:SiteFooter>
     </body>
 </html>

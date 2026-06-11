@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'frontpage.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    {# grid-cols-1 gives the implicit column min 0 (minmax(0, 1fr)), so #}
+    {# children like the CardRail can let their overflow-x-auto kick in #}
+    {# instead of expanding the grid to their min-content width. #}
+    <div class="view-root grid grid-cols-1 gap-12">
+
+        <twig:Hero eyebrow="frontpage.hero.eyebrow">
+            <twig:block name="heading">{{ 'frontpage.hero.heading_html'|trans|raw }}</twig:block>
+            <twig:block name="lead">{{ 'frontpage.hero.lead'|trans }}</twig:block>
+
+            <twig:Stats:List>
+                <twig:Stats:Item label="frontpage.stats.assistants" value="{{ stats.assistants }}" />
+                <twig:Stats:Item label="frontpage.stats.kommuner"   value="{{ stats.kommuner }}" />
+                <twig:Stats:Item label="frontpage.stats.models"     value="{{ stats.models }}" />
+            </twig:Stats:List>
+        </twig:Hero>
+
+        <twig:SearchBox placeholder="search.placeholder" />
+
+        <twig:CardRail:Container eyebrow="frontpage.rail.eyebrow" linkLabel="frontpage.rail.link">
+            {% for a in assistants %}
+                <twig:CardRail:Card
+                    kommune="{{ a.kommune }}"
+                    model="{{ a.model }}"
+                    name="{{ a.name }}"
+                    summary="{{ a.summary }}" />
+            {% endfor %}
+        </twig:CardRail:Container>
+
+        <twig:Box eyebrow="frontpage.steps.eyebrow">
+            {% set steps = [
+                {lead: 'frontpage.steps.1.lead', body: 'frontpage.steps.1.body'},
+                {lead: 'frontpage.steps.2.lead', body: 'frontpage.steps.2.body'},
+                {lead: 'frontpage.steps.3.lead', body: 'frontpage.steps.3.body'},
+                {lead: 'frontpage.steps.4.lead', body: 'frontpage.steps.4.body'},
+            ] %}
+            <twig:StepList:List>
+                {% for step in steps %}
+                    <twig:StepList:Item index="{{ loop.index }}" lead="{{ step.lead }}" body="{{ step.body }}" />
+                {% endfor %}
+            </twig:StepList:List>
+        </twig:Box>
+
+    </div>
+{% endblock %}

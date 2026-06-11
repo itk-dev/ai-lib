@@ -96,12 +96,18 @@ itkdev-docker-compose php bin/console asset-map:compile
 itkdev-docker-compose php bin/console debug:asset-map
 ```
 
+> **Heads-up:** there is no live Tailwind watcher running by default, and
+> `cache:clear` does **not** rebuild the stylesheet. After editing a
+> template that introduces a utility class not already in use (e.g.
+> `pt-2`, `grid-cols-1`), run `tailwind:build` — or keep a
+> `tailwind:build --watch` terminal open while you style.
+
 Source files live under [`assets/`](assets):
 
 - `assets/app.js` — JavaScript entrypoint, boots Stimulus.
 - `assets/styles/app.css` — Tailwind entrypoint (`@import "tailwindcss";`).
 - `assets/controllers/` — Stimulus controllers, auto-registered by
-  filename (`hello_controller.js` → `data-controller="hello"`).
+  filename (`nav_toggle_controller.js` → `data-controller="nav-toggle"`).
 
 For one-off commands without a dedicated task, fall back to the underlying
 tools, e.g. `docker compose --profile dev run --rm prettier <args>` or
