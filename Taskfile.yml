@@ -112,6 +112,8 @@ tasks:
       - task: coding-standards-php-check
       - task: coding-standards-twig-check
       - task: coding-standards-yaml-check
+      - task: coding-standards-js-check
+      - task: coding-standards-css-check
       - task: coding-standards-markdown-check
       - task: coding-standards-composer-check
     silent: true
@@ -122,6 +124,8 @@ tasks:
       - task: coding-standards-php-apply
       - task: coding-standards-twig-apply
       - task: coding-standards-yaml-apply
+      - task: coding-standards-js-apply
+      - task: coding-standards-css-apply
       - task: coding-standards-markdown-apply
       - task: coding-standards-composer-apply
     silent: true
@@ -160,6 +164,30 @@ tasks:
     desc: 'Apply YAML formatting (Prettier).'
     cmds:
       - task compose -- --profile dev run --rm prettier '**/*.{yml,yaml}' --write
+    silent: true
+
+  coding-standards-js-check:
+    desc: 'Check JavaScript formatting (Prettier). Mirrors the JavaScript CI workflow.'
+    cmds:
+      - task compose -- --profile dev run --rm prettier 'assets/**/*.js' --check
+    silent: true
+
+  coding-standards-js-apply:
+    desc: 'Apply JavaScript formatting (Prettier).'
+    cmds:
+      - task compose -- --profile dev run --rm prettier 'assets/**/*.js' --write
+    silent: true
+
+  coding-standards-css-check:
+    desc: 'Check CSS/SCSS formatting (Prettier). Mirrors the Styles CI workflow.'
+    cmds:
+      - task compose -- --profile dev run --rm prettier 'assets/**/*.{css,scss}' --check
+    silent: true
+
+  coding-standards-css-apply:
+    desc: 'Apply CSS/SCSS formatting (Prettier).'
+    cmds:
+      - task compose -- --profile dev run --rm prettier 'assets/**/*.{css,scss}' --write
     silent: true
 
   coding-standards-markdown-check:
