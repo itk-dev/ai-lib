@@ -36,11 +36,12 @@ tasks:
   # ---- Lifecycle --------------------------------------------------------
 
   site-install:
-    desc: 'Pull images, start the stack, and install Composer dependencies.'
+    desc: 'Pull images, start the stack, install Composer dependencies, and apply database migrations.'
     cmds:
       - task compose -- pull
       - task compose -- up --detach --remove-orphans --wait
       - task composer-install
+      - task console -- doctrine:migrations:migrate --no-interaction
     silent: true
 
   # ---- Composer ---------------------------------------------------------

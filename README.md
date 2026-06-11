@@ -147,10 +147,10 @@ URL is printed by the start task).
 
 ### Creating the first user
 
-```sh
-# Apply the database schema
-task console -- doctrine:migrations:migrate -n
+`task site-install` applies the database schema, so by the time you
+get here the `user` table already exists.
 
+```sh
 # Option A — load the local-dev fixtures (alice + bob, password `password`)
 task console -- doctrine:fixtures:load -n
 
