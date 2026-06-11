@@ -8,6 +8,7 @@ use Twig\Environment;
 use Twig\Node\BlockNode;
 use Twig\Node\ModuleNode;
 use Twig\Node\Node;
+use Twig\Node\Nodes;
 use Twig\Node\TextNode;
 use Twig\NodeVisitor\NodeVisitorInterface;
 
@@ -82,9 +83,6 @@ final class DevTemplateMarkerNodeVisitor implements NodeVisitorInterface
      */
     private function wrapExtendingBody(ModuleNode $node, TextNode $prefix, TextNode $suffix): void
     {
-        if (!$node->hasNode('blocks')) {
-            return;
-        }
         $blocks = $node->getNode('blocks');
         if (!$blocks->hasNode('body')) {
             return;
@@ -120,7 +118,7 @@ final class DevTemplateMarkerNodeVisitor implements NodeVisitorInterface
     private function wrap(Node $node, TextNode $prefix, TextNode $suffix): void
     {
         $body = $node->getNode('body');
-        $wrapped = new Node([$prefix, $body, $suffix], [], $body->getTemplateLine());
+        $wrapped = new Nodes([$prefix, $body, $suffix], $body->getTemplateLine());
         $node->setNode('body', $wrapped);
     }
 }
