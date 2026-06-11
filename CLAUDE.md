@@ -1,226 +1,230 @@
-# Project conventions for Claude
+# CLAUDE.md
 
-This file documents project-specific patterns. Global preferences live in
-`~/.claude/CLAUDE.md` and still apply.
+Operating instructions for Claude Code (and other AI agents) working in this
+repository. Audience is the agent, not human contributors — for human-facing
+documentation see [README.md](README.md).
 
-## Twig templates
+When the instructions here conflict with the user's global `~/.claude/CLAUDE.md`,
+this file wins — project-specific rules override the global defaults.
 
-### Component-first
+## Project overview
 
-All non-trivial markup belongs in a component under `templates/components/`,
-not inline in page or layout templates. Page templates (`templates/<page>/…`)
-should read as a thin composition of `<twig:…>` calls.
+`ai-lib` is a shared catalog of AI assistants for the Danish public sector.
+The application is a Symfony 8 web app built on the ITK Dev Docker
+development setup.
 
-We use **anonymous components** from `symfony/ux-twig-component` — no PHP
-backing class. The component template alone defines the contract via
-`{% props … %}`.
+## Tech stack
 
-### Directory layout
+- **PHP 8.4** running under `phpfpm` (Symfony 8 skeleton, PSR-4 `App\\` at `src/`).
+- **Nginx** in front of `phpfpm`, served via the shared **Traefik** proxy at
+  `https://ai-lib.local.itkdev.dk`.
+- **MariaDB** for persistence.
+- **Mailpit** for outbound mail capture at
+  `https://mail-ai-lib.local.itkdev.dk`.
+- **ITK Dev Docker** template `symfony-8` provides the container orchestration.
 
-Group components by domain under `templates/components/`. Nested namespaces
-become nested directories:
+## Project structure
 
-```
-templates/components/
-    Eyebrow.html.twig                # <twig:Eyebrow>
-    Hero.html.twig                   # <twig:Hero>
-    Layout/SiteHeader.html.twig      # <twig:Layout:SiteHeader>
-    Nav/Link.html.twig               # <twig:Nav:Link>
-    Stats/List.html.twig             # <twig:Stats:List>
-    Stats/Item.html.twig             # <twig:Stats:Item>
-```
-
-Use PascalCase for component file names (matches the `<twig:Name>` casing).
-Singular vs plural follows whether the component is a container (`List`)
-or a single item (`Item`).
-
-### Component anatomy
-
-Every component template has this shape:
-
-```twig
-{% props label, value, href = '#' %}
-<a class="…" href="{{ href }}">
-    <span class="…">{{ label }}</span>
-    <span class="…">{{ value }}</span>
-    {% block content %}{% endblock %}
-</a>
+```text
+bin/                Symfony console entry
+config/             Symfony configuration (bundles, packages, routes, services)
+public/             Web root (public/index.php)
+src/                Application code (PSR-4 namespace App\)
+assets/             Frontend entry points (placeholder until a stack is picked)
+.docker/            nginx config and templates
+.github/workflows/  CI workflows (do NOT edit locally — see "Workflows" below)
+docs/adr/           Architecture Decision Records (see "ADRs")
 ```
 
-Rules:
+## Execution policy
 
-1. **Declare props** with `{% props … %}` on the first line. Required
-   props have no default; optional props use `prop = 'value'`.
-2. **Default slot** is `{% block content %}{% endblock %}` — content placed
-   between `<twig:Foo>…</twig:Foo>` lands here.
-3. **Named slots** use `{% block <name> %}{% endblock %}` and are filled
-   from the call site with `<twig:block name="<name>">…</twig:block>`.
-   Prefer named slots over `|raw` string props whenever the value contains
-   HTML (e.g. an inline `<em>`).
-4. Keep Tailwind utility classes inline. Design tokens (`text-ink`,
-   `bg-surface`, `font-display`, …) come from the `@theme` block in
-   `assets/styles/app.css`; do not introduce new CSS files for one-off
-   styles.
+All language/build tooling runs inside containers. Never invoke `php`,
+`composer`, `node`, `npm`, `npx`, `prettier`, or similar on the host.
 
-### Dev-mode template markers
+Preferred order:
 
-In the `dev` environment, every project template is wrapped at compile
-time with HTML comments showing its path:
+1. `task <name>` — the project's `Taskfile.yml` is the entry point for
+   everyday commands. Run `task --list` to see what's available.
+2. `task compose -- <args>` / `task compose-exec -- <args>` — pass-through
+   helpers when no dedicated target exists.
+3. `itkdev-docker-compose <command>` — for cross-project ITK Dev tooling
+   not wrapped by the project Taskfile (e.g. `traefik:start`).
+4. `docker compose --profile dev run --rm <service> <args>` — direct fallback
+   for the dev-only tooling (`prettier`, `markdownlint`) when going around
+   the Taskfile is justified.
 
-```html
-<!-- components/Hero.html.twig -->
-…component output…
-<!-- /components/Hero.html.twig -->
-```
-
-This is automatic — do **not** add `{% if app.environment == 'dev' %}<!-- … -->{% endif %}`
-lines inside templates. The injection is done by
-`App\Twig\DevTemplateMarkerNodeVisitor` (in `src/Twig/`), registered
-only in dev so prod output is unchanged.
-
-For templates that `extends` another, the visitor wraps the content of
-the `body` block specifically (the template's top-level content never
-renders in that case). Page templates should therefore put their content
-inside `{% block body %}…{% endblock %}` if they want the auto-marker.
-
-### Calling components
-
-```twig
-<twig:Hero eyebrow="Del &amp; hjemtag · dansk offentlig AI">
-    <twig:block name="heading">
-        Et fælles bibliotek over <em class="italic text-primary">kommunale</em> AI-assistenter.
-    </twig:block>
-    <twig:block name="lead">…</twig:block>
-
-    <twig:Stats:List>
-        <twig:Stats:Item label="Assistenter" value="{{ stats.assistants }}" />
-        <twig:Stats:Item label="Kommuner"    value="{{ stats.kommuner }}" />
-    </twig:Stats:List>
-</twig:Hero>
-```
-
-Self-close (`<twig:Foo … />`) when the component has no slot content.
-
-### When not to extract a component
-
-- A piece of markup used exactly once and unlikely to repeat. Inline it.
-- A wrapper that adds no parameters and no semantics. The call site is
-  clearer with the underlying utilities.
-
-A component earns its place when it has a name, a contract (props /
-slots), and at least one reason to be reused or replaced in isolation.
-
-### Translations
-
-The default locale is `da`. All user-facing strings (labels, buttons,
-ARIA labels, placeholders, page titles, copy) live in a single file:
-
-```
-translations/messages.da.yaml
-```
-
-Keys are hierarchical dot-notation, grouped by area (`nav.*`, `frontpage.*`,
-`search.*`, `layout.*`, …). Conventions:
-
-1. **Components translate text props internally.** Each text-bearing
-   prop defaults to a translation key, and the component applies `|trans`
-   itself. Call sites pass keys, not Danish strings:
-
-   ```twig
-   {# Stats/Item.html.twig — component #}
-   {% props label, value %}
-   <div>
-       <dt>{{ label|trans }}</dt>
-       <dd>{{ value }}</dd>
-   </div>
-
-   {# Call site #}
-   <twig:Stats:Item label="frontpage.stats.assistants" value="{{ stats.assistants }}" />
-   ```
-
-   Defaults that hold a translation key let a call site omit the prop:
-
-   ```twig
-   {% props label = 'nav.menu_label' %}
-   <nav aria-label="{{ label|trans }}">…</nav>
-   ```
-
-2. **HTML in translations.** Keys whose value contains HTML get the
-   `_html` suffix and are rendered with `|trans|raw` at the call site
-   (the translation source is trusted YAML, no XSS risk):
-
-   ```yaml
-   frontpage:
-       hero:
-           heading_html: 'Et fælles bibliotek over <em class="italic text-primary">kommunale</em> AI-assistenter.'
-   ```
-
-3. **Placeholders use `%name%` syntax** and are filled at call time:
-
-   ```yaml
-   frontpage:
-       title: '%brand% – forhåndsvisning'
-   ```
-   ```twig
-   {{ 'frontpage.title'|trans({'%brand%': brand_name}) }}
-   ```
-
-4. **`SAMPLE_ASSISTANTS` and other placeholder content data is NOT
-   translated** — only chrome and copy strings are. Sample data will be
-   replaced by real persistence soon and isn't worth extracting.
-
-5. `bin/console debug:translation da` reports keys passed as props as
-   `unused` because the static scanner can't see dynamic |trans calls
-   inside components. Verify usage by inspecting the rendered HTML
-   instead.
-
-### Brand identity (env-driven, not translated)
-
-The brand name, tagline, and logo initials come from environment
-variables, exposed as Twig globals:
-
-| Env var | Twig global | Default (in `config/services.yaml`) |
-|---|---|---|
-| `BRAND_NAME` | `brand_name` | `AI Bibliotek` |
-| `BRAND_TAGLINE` | `brand_tagline` | `del & hjemtag assistenter · prototype` |
-| `BRAND_INITIALS` | `brand_initials` | `AI` |
-
-Wiring lives in `config/packages/twig.yaml` (globals block, with
-`default:` env processor) and `config/services.yaml` (parameter
-defaults). Set the env vars in `.env` for committed defaults, or in
-`.env.local` for per-machine overrides.
-
-Use `{{ brand_name }}` directly in templates; do not look it up via
-`|trans`. Brand identity is configuration, not localization.
-
-### Rebuilding Tailwind after edits
-
-The project compiles Tailwind via `symfonycasts/tailwind-bundle`. There is
-**no live watcher** by default — `cache:clear` does not rebuild CSS, and
-new utility classes added to templates will not apply until Tailwind
-recompiles `var/tailwind/app.built.css`.
-
-After editing templates or component classes (especially when adding a
-utility that wasn't already in use, e.g. `pt-2`, `grid-cols-1`), run:
+## Common commands
 
 ```sh
-docker compose exec phpfpm bin/console tailwind:build
+# Lifecycle
+task start                          # pull, up, composer install
+task down                           # tear the stack down
+
+# Composer / PHP / Symfony console
+task composer -- <command>          # e.g. task composer -- require foo/bar
+task compose-exec -- phpfpm php <command>
+task console -- <command>           # e.g. task console -- cache:clear
+
+# Coding standards (check / apply pairs)
+task coding-standards-php-check
+task coding-standards-php-apply
+task coding-standards-twig-check
+task coding-standards-twig-apply
+task coding-standards-yaml-check
+task coding-standards-yaml-apply
+task coding-standards-markdown-check
+task coding-standards-markdown-apply
+task coding-standards-composer-check
+task coding-standards-composer-apply
+
+# Run every check at once
+task coding-standards-check
+
+# Tests
+task test                           # PHPUnit, no coverage
+task test-coverage                  # PHPUnit + Xdebug coverage, enforces 100% gate
 ```
 
-For active styling work, keep a watcher open in a side terminal:
+The coverage gate is **100%** and is enforced by the `Tests` GitHub
+Actions workflow on every pull request — see `.github/workflows/tests.yaml`.
+
+Run the matching check before committing changes in that area. For
+commands without a dedicated task, fall back to `task compose -- <args>`
+or `itkdev-docker-compose <args>`.
+
+## Coding standards
+
+Config files live at the repo root:
+
+- `.php-cs-fixer.dist.php` — PHP CS Fixer (Symfony ruleset).
+- `.twig-cs-fixer.dist.php` — Twig CS Fixer.
+- `.prettierrc.yaml` — Prettier (YAML, CSS/SCSS, JS).
+- `.markdownlint.jsonc` + `.markdownlintignore` — Markdown lint.
+
+These come from the `symfony-8` template — don't edit them without a reason.
+If a project-specific override is needed, override via the template's
+documented mechanism (e.g. `.php-cs-fixer.php` next to `.php-cs-fixer.dist.php`).
+
+### Controllers stay thin
+
+Controllers handle routes and template/response rendering only — no business
+logic. Push logic into a service class. A controller action looks like:
+inject service → call service method → return `render()` / `Response` /
+`RedirectResponse`.
+
+### Service classes are fully documented
+
+Every service class method (public, protected, private) carries a PHPDoc block
+with a one-line summary, a description of intent, `@param` per parameter,
+`@return`, and `@throws` for every exception that can be raised.
+
+## Workflows
+
+The `.github/workflows/*.yaml` files are mirrored from
+[`itk-dev/devops_itkdev-docker`](https://github.com/itk-dev/devops_itkdev-docker)
+and carry a `Do not edit this file!` header. If a workflow needs to change,
+open a PR upstream rather than patching locally.
+
+## Branching and PRs
+
+- Base branch for feature work: **`develop`**. `main` is the release/stable line.
+- Branch name: **`feature/issue-<n>-<short-slug>`** (e.g. `feature/issue-5-claude-md`).
+- One issue per branch where possible. Reference the issue number in the
+  branch name and PR.
+- PR target: **`develop`**.
+- A PR must:
+  - Link the issue with `Fixes #<n>` (or `Closes #<n>` for non-bug issues).
+    Use `Refs #<n>` when coverage is partial.
+  - Pass all required CI checks before merging.
+  - Carry a `CHANGELOG.md` update under `## [Unreleased]` for any user-visible
+    change.
+
+## Commits
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` new feature
+- `fix:` bug fix
+- `docs:` documentation only
+- `chore:` tooling, build, deps, repo housekeeping
+- `refactor:` code change that neither adds a feature nor fixes a bug
+- `test:` tests only
+
+Keep subject lines under ~70 characters. Use the body for the *why*.
+
+## CHANGELOG
+
+`CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Add an entry to `## [Unreleased]` under the right section (`Added`, `Changed`,
+`Fixed`, `Removed`, `Deprecated`, `Security`) for every meaningful change.
+
+## GitHub issue types and labels
+
+Every issue **must** have its native **issue type** set to one of:
+
+- **Bug** — something is broken.
+- **Feature** — new user-visible capability.
+- **Task** — everything else: chores, tooling, documentation, infrastructure,
+  refactors, ADRs, etc.
+
+Documentation-only work is tracked as a **`Task`** type plus the
+`documentation` **label**. The type classifies the nature of the work,
+labels add orthogonal context.
+
+The current `gh` CLI (≤ 2.92) does not expose `--type`. To set a type,
+fall back to the REST API (`PATCH /repos/{owner}/{repo}/issues/{n}` with
+`type=<Name>`) when available, otherwise ask the user to set it in the
+UI. Labels can always be set with `gh issue create --label`.
+
+## Pushing
+
+SSH keys aren't available to the Claude session. Push one-off via HTTPS:
 
 ```sh
-docker compose exec phpfpm bin/console tailwind:build --watch
+git push https://github.com/itk-dev/ai-lib.git HEAD:<branch>
 ```
 
-AssetMapper picks up the rebuilt file on the next request — no separate
-asset-map step needed in dev.
+Do not change the `origin` remote URL — SSH is wanted for normal use outside
+Claude.
 
-### Stimulus + CSS hooks
+## ADRs
 
-When a component carries a `data-controller=`, `data-action=`,
-`data-…-target=`, or a hand-rolled CSS class hook (e.g. `.nav-toggle`,
-`.nav-toggle-bar`), leave a short `{# … #}` comment in the component
-explaining why the attribute must stay verbatim — these are load-bearing
-for JS controllers in `assets/controllers/` or CSS rules in
-`assets/styles/app.css`.
+Architectural decisions are recorded as ADRs in `docs/adr/`. Create and manage
+them via the `itkdev-adr` skill (see issue #11). Open an ADR for decisions
+that:
+
+- Change the runtime architecture (storage, integrations, deployment).
+- Choose between two viable options with non-trivial trade-offs.
+- Establish a convention other contributors must follow.
+
+Small implementation choices belong in code review, not in an ADR.
+
+Do not include a "Follow-up Actions" (or similarly named) checklist
+inside an ADR. Track follow-up work as GitHub issues and reference the
+ADR from each issue, not the other way around. The ADR records the
+decision; the issues track the work derived from it. The one-time
+cleanup of existing sections is tracked in #44.
+
+## Domain glossary
+
+- **Assistant** — a configured AI persona/prompt bundle that can be exported,
+  shared, and re-imported.
+- **Catalog** — the searchable collection of assistants surfaced by the app.
+- **OpenWebUI export format** — the JSON schema used by
+  [OpenWebUI](https://openwebui.com/) for importing/exporting assistants;
+  the canonical interchange format for this project.
+- **Share/upload flow** — the moderated path by which a user submits an
+  assistant to the catalog (metadata + review).
+- **Tags / categories** — taxonomy applied to assistants for filtering and
+  discovery.
+- **Moderation** — validation and review of submitted assistants before they
+  appear in the catalog.
+
+## When in doubt
+
+- Prefer an existing pattern in the codebase over inventing a new one.
+- For non-trivial decisions, write an ADR or ask the user — don't silently
+  pick.
+- For destructive git operations (`reset --hard`, `push --force`, branch
+  deletion), stop and ask the user — these are deny-listed globally for good
+  reason.
