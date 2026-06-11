@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (stack, structure, execution policy, branching, commits, CHANGELOG,
   ADRs, domain glossary).
 - Initial Symfony 8 application scaffold.
+- PHPUnit test harness with 100% coverage gate enforced in CI via
+  `rregeer/phpunit-coverage-check`
+  ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
 
 ### Changed
 
@@ -27,9 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ADR `docs/adr/002-project-license-mpl-2.md` recording the MPL-2.0 license
   decision and its rationale.
 - License section in `README.md` referencing the new `LICENSE` file and ADR.
-
-### Changed
-
 - Project license declared as **MPL-2.0** (Mozilla Public License 2.0); the
   `license` field in `composer.json` updated from the Symfony skeleton
   default `proprietary` to the SPDX identifier `MPL-2.0`.
@@ -45,4 +45,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rewrite the project README around the AI Bibliotek catalog: adds project
   description, status banner, feature list, tech stack, Task-based local
   development workflow, contributing pointers, and prototype references.
-
