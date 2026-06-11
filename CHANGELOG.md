@@ -13,9 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (stack, structure, execution policy, branching, commits, CHANGELOG,
   ADRs, domain glossary).
 - Initial Symfony 8 application scaffold.
-- PHPUnit test harness with 100% coverage gate enforced in CI via
-  `rregeer/phpunit-coverage-check`
-  ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
 
 ### Changed
 
@@ -43,9 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   matching the prototype palette and typography.
 - Stimulus controller `nav_toggle_controller` driving the mobile
   navigation menu.
-- Functional smoke test for the frontpage
-  (`tests/Controller/FrontpageControllerTest.php`); will start running
-  once PHPUnit lands (#31).
 - GitHub Action `block-on-label` that fails the check while a
   `do-not-merge` label is applied to a pull request, providing a
   per-PR merge gate for dependencies (e.g. another PR that must land
