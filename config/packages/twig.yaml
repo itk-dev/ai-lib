@@ -1,9 +1,9 @@
 twig:
     file_name_pattern: '*.twig'
     globals:
-        brand_name: '%env(default:brand.default_name:BRAND_NAME)%'
-        brand_tagline: '%env(default:brand.default_tagline:BRAND_TAGLINE)%'
-        brand_initials: '%env(default:brand.default_initials:BRAND_INITIALS)%'
+        brand_name: '%env(BRAND_NAME)%'
+        brand_tagline: '%env(BRAND_TAGLINE)%'
+        brand_initials: '%env(BRAND_INITIALS)%'
 
 when@test:
     twig:
