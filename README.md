@@ -145,6 +145,24 @@ task open
 The site is served through Traefik on a `*.local.itkdev.dk` domain (the exact
 URL is printed by the start task).
 
+### Creating the first user
+
+```sh
+# Apply the database schema
+task console -- doctrine:migrations:migrate -n
+
+# Option A — load the local-dev fixtures (alice + bob, password `password`)
+task console -- doctrine:fixtures:load -n
+
+# Option B — create a single user explicitly
+task console -- app:user:create alice@example.test secret
+
+# Change an existing user's password
+task console -- app:user:change-password alice@example.test newsecret
+```
+
+Then sign in at `/login`.
+
 ## Testing
 
 Tests live under `tests/` (PSR-4 namespace `App\Tests\`) and run with
