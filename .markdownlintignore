@@ -10,3 +10,5 @@ web/*.md
 web/core/
 web/libraries/
 web/*/contrib/
+# Symfony (cache + scratch dir, gitignored)
+var/
