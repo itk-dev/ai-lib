@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHPUnit test harness with 100% coverage gate enforced in CI via
   `rregeer/phpunit-coverage-check`
   ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
+- ADR 003 (Draft): admin / CRUD tooling — Symfony Form + hand-written
+  controllers and Twig templates over a generator
+  ([#39](https://github.com/itk-dev/ai-lib/issues/39)).
 
 ### Changed
 
