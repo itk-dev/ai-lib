@@ -13,31 +13,19 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 /**
  * Routes for interactive authentication.
  *
- * `GET/POST /login` renders the login form and surfaces the last
- * authentication error and pre-filled username via Symfony Security's
- * {@see AuthenticationUtils}. The actual credential check is performed
- * by the `form_login` authenticator declared in `security.yaml`, not
- * here — this controller stays in the "inject service → render"
- * shape required by project conventions.
- *
- * `/logout` is wired declaratively in the firewall's `logout` block;
- * the method body is never executed because Symfony intercepts the
- * request and clears the session.
+ * `/login` renders the form and surfaces the previous error / last
+ * username via {@see AuthenticationUtils}. The credential check is
+ * performed by the `form_login` authenticator declared in
+ * `security.yaml`, not here. `/logout` is intercepted by the firewall.
  */
 final class SecurityController extends AbstractController
 {
     /**
      * Render the login form.
      *
-     * @param AuthenticationUtils $authenticationUtils symfony Security helper
-     *                                                 providing the previous
-     *                                                 login error (if any)
-     *                                                 and the last entered
-     *                                                 username so the form
-     *                                                 can be re-rendered with
-     *                                                 user input preserved
+     * @param AuthenticationUtils $authenticationUtils Security helper for the previous error + last username
      *
-     * @return Response the rendered `security/login.html.twig` template
+     * @return Response the rendered login template
      */
     #[Route(path: '/login', name: 'app_login', methods: ['GET', 'POST'])]
     public function login(AuthenticationUtils $authenticationUtils): Response
@@ -51,11 +39,9 @@ final class SecurityController extends AbstractController
     /**
      * Placeholder action for the `app_logout` route.
      *
-     * The route exists so URL generation (`{{ path('app_logout') }}`)
-     * works in templates, but Symfony Security intercepts the request
-     * and handles session invalidation before this method is called.
-     * The unreachable body throws so that any accidental direct call
-     * fails loudly.
+     * The firewall intercepts the request and clears the session, so
+     * the body is unreachable in production. The throw guards against
+     * an accidental direct call.
      *
      * @throws \LogicException always — the firewall must intercept
      */

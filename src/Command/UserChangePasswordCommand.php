@@ -15,8 +15,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Console command that updates an existing user's password.
  *
+ * Thin adapter over {@see UserManager::changePassword()}.
  * Usage: `task console -- app:user:change-password <email> <password>`.
- * Delegates to {@see UserManager::changePassword()}.
  */
 #[AsCommand(
     name: 'app:user:change-password',
@@ -25,8 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class UserChangePasswordCommand extends Command
 {
     /**
-     * @param UserManager $userManager service that owns password hashing and
-     *                                 persistence
+     * @param UserManager $userManager service that owns password rotation
      */
     public function __construct(private readonly UserManager $userManager)
     {
@@ -44,15 +43,12 @@ final class UserChangePasswordCommand extends Command
     }
 
     /**
-     * Adapt console arguments to the {@see UserManager} call and render
-     * a success / error message.
+     * Adapt console arguments to the {@see UserManager} call.
      *
-     * @param InputInterface  $input  CLI arguments
-     * @param OutputInterface $output Symfony console output stream
+     * @param InputInterface $input CLI arguments
+     * @param OutputInterface $output console output stream
      *
-     * @return int Command::SUCCESS on a successful change,
-     *             Command::FAILURE when the user is not found or the
-     *             password is rejected
+     * @return int Command::SUCCESS on a successful change, Command::FAILURE otherwise
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {

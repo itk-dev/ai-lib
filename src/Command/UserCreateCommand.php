@@ -15,10 +15,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Console command that creates a new application user.
  *
+ * Thin adapter over {@see UserManager::createUser()}.
  * Usage: `task console -- app:user:create <email> <password>`.
- * Delegates to {@see UserManager::createUser()} for the actual
- * persistence and hashing — the command itself just adapts CLI input
- * and renders the outcome.
  */
 #[AsCommand(
     name: 'app:user:create',
@@ -27,8 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class UserCreateCommand extends Command
 {
     /**
-     * @param UserManager $userManager service that owns user creation,
-     *                                 password hashing, and persistence
+     * @param UserManager $userManager service that owns user creation
      */
     public function __construct(private readonly UserManager $userManager)
     {
@@ -46,15 +43,12 @@ final class UserCreateCommand extends Command
     }
 
     /**
-     * Adapt console arguments to the {@see UserManager} call and render
-     * a success / error message.
+     * Adapt console arguments to the {@see UserManager} call.
      *
-     * @param InputInterface  $input  CLI arguments
-     * @param OutputInterface $output Symfony console output stream
+     * @param InputInterface $input CLI arguments
+     * @param OutputInterface $output console output stream
      *
-     * @return int Command::SUCCESS on creation, Command::FAILURE when
-     *             {@see UserManager::createUser()} throws a domain or
-     *             validation error
+     * @return int Command::SUCCESS on creation, Command::FAILURE on domain or validation error
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
