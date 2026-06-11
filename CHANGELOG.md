@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (stack, structure, execution policy, branching, commits, CHANGELOG,
   ADRs, domain glossary).
 - Initial Symfony 8 application scaffold.
+- PHPUnit test harness with 100% coverage gate enforced in CI via
+  `rregeer/phpunit-coverage-check`
+  ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
 
 ### Changed
 
