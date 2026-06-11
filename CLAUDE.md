@@ -79,7 +79,14 @@ task coding-standards-composer-apply
 
 # Run every check at once
 task coding-standards-check
+
+# Tests
+task test                           # PHPUnit, no coverage
+task test-coverage                  # PHPUnit + Xdebug coverage, enforces 100% gate
 ```
+
+The coverage gate is **100%** and is enforced by the `Tests` GitHub
+Actions workflow on every pull request — see `.github/workflows/tests.yaml`.
 
 Run the matching check before committing changes in that area. For
 commands without a dedicated task, fall back to `task compose -- <args>`
