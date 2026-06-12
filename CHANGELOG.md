@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   console commands `app:user:create` and `app:user:change-password`,
   and end-to-end functional + unit tests
   ([#2](https://github.com/itk-dev/ai-lib/issues/2)).
+- `Assistant` Doctrine entity with base fields (title, description,
+  language model, framework, tags as a JSON list), repository, and
+  migration. Organization linkage and the richer #14 scope
+  (system prompt, parameters, OpenWebUI mapping, versioning) are
+  deferred to follow-on PRs per ADR 005
+  ([#14](https://github.com/itk-dev/ai-lib/issues/14),
+  [#16](https://github.com/itk-dev/ai-lib/issues/16)).
 
 ### Changed
 
