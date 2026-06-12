@@ -119,8 +119,9 @@ signed-in user do", not "may this person sign in".
 ### Approval queue
 
 - A route (e.g. `/admin/users/pending`) lists users with
-  `status = Pending`. Restricted to users with `domainManager = true`
-  via a voter or `IsGranted` expression.
+  `status = Pending`. Restricted to users with `ROLE_DOMAIN_MANAGER`
+  (or `ROLE_ADMIN` via role hierarchy) via the voter described in
+  "Domain manager — a role, not a flag" below.
 - The approver can **approve** (`status = Approved`) or **reject**
   (`status = Blocked` — preserves the row for audit; a separate
   "delete" action can come later if needed).
@@ -128,14 +129,48 @@ signed-in user do", not "may this person sign in".
   `Blocked`) from the same admin surface; un-blocking is just the
   same action in reverse.
 
+### Domain manager — a role, not a flag
+
+Following the same reasoning as the `status` decision above —
+capability and identity stay orthogonal — "domain manager" is
+modelled as the **role** `ROLE_DOMAIN_MANAGER` on the existing
+`User.roles` column rather than a dedicated boolean field.
+
+- Promotion / demotion is just adding or removing the role from the
+  array.
+- A user's **scope** (which domain they manage) is derived from the
+  part of their own e-mail address after the `@`. No separate
+  column.
+- Authorisation flows through a small voter that combines:
+  1. `is_granted('ROLE_DOMAIN_MANAGER')` on the acting user, and
+  2. `emailDomain(currentUser) === emailDomain(targetUser)`.
+- Site admin gets `ROLE_ADMIN`. Symfony's `role_hierarchy` is
+  configured so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and the
+  voter short-circuits the domain-match check for admins so they can
+  manage users across all domains from the same screen.
+- The user-management view is a single controller. The list query
+  is scoped: `ROLE_ADMIN` sees everyone; `ROLE_DOMAIN_MANAGER` sees
+  only users whose email domain matches their own.
+
+If we later need a user to manage a domain *other than* their own
+email's, or an organisation that owns multiple e-mail domains, we
+introduce a `Domain` entity and a relation. Defer until needed —
+removing that complexity later would be the painful direction.
+
 ### Implication for #45
 
-The `active` boolean planned in
-[#45](https://github.com/itk-dev/ai-lib/issues/45) is **superseded**
-by the `status` enum. When #45's implementation lands, the User entity
-ships with `name`, `domainManager`, and `status` — not `active`. #45
-should be updated to reflect this so the migration doesn't end up
-needing immediate amendment.
+Both `active` and `domainManager` from
+[#45](https://github.com/itk-dev/ai-lib/issues/45) are **superseded**:
+
+- `active` → replaced by the `status` enum.
+- `domainManager` → replaced by the `ROLE_DOMAIN_MANAGER` role on the
+  existing `User.roles` column.
+
+When #45's implementation lands, the entity ships with **only `name`**
+on top of the auth fields from
+[#2](https://github.com/itk-dev/ai-lib/issues/2). #45 should be
+updated to reflect this so the migration doesn't end up needing
+immediate amendment.
 
 ## Consequences
 
