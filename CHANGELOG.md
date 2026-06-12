@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHPUnit test harness with 100% coverage gate enforced in CI via
   `rregeer/phpunit-coverage-check`
   ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
+- ADR 004 (Draft) — user registration, approval, and account-state
+  model: a `status` enum (`pending | approved | blocked`) on `User`,
+  an env-var allow-list of e-mail domains for self-signup, and a
+  `UserCheckerInterface` gating login
+  ([#60](https://github.com/itk-dev/ai-lib/issues/60)).
 
 ### Changed
 
