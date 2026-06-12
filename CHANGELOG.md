@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHPUnit test harness with 100% coverage gate enforced in CI via
   `rregeer/phpunit-coverage-check`
   ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
+- ADR 005 (Draft) — `Organization` entity with `name`, e-mail
+  domain(s), `defaultFramework`, `defaultLanguageModel`. Users
+  belong to one organisation (M:1, matched at signup), assistants
+  are used by many (M:N). Framework and language model on new
+  assistants are derived from the creator's organisation as a
+  snapshot (not a live reference). Supersedes ADR 004's env-var
+  e-mail-domain allow-list once landed
+  ([#65](https://github.com/itk-dev/ai-lib/issues/65)).
 
 ### Changed
 
