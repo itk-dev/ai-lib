@@ -141,15 +141,3 @@ Rationale:
 - Switching license later (relaxing or tightening) requires consent
   from all contributors whose contributions are non-trivial, so this
   choice is effectively durable.
-
-### Follow-up Actions
-
-- [x] Add `LICENSE` file at the repo root with the full MPL-2.0 text.
-- [x] Update `composer.json` `license` field from `proprietary` to
-      `MPL-2.0`.
-- [x] Reference the license in `README.md`.
-- [x] Record the change under `## [Unreleased]` in `CHANGELOG.md`.
-- [ ] When adding new source files going forward, consider including
-      the short Exhibit A notice ("This Source Code Form is subject to
-      the terms of the Mozilla Public License, v. 2.0…") at the top of
-      each file. Existing files inherit the project-wide LICENSE.
