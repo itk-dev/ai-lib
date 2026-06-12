@@ -155,21 +155,3 @@ Rationale:
   alongside AssetMapper rather than replacing it wholesale.
 - Stimulus has a learning curve for developers new to it, though it is
   well documented and stays close to plain DOM APIs.
-
-### Follow-up Actions
-
-- [ ] Wire dependencies (`symfony/asset-mapper`, `symfony/asset`,
-      `symfony/twig-pack`, `symfony/stimulus-bundle`,
-      `symfonycasts/tailwind-bundle`) into `composer.json`.
-- [ ] Add a minimal Tailwind source (`assets/styles/app.css`) and a
-      Stimulus smoke controller (`assets/controllers/hello_controller.js`).
-- [ ] Add a base Twig layout (`templates/base.html.twig`) that loads the
-      compiled CSS and the Stimulus importmap.
-- [ ] Expose `frontend:install`, `frontend:build`, and `frontend:watch`
-      via Taskfile once #29 / #35 land (the commands run as
-      `bin/console tailwind:build` and `bin/console asset-map:compile`
-      inside the phpfpm container).
-- [ ] Update `README.md` with the install / build / watch workflow and
-      add an `[Unreleased] / Added` entry to `CHANGELOG.md`.
-- [ ] Frontpage work in #40 (and the richer #3) consumes this stack as
-      its first real surface.
