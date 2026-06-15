@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deferred to follow-on PRs per ADR 005
   ([#14](https://github.com/itk-dev/ai-lib/issues/14),
   [#16](https://github.com/itk-dev/ai-lib/issues/16)).
+- Assistant detail page at `/assistant/{id}` rendering the base
+  fields (title, description, framework, language model, tags).
+  Export entry point, organisation / author display, system-prompt
+  preview, and back-link to the catalogue listing all wait for the
+  follow-on data and #15 / #22
+  ([#20](https://github.com/itk-dev/ai-lib/issues/20)).
 
 ### Changed
 

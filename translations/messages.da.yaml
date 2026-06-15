@@ -42,6 +42,16 @@ security:
         password_label: "Adgangskode"
         submit: "Log ind"
 
+assistant:
+    detail:
+        title: "%title% – %brand%"
+        back: "← Tilbage til kataloget"
+        eyebrow: "Assistent"
+        runtime_heading: "Driftsplatform"
+        framework_label: "Framework"
+        language_model_label: "Sprogmodel"
+        tags_heading: "Tags"
+
 frontpage:
     title: "%brand% – forhåndsvisning"
     hero:

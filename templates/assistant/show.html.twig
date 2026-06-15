@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'assistant.detail.title'|trans({'%title%': assistant.title, '%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <article class="view-root grid gap-12">
+        <header class="max-w-3xl">
+            <p class="mb-4">
+                <a class="text-sm font-medium text-text-muted no-underline hover:text-primary"
+                   href="{{ path('app_frontpage') }}">
+                    {{ 'assistant.detail.back'|trans }}
+                </a>
+            </p>
+            <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.detail.eyebrow'|trans }}</twig:Eyebrow>
+            <h1 class="mb-4 font-display text-[clamp(2rem,3vw,2.6rem)] font-medium leading-tight tracking-tight text-ink">
+                {{ assistant.title }}
+            </h1>
+            <p class="max-w-[60ch] text-lg leading-relaxed text-text">
+                {{ assistant.description }}
+            </p>
+        </header>
+
+        <twig:Box eyebrow="assistant.detail.runtime_heading">
+            <dl class="grid gap-4 sm:grid-cols-2">
+                <div class="flex flex-col gap-1">
+                    <dt class="text-xs uppercase tracking-widest text-text-muted">
+                        {{ 'assistant.detail.framework_label'|trans }}
+                    </dt>
+                    <dd class="font-display text-lg font-semibold text-ink">{{ assistant.framework }}</dd>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <dt class="text-xs uppercase tracking-widest text-text-muted">
+                        {{ 'assistant.detail.language_model_label'|trans }}
+                    </dt>
+                    <dd class="font-display text-lg font-semibold text-ink">{{ assistant.languageModel }}</dd>
+                </div>
+            </dl>
+        </twig:Box>
+
+        {% if assistant.tags is not empty %}
+            <twig:Box eyebrow="assistant.detail.tags_heading">
+                <ul class="flex flex-wrap gap-2" aria-label="{{ 'assistant.detail.tags_heading'|trans }}">
+                    {% for tag in assistant.tags %}
+                        <li class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text">
+                            {{ tag }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </twig:Box>
+        {% endif %}
+    </article>
+{% endblock %}
