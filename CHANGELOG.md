@@ -37,6 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   preview, and back-link to the catalogue listing all wait for the
   follow-on data and #15 / #22
   ([#20](https://github.com/itk-dev/ai-lib/issues/20)).
+- `AssistantFixtures` seeding 20 deterministic assistants — five
+  hand-written authentic catalogue entries (Borgerservice-vejviser,
+  Mødereferent, Journaliseringsassistent, Skole- og dagtilbudssvar,
+  Tilsynsrapport-assistent) plus 15 generated from a fixed set of
+  topics × kommuner × language models, no randomness.
 
 ### Changed
 
