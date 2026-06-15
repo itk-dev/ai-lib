@@ -2,19 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Security;
+namespace App\Tests\Integration\Security;
 
 use App\Repository\UserRepository;
 use App\Security\UserManager;
-use App\Tests\Support\ResetsDatabaseSchemaTrait;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class UserManagerTest extends KernelTestCase
 {
-    use ResetsDatabaseSchemaTrait;
-
     private UserManager $userManager;
     private UserRepository $userRepository;
     private UserPasswordHasherInterface $passwordHasher;
@@ -23,8 +19,6 @@ final class UserManagerTest extends KernelTestCase
     {
         self::bootKernel();
         $container = self::getContainer();
-
-        self::resetSchema($container->get(EntityManagerInterface::class));
 
         $this->userManager = $container->get(UserManager::class);
         $this->userRepository = $container->get(UserRepository::class);

@@ -2,19 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Command;
+namespace App\Tests\Integration\Command;
 
 use App\Security\UserManager;
-use App\Tests\Support\ResetsDatabaseSchemaTrait;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class UserChangePasswordCommandTest extends KernelTestCase
 {
-    use ResetsDatabaseSchemaTrait;
-
     private CommandTester $tester;
     private UserManager $userManager;
 
@@ -22,7 +18,6 @@ final class UserChangePasswordCommandTest extends KernelTestCase
     {
         self::bootKernel();
         $container = self::getContainer();
-        self::resetSchema($container->get(EntityManagerInterface::class));
 
         $this->userManager = $container->get(UserManager::class);
 

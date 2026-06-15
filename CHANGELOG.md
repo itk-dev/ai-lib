@@ -64,6 +64,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   console commands `app:user:create` and `app:user:change-password`,
   and end-to-end functional + unit tests
   ([#2](https://github.com/itk-dev/ai-lib/issues/2)).
+- PHPUnit suite split into `unit` (no database) and `integration` (full
+  kernel) testsuites under `tests/Unit/` and `tests/Integration/`, with
+  transactional database isolation per integration test via
+  `dama/doctrine-test-bundle`. Schema is built once from ORM metadata in
+  `tests/bootstrap.php`. `task test-unit` and `task test-integration`
+  expose the suites individually.
 - Site chrome (header with brand + nav, footer) in
   `templates/base.html.twig`, with the Fraunces/Geist font stack
   preloaded from Google Fonts.

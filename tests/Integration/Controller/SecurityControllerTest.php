@@ -2,13 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Controller;
+namespace App\Tests\Integration\Controller;
 
 use App\Controller\SecurityController;
 use App\Entity\User;
 use App\Security\UserManager;
-use App\Tests\Support\ResetsDatabaseSchemaTrait;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -18,15 +16,12 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 final class SecurityControllerTest extends WebTestCase
 {
-    use ResetsDatabaseSchemaTrait;
-
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         $this->client = self::createClient();
         $container = self::getContainer();
-        self::resetSchema($container->get(EntityManagerInterface::class));
 
         $container->get(UserManager::class)
             ->createUser('alice@example.test', 'secret');

@@ -2,12 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Repository;
+namespace App\Tests\Integration\Repository;
 
 use App\Repository\UserRepository;
 use App\Security\UserManager;
-use App\Tests\Support\ResetsDatabaseSchemaTrait;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -23,8 +21,6 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  */
 final class UserRepositoryTest extends KernelTestCase
 {
-    use ResetsDatabaseSchemaTrait;
-
     private UserRepository $repository;
     private UserManager $userManager;
 
@@ -32,7 +28,6 @@ final class UserRepositoryTest extends KernelTestCase
     {
         self::bootKernel();
         $container = self::getContainer();
-        self::resetSchema($container->get(EntityManagerInterface::class));
 
         $this->repository = $container->get(UserRepository::class);
         $this->userManager = $container->get(UserManager::class);

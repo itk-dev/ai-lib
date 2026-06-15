@@ -105,6 +105,19 @@ tasks:
       - task compose-exec -- phpfpm vendor/bin/phpunit
     silent: true
 
+  test-unit:
+    desc: 'Run only the unit suite (no database).'
+    cmds:
+      - task compose -- exec --no-TTY -e TESTS_SKIP_SCHEMA=1 phpfpm vendor/bin/phpunit --testsuite=unit
+    silent: true
+
+  test-integration:
+    desc: 'Run only the integration suite.'
+    cmds:
+      - task: db-prepare-test
+      - task compose-exec -- phpfpm vendor/bin/phpunit --testsuite=integration
+    silent: true
+
   test-coverage:
     desc: 'Run PHPUnit with coverage and enforce the 100% gate.'
     cmds:

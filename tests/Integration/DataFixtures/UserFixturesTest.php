@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\DataFixtures;
+namespace App\Tests\Integration\DataFixtures;
 
 use App\DataFixtures\UserFixtures;
 use App\Entity\User;
 use App\Repository\UserRepository;
-use App\Tests\Support\ResetsDatabaseSchemaTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -20,14 +19,11 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  */
 final class UserFixturesTest extends KernelTestCase
 {
-    use ResetsDatabaseSchemaTrait;
-
     public function testLoadsAliceAndBob(): void
     {
         self::bootKernel();
         $container = self::getContainer();
         $em = $container->get(EntityManagerInterface::class);
-        self::resetSchema($em);
 
         $container->get(UserFixtures::class)->load($em);
 
