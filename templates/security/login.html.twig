@@ -16,34 +16,33 @@
         {% endif %}
 
         <form action="{{ path('app_login') }}" method="post" class="grid gap-4">
-            <label class="grid gap-1 text-sm" for="inputEmail">
-                <span class="font-medium text-ink">{{ 'security.login.email_label'|trans }}</span>
-                <input id="inputEmail"
-                       name="_username"
-                       type="email"
-                       value="{{ last_username }}"
-                       autocomplete="email"
-                       required
-                       autofocus
-                       class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
-            </label>
+            <twig:Form:Label for="inputEmail" text="{{ 'security.login.email_label'|trans }}">
+                <twig:Form:Input
+                    id="inputEmail"
+                    name="_username"
+                    type="email"
+                    value="{{ last_username }}"
+                    autocomplete="email"
+                    required
+                    autofocus
+                />
+            </twig:Form:Label>
 
-            <label class="grid gap-1 text-sm" for="inputPassword">
-                <span class="font-medium text-ink">{{ 'security.login.password_label'|trans }}</span>
-                <input id="inputPassword"
-                       name="_password"
-                       type="password"
-                       autocomplete="current-password"
-                       required
-                       class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
-            </label>
+            <twig:Form:Label for="inputPassword" text="{{ 'security.login.password_label'|trans }}">
+                <twig:Form:Input
+                    id="inputPassword"
+                    name="_password"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                />
+            </twig:Form:Label>
 
             <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
 
-            <button type="submit"
-                    class="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-ink transition-colors hover:bg-primary-hover">
+            <twig:Form:Button type="submit">
                 {{ 'security.login.submit'|trans }}
-            </button>
+            </twig:Form:Button>
         </form>
     </section>
 {% endblock %}

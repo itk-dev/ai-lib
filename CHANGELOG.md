@@ -70,6 +70,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `dama/doctrine-test-bundle`. Schema is built once from ORM metadata in
   `tests/bootstrap.php`. `task test-unit` and `task test-integration`
   expose the suites individually.
+- Reusable Twig form components under `templates/components/Form/`:
+  `Form/Label`, `Form/Input`, and `Form/Button` (with `variant` and
+  `size` props for future styling variants). The `/login` template
+  consumes them instead of inlining the input/label/button markup.
 - Site chrome (header with brand + nav, footer) in
   `templates/base.html.twig`, with the Fraunces/Geist font stack
   preloaded from Google Fonts.
