@@ -17,4 +17,16 @@ class AssistantRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Assistant::class);
     }
+
+    /**
+     * Count how many distinct `languageModel` values are in use across
+     * the catalogue. Powers the frontpage "Sprogmodeller" stat.
+     */
+    public function countDistinctLanguageModels(): int
+    {
+        return (int) $this->createQueryBuilder('a')
+            ->select('COUNT(DISTINCT a.languageModel)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

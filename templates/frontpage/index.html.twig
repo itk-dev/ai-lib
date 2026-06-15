@@ -22,12 +22,18 @@
         <twig:SearchBox placeholder="search.placeholder" />
 
         <twig:CardRail:Container eyebrow="frontpage.rail.eyebrow" linkLabel="frontpage.rail.link">
-            {% for a in assistants %}
+            {# Card prop names (`kommune`, `model`, `name`, `summary`) come from #}
+            {# the original prototype design; today we map them to the fields #}
+            {# the Assistant entity actually carries. Once the Organization #}
+            {# entity lands (ADR 005), the `kommune` slot returns to a real #}
+            {# organisation name. #}
+            {% for assistant in assistants %}
                 <twig:CardRail:Card
-                    kommune="{{ a.kommune }}"
-                    model="{{ a.model }}"
-                    name="{{ a.name }}"
-                    summary="{{ a.summary }}" />
+                    kommune="{{ assistant.framework }}"
+                    model="{{ assistant.languageModel }}"
+                    name="{{ assistant.title }}"
+                    summary="{{ assistant.description }}"
+                    href="{{ path('app_assistant_show', {id: assistant.id}) }}" />
             {% endfor %}
         </twig:CardRail:Container>
 

@@ -42,6 +42,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Mødereferent, Journaliseringsassistent, Skole- og dagtilbudssvar,
   Tilsynsrapport-assistent) plus 15 generated from a fixed set of
   topics × kommuner × language models, no randomness.
+- Frontpage CardRail and stats now read from the database. The
+  hardcoded `SAMPLE_ASSISTANTS` constant in `FrontpageController` is
+  gone; cards iterate the five most-recent persisted `Assistant`s
+  (newest first) and each card links to `/assistant/{id}`. The
+  Assistanter and Sprogmodeller stat values are computed from real
+  queries; Kommuner stays a placeholder (`10`) until ADR 005 /
+  [#65](https://github.com/itk-dev/ai-lib/issues/65) lands the
+  `Organization` entity.
 
 ### Changed
 
