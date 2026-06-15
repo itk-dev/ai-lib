@@ -22,6 +22,9 @@ jobs:
             - name: Build Tailwind CSS
               run: docker compose run --rm phpfpm bin/console tailwind:build
 
+            - name: Create the test database
+              run: docker compose run --rm phpfpm bin/console --env=test doctrine:database:create --if-not-exists --no-interaction
+
             - name: Run PHPUnit with coverage
               run: docker compose run -e XDEBUG_MODE=coverage --rm phpfpm vendor/bin/phpunit --coverage-clover=coverage/clover.xml
 

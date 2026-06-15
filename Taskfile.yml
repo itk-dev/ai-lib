@@ -93,13 +93,9 @@ tasks:
   # ---- Tests ------------------------------------------------------------
 
   db-prepare-test:
-    desc: 'Ensure the test database exists and the app user can write to it (idempotent).'
+    desc: 'Ensure the test database exists (idempotent).'
     cmds:
-      # Re-apply the init SQL on every invocation so local devs whose
-      # mariadb data volume predates the init mount also pick up the
-      # CREATE DATABASE + GRANT. The script is IF-NOT-EXISTS / additive
-      # only — no row data is read or written.
-      - cat .docker/mariadb/init/01-grant-test-databases.sql | task compose-exec -- mariadb mariadb -uroot -ppassword
+      - task console -- --env=test doctrine:database:create --if-not-exists --no-interaction
     silent: true
 
   test:
