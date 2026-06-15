@@ -15,8 +15,7 @@ if ($_SERVER['APP_DEBUG']) {
     umask(0000);
 }
 
-// `task test-unit` sets TESTS_SKIP_SCHEMA=1 so unit-only runs do not
-// require a live database. The integration suite needs the schema in
+// The integration suite needs the schema in
 // place before DAMA starts wrapping tests in transactions, so build it
 // here from the current ORM metadata.
 if ('1' !== ($_SERVER['TESTS_SKIP_SCHEMA'] ?? '')) {
