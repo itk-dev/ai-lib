@@ -56,12 +56,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `nav_toggle_controller` driving the mobile menu, and a
   `block-on-label` GitHub Action providing a per-PR merge gate
   ([#40](https://github.com/itk-dev/ai-lib/issues/40)).
-- ADR `003-admin-crud-tooling` (Draft) — backend admin / CRUD is
-  built with Symfony Form plus hand-written controllers and Twig
-  templates rather than adopting a generator
-  ([#39](https://github.com/itk-dev/ai-lib/issues/39)).
-- ADRs no longer carry a "Follow-up Actions" section; outstanding
-  work is tracked as GitHub issues instead. Existing sections in
-  ADRs 001 / 002 stripped and remaining items surfaced as #53, #54,
-  #55, #56
-  ([#44](https://github.com/itk-dev/ai-lib/issues/44)).
+- Site chrome (header with brand + nav, footer) in
+  `templates/base.html.twig`, with the Fraunces/Geist font stack
+  preloaded from Google Fonts.
+- Tailwind v4 design tokens (`@theme` in `assets/styles/app.css`)
+  matching the prototype palette and typography.
+- Stimulus controller `nav_toggle_controller` driving the mobile
+  navigation menu.
+- GitHub Action `block-on-label` that fails the check while a
+  `do-not-merge` label is applied to a pull request, providing a
+  per-PR merge gate for dependencies (e.g. another PR that must land
+  first).
+- `LICENSE` file at repo root containing the full Mozilla Public License 2.0 text.
+- Project license declared as **MPL-2.0** (Mozilla Public License 2.0); the
+  `license` field in `composer.json` updated from the Symfony skeleton
+  default `proprietary` to the SPDX identifier `MPL-2.0`.
+- `Taskfile.yml` exposing common developer commands via `task --list`
+  (compose helpers, composer, console, coding-standards family).
+- README documents [Task](https://taskfile.dev) as a host requirement and
+  uses `task` targets in the *Common commands* section.
+- `docs/adr/` with index (`docs/adr/README.md`) and ADR `001-tech-stack-docker-symfony`
+  documenting the choice of Symfony 8 on the ITK Dev Docker `symfony-8` template.
+- `CONTRIBUTING.md` documenting branching, Conventional Commits, coding
+  standards, changelog expectations and the pull-request workflow.
