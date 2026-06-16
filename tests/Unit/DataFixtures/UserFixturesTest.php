@@ -14,15 +14,10 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * Unit-level coverage for {@see UserFixtures::load()}.
- *
- * The integration bootstrap (`tests/bootstrap_integration.php`) calls
- * `UserFixtures::load()` once before any test, but PHPUnit's coverage
- * collector only attributes execution that happens inside test methods.
- * This unit test invokes `load()` directly so the fixture's two
- * `createUser` calls land in coverage. `UserManager` is `final`, so we
- * instantiate the real one with mocked collaborators rather than
- * stubbing the manager itself.
+ * `tests/bootstrap_integration.php` already calls `UserFixtures::load()`;
+ * this test only re-invokes it so the lines land in the coverage report.
+ * `UserManager` is `final` and can't be mocked directly, so we build a
+ * real one with mocked collaborators.
  */
 final class UserFixturesTest extends TestCase
 {
