@@ -4,30 +4,26 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\DataFixtures;
 
-use App\DataFixtures\UserFixtures;
 use App\Entity\User;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
- * Verifies the local-dev fixture loads both baseline users.
+ * Asserts the baseline users from {@see \App\DataFixtures\UserFixtures}
+ * are present after `tests/bootstrap_integration.php` has run.
  *
- * The fixture itself is straight-line code, but exercising it through
- * a test keeps it in coverage and catches regressions in the
- * {@see \App\Security\UserManager} wiring it depends on.
+ * The bootstrap calls `UserFixtures::load()` once before any test
+ * starts, so this test indirectly covers the fixture's wiring: if the
+ * fixture or its `UserManager` dependency broke, the bootstrap would
+ * have failed and no integration test would reach the assertions.
  */
 final class UserFixturesTest extends KernelTestCase
 {
-    public function testLoadsAliceAndBob(): void
+    public function testBaselineContainsAliceAndBob(): void
     {
         self::bootKernel();
-        $container = self::getContainer();
-        $em = $container->get(EntityManagerInterface::class);
+        $repository = self::getContainer()->get(UserRepository::class);
 
-        $container->get(UserFixtures::class)->load($em);
-
-        $repository = $container->get(UserRepository::class);
         $alice = $repository->findOneBy(['email' => 'alice@example.test']);
         $bob = $repository->findOneBy(['email' => 'bob@example.test']);
 

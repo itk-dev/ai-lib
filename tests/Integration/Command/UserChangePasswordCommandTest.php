@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Command;
 
-use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
+/**
+ * Uses baseline alice from `UserFixtures`, loaded by
+ * `tests/bootstrap_integration.php`.
+ */
 final class UserChangePasswordCommandTest extends KernelTestCase
 {
     private CommandTester $tester;
-    private UserManager $userManager;
 
     protected function setUp(): void
     {
         self::bootKernel();
-        $container = self::getContainer();
-
-        $this->userManager = $container->get(UserManager::class);
 
         $application = new Application(self::$kernel);
         $command = $application->find('app:user:change-password');
@@ -28,8 +27,6 @@ final class UserChangePasswordCommandTest extends KernelTestCase
 
     public function testChangesPassword(): void
     {
-        $this->userManager->createUser('alice@example.test', 'old');
-
         $exit = $this->tester->execute([
             'email' => 'alice@example.test',
             'password' => 'new',

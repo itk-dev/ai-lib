@@ -9,6 +9,14 @@ use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
+/**
+ * Tests for {@see UserManager}.
+ *
+ * Relies on the baseline `UserFixtures` (alice + bob with password
+ * `password`) loaded by `tests/bootstrap_integration.php`. Tests that
+ * exercise the "create a brand-new user" path use a non-fixture email
+ * (`charlie@example.test`) to avoid colliding with the baseline.
+ */
 final class UserManagerTest extends KernelTestCase
 {
     private UserManager $userManager;
@@ -27,17 +35,17 @@ final class UserManagerTest extends KernelTestCase
 
     public function testCreatesAndPersistsUserWithHashedPassword(): void
     {
-        $user = $this->userManager->createUser('alice@example.test', 'secret');
+        $user = $this->userManager->createUser('charlie@example.test', 'secret');
 
         self::assertNotNull($user->getId());
-        self::assertSame('alice@example.test', $user->getEmail());
+        self::assertSame('charlie@example.test', $user->getEmail());
         self::assertSame(['ROLE_USER'], $user->getRoles());
         self::assertNotSame('secret', $user->getPassword(), 'Password must be hashed.');
         self::assertTrue(
             $this->passwordHasher->isPasswordValid($user, 'secret'),
             'Hashed password must verify against the original plain text.',
         );
-        self::assertSame($user->getId(), $this->userRepository->findOneBy(['email' => 'alice@example.test'])?->getId());
+        self::assertSame($user->getId(), $this->userRepository->findOneBy(['email' => 'charlie@example.test'])?->getId());
     }
 
     public function testCreateUserStoresExtraRoles(): void
@@ -49,8 +57,7 @@ final class UserManagerTest extends KernelTestCase
 
     public function testCreateUserRejectsDuplicateEmail(): void
     {
-        $this->userManager->createUser('alice@example.test', 'secret');
-
+        // alice@example.test is loaded by UserFixtures in the bootstrap.
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('alice@example.test');
 
@@ -62,20 +69,21 @@ final class UserManagerTest extends KernelTestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Password must not be empty.');
 
-        $this->userManager->createUser('alice@example.test', '');
+        $this->userManager->createUser('charlie@example.test', '');
     }
 
     public function testChangePasswordReplacesTheHash(): void
     {
-        $user = $this->userManager->createUser('alice@example.test', 'old');
-        $oldHash = $user->getPassword();
+        $alice = $this->userRepository->findOneBy(['email' => 'alice@example.test']);
+        self::assertNotNull($alice);
+        $oldHash = $alice->getPassword();
 
         $updated = $this->userManager->changePassword('alice@example.test', 'new');
 
-        self::assertSame($user->getId(), $updated->getId());
+        self::assertSame($alice->getId(), $updated->getId());
         self::assertNotSame($oldHash, $updated->getPassword());
         self::assertTrue($this->passwordHasher->isPasswordValid($updated, 'new'));
-        self::assertFalse($this->passwordHasher->isPasswordValid($updated, 'old'));
+        self::assertFalse($this->passwordHasher->isPasswordValid($updated, 'password'));
     }
 
     public function testChangePasswordFailsWhenUserMissing(): void
@@ -88,8 +96,6 @@ final class UserManagerTest extends KernelTestCase
 
     public function testChangePasswordRejectsEmptyPassword(): void
     {
-        $this->userManager->createUser('alice@example.test', 'secret');
-
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Password must not be empty.');
 

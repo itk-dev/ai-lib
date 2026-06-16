@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Repository;
 
 use App\Repository\UserRepository;
-use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -18,11 +17,13 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * the configured cost has increased). The functional login test does
  * not exercise that path because the fixtures already hash with the
  * current algorithm, so we cover the upgrade method directly here.
+ *
+ * Uses baseline alice from `UserFixtures`, loaded by
+ * `tests/bootstrap_integration.php`.
  */
 final class UserRepositoryTest extends KernelTestCase
 {
     private UserRepository $repository;
-    private UserManager $userManager;
 
     protected function setUp(): void
     {
@@ -30,19 +31,19 @@ final class UserRepositoryTest extends KernelTestCase
         $container = self::getContainer();
 
         $this->repository = $container->get(UserRepository::class);
-        $this->userManager = $container->get(UserManager::class);
     }
 
     public function testUpgradePasswordWritesTheNewHash(): void
     {
-        $user = $this->userManager->createUser('alice@example.test', 'old');
-        $oldHash = $user->getPassword();
+        $alice = $this->repository->findOneBy(['email' => 'alice@example.test']);
+        self::assertNotNull($alice);
+        $oldHash = $alice->getPassword();
 
-        $this->repository->upgradePassword($user, 'a-new-hash');
+        $this->repository->upgradePassword($alice, 'a-new-hash');
 
-        self::assertSame('a-new-hash', $user->getPassword());
+        self::assertSame('a-new-hash', $alice->getPassword());
 
-        $reloaded = $this->repository->find($user->getId());
+        $reloaded = $this->repository->find($alice->getId());
         self::assertNotNull($reloaded);
         self::assertSame('a-new-hash', $reloaded->getPassword());
         self::assertNotSame($oldHash, $reloaded->getPassword());

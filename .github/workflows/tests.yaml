@@ -26,7 +26,7 @@ jobs:
               run: docker compose run --rm phpfpm bin/console --env=test doctrine:database:create --if-not-exists --no-interaction
 
             - name: Run PHPUnit with coverage
-              run: docker compose run -e XDEBUG_MODE=coverage --rm phpfpm vendor/bin/phpunit --coverage-clover=coverage/clover.xml
+              run: docker compose run -e XDEBUG_MODE=coverage --rm phpfpm vendor/bin/phpunit --bootstrap=tests/bootstrap_integration.php --coverage-clover=coverage/clover.xml
 
             - name: Enforce coverage threshold (100%)
               run: docker compose run --rm phpfpm vendor/bin/coverage-check coverage/clover.xml 100

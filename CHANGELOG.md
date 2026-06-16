@@ -67,8 +67,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHPUnit suite split into `unit` (no database) and `integration` (full
   kernel) testsuites under `tests/Unit/` and `tests/Integration/`, with
   transactional database isolation per integration test via
-  `dama/doctrine-test-bundle`. Schema is built once from ORM metadata in
-  `tests/bootstrap.php`. `task test-unit` and `task test-integration`
+  `dama/doctrine-test-bundle`. The integration suite uses a dedicated
+  `tests/bootstrap_integration.php` that builds the schema from ORM
+  metadata and loads baseline `UserFixtures` once before any test;
+  DAMA's per-test transaction rolls back mutations so the baseline
+  persists. The default `tests/bootstrap.php` is minimal and is used
+  by `task test-unit`. `task test-unit` and `task test-integration`
   expose the suites individually.
 - Reusable Twig form components under `templates/components/Form/`:
   `Form/Label`, `Form/Input`, and `Form/Button` (with `variant` and

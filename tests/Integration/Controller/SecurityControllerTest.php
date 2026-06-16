@@ -6,13 +6,15 @@ namespace App\Tests\Integration\Controller;
 
 use App\Controller\SecurityController;
 use App\Entity\User;
-use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * End-to-end login / logout flow against the real `form_login`
  * authenticator wired in `security.yaml`.
+ *
+ * Relies on the baseline `UserFixtures` (alice + bob with password
+ * `password`) loaded by `tests/bootstrap_integration.php`.
  */
 final class SecurityControllerTest extends WebTestCase
 {
@@ -21,10 +23,6 @@ final class SecurityControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = self::createClient();
-        $container = self::getContainer();
-
-        $container->get(UserManager::class)
-            ->createUser('alice@example.test', 'secret');
     }
 
     public function testLoginPageRenders(): void
@@ -42,7 +40,7 @@ final class SecurityControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/login');
         $form = $crawler->filter('form')->form();
         $form['_username'] = 'alice@example.test';
-        $form['_password'] = 'secret';
+        $form['_password'] = 'password';
         $this->client->submit($form);
 
         self::assertResponseRedirects('/');
@@ -89,7 +87,7 @@ final class SecurityControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/login');
         $form = $crawler->filter('form')->form();
         $form['_username'] = 'alice@example.test';
-        $form['_password'] = 'secret';
+        $form['_password'] = 'password';
         $this->client->submit($form);
         $this->client->followRedirect();
 
