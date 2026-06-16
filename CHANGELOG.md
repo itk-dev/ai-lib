@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([#9](https://github.com/itk-dev/ai-lib/issues/9)).
 - Project license declared as **MPL-2.0** — full `LICENSE` text at
   the repo root, `composer.json` `license` field updated from
-  `proprietary` to `MPL-2.0`, and ADR `002-project-license-mpl-2`
+  `proprietary` to `MPL-2.0`, and ADR `004-project-license-mpl-2`
   recording the rationale
   ([#32](https://github.com/itk-dev/ai-lib/issues/32)).
 - `Taskfile.yml` exposing common developer commands via `task --list`
@@ -79,3 +79,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   documenting the choice of Symfony 8 on the ITK Dev Docker `symfony-8` template.
 - `CONTRIBUTING.md` documenting branching, Conventional Commits, coding
   standards, changelog expectations and the pull-request workflow.
+- GitHub issue template `.github/ISSUE_TEMPLATE/issue.md` and pull-request
+  template `.github/PULL_REQUEST_TEMPLATE.md`, each with a human-facing
+  "Resume" / checklist section followed by an "AI specificities" detail
+  block so other agents can continue work from a structured brief
+  ([#69](https://github.com/itk-dev/ai-lib/issues/69)).
+- `CLAUDE.md` rules for the agent workflow: require the issue template
+  when creating issues, forbid edits under `tests/` without explicit
+  user approval (and require a written which-tests/what/why rationale
+  first), and require PR descriptions to spell out the blocker and
+  reason whenever a PR carries the `do-not-merge` label
+  ([#69](https://github.com/itk-dev/ai-lib/issues/69)).
+
+### Changed
+
+- ADR `002-project-license-mpl-2` renumbered to `004-project-license-mpl-2`
+  so ADR `002` is free for the frontend-tooling decision; index, README
+  link, and changelog reference updated accordingly.
