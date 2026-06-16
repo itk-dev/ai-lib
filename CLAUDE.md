@@ -177,6 +177,18 @@ Keep subject lines under ~70 characters. Use the body for the *why*.
 Add an entry to `## [Unreleased]` under the right section (`Added`, `Changed`,
 `Fixed`, `Removed`, `Deprecated`, `Security`) for every meaningful change.
 
+**Pre-release rule:** while the project has no tagged releases yet,
+*everything* is `Added` — there is no prior released version for a
+change to be `Changed`, `Fixed`, `Removed`, `Deprecated`, or `Security`
+relative to. Keep those sections empty (or omit them) and fold the
+entry into `Added`, even when the work edits or replaces material that
+already exists in `[Unreleased]`. Before adding to any non-`Added`
+section, check `git tag` (or the GitHub releases page) and confirm at
+least one release exists; if none does, use `Added`. Once the first
+release is cut, the standard Keep a Changelog sections apply normally
+from the next `[Unreleased]` onward. See PR #57 for the prior
+consolidation that established this convention.
+
 ## GitHub issue types and labels
 
 Every issue **must** have its native **issue type** set to one of:

@@ -87,12 +87,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CLAUDE.md` rules for the agent workflow: require the issue template
   when creating issues, forbid edits under `tests/` without explicit
   user approval (and require a written which-tests/what/why rationale
-  first), and require PR descriptions to spell out the blocker and
-  reason whenever a PR carries the `do-not-merge` label
+  first), require PR descriptions to spell out the blocker and reason
+  whenever a PR carries the `do-not-merge` label, and a pre-release
+  rule keeping every `[Unreleased]` entry under `Added` until the
+  first tagged release exists
   ([#69](https://github.com/itk-dev/ai-lib/issues/69)).
-
-### Changed
-
 - ADR `002-project-license-mpl-2` renumbered to `004-project-license-mpl-2`
   so ADR `002` is free for the frontend-tooling decision; index, README
   link, and changelog reference updated accordingly.

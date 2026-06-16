@@ -1,6 +1,6 @@
-#### Link to ticket
+#### Links to issues
 
-Please add a link to the ticket being addressed by this change.
+Please add links to github issues that this PR addresses.
 
 #### Description
 
