@@ -49,6 +49,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHPUnit test harness with a 100 % coverage gate enforced in CI via
   `rregeer/phpunit-coverage-check`
   ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
+- User authentication: `User` Doctrine entity (email, hashed password,
+  roles), `UserRepository` (with `PasswordUpgraderInterface`), the
+  `UserManager` service that hides persistence + hashing, form-login
+  firewall + `/login` + `/logout`, fixtures for two baseline users
+  (`alice@example.test`, `bob@example.test` — password `password`),
+  console commands `app:user:create` and `app:user:change-password`,
+  and end-to-end functional + unit tests
+  ([#2](https://github.com/itk-dev/ai-lib/issues/2)).
+- `Assistant` Doctrine entity with base fields (title, description,
+  language model, framework, tags as a JSON list), repository, and
+  migration. Organization linkage and the richer #14 scope
+  (system prompt, parameters, OpenWebUI mapping, versioning) are
+  deferred to follow-on PRs per ADR 005
+  ([#14](https://github.com/itk-dev/ai-lib/issues/14), [#16](https://github.com/itk-dev/ai-lib/issues/16)).
+- Base Twig layout (`templates/base.html.twig`) and frontend asset
+  entrypoints (`assets/app.js`, `assets/styles/app.css`).
 - Placeholder frontpage at `/` (`App\Controller\FrontpageController`)
   previewing the AI Bibliotek design with hardcoded sample data
   (hero, search box, sample-assistant rail, "Sådan virker det" steps),
@@ -106,14 +122,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Resume" / checklist section followed by an "AI specificities" detail
   block so other agents can continue work from a structured brief
   ([#69](https://github.com/itk-dev/ai-lib/issues/69)).
-- `CLAUDE.md` rules for the agent workflow: require the issue template
-  when creating issues, forbid edits under `tests/` without explicit
-  user approval (and require a written which-tests/what/why rationale
-  first), require PR descriptions to spell out the blocker and reason
-  whenever a PR carries the `do-not-merge` label, and a pre-release
-  rule keeping every `[Unreleased]` entry under `Added` until the
-  first tagged release exists
-  ([#69](https://github.com/itk-dev/ai-lib/issues/69)).
-- ADR `002-project-license-mpl-2` renumbered to `004-project-license-mpl-2`
-  so ADR `002` is free for the frontend-tooling decision; index, README
-  link, and changelog reference updated accordingly.
