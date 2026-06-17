@@ -17,7 +17,7 @@
 
         <form action="{{ path('app_login') }}" method="post" class="grid gap-4">
             <twig:Form:Label for="inputEmail" text="{{ 'security.login.email_label'|trans }}">
-                <twig:Form:Input
+                <twig:Form:TextInput
                     id="inputEmail"
                     name="_username"
                     type="email"
@@ -29,7 +29,7 @@
             </twig:Form:Label>
 
             <twig:Form:Label for="inputPassword" text="{{ 'security.login.password_label'|trans }}">
-                <twig:Form:Input
+                <twig:Form:TextInput
                     id="inputPassword"
                     name="_password"
                     type="password"
