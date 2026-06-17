@@ -60,7 +60,7 @@ frontpage:
         lead: "Find, del og hjemtag AI-assistenter bygget af danske myndigheder. Når én kommune løser en opgave, kan resten hjemtage assistenten, eksportere konfigurationen og køre den lokalt — så gode løsninger skalerer nationalt."
     stats:
         assistants: "Assistenter"
-        kommuner: "Kommuner"
+        organizations: "Kommuner"
         models: "Sprogmodeller"
     rail:
         eyebrow: "Forhåndsvisning"
