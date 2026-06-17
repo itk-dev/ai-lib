@@ -16,7 +16,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * Console command that updates an existing user's password.
  *
  * Thin adapter over {@see UserManager::changePassword()}.
- * Usage: `task console -- app:user:change-password <email> <password>`.
  */
 #[AsCommand(
     name: 'app:user:change-password',
