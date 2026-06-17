@@ -51,7 +51,7 @@ final class UserRepositoryTest extends KernelTestCase
 
     public function testUpgradePasswordRejectsForeignUserType(): void
     {
-        $foreignUser = new class implements PasswordAuthenticatedUserInterface {
+        $foreignUser = new class () implements PasswordAuthenticatedUserInterface {
             public function getPassword(): ?string
             {
                 return null;

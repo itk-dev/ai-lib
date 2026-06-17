@@ -13,13 +13,4 @@ $finder->ignoreVCSIgnored(true);
 $config = new PhpCsFixer\Config();
 $config->setFinder($finder);
 
-$config->setRules([
-  '@Symfony' => true,
-  // Override the Symfony default that vertically aligns @param / @return
-  // columns by padding names and descriptions with spaces. We keep tags
-  // left-aligned so descriptions don't get pushed into hard-to-read
-  // multi-line wraps.
-  'phpdoc_align' => ['align' => 'left'],
-]);
-
 return $config;
