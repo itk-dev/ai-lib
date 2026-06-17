@@ -118,9 +118,9 @@
             </header>
 
             {% if total == 0 %}
-                <div class="rounded-xl border border-line bg-surface p-8 text-center">
+                <div class="rounded-xl border border-line bg-surface px-8 py-16 text-center">
                     <h2 class="font-display text-xl font-semibold text-ink">{{ 'catalog.empty.heading'|trans }}</h2>
-                    <p class="mt-2 text-sm text-text-muted">{{ 'catalog.empty.help'|trans }}</p>
+                    <p class="mt-3 text-sm text-text-muted">{{ 'catalog.empty.help'|trans }}</p>
                 </div>
             {% else %}
                 <ul role="list"

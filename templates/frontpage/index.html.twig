@@ -21,7 +21,11 @@
 
         <twig:SearchBox placeholder="search.placeholder" />
 
-        <twig:CardRail:Container eyebrow="frontpage.rail.eyebrow" linkLabel="frontpage.rail.link">
+        <twig:CardRail:Container
+            eyebrow="frontpage.rail.eyebrow"
+            linkHref="{{ path('app_assistant_catalog') }}"
+            linkLabel="frontpage.rail.link"
+        >
             {# Card prop names (`kommune`, `model`, `name`, `summary`) come from #}
             {# the original prototype design; today we map them to the fields #}
             {# the Assistant entity actually carries. Once the Organization #}

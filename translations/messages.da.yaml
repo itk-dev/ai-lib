@@ -91,7 +91,7 @@ frontpage:
         models: "Sprogmodeller"
     rail:
         eyebrow: "Forhåndsvisning"
-        link: "Kataloget kommer →"
+        link: "Se hele kataloget →"
         list_label: "Eksempler på assistenter"
     steps:
         eyebrow: "Sådan virker det"
