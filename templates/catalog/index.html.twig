@@ -2,181 +2,82 @@
 
 {% block title %}{{ 'catalog.title'|trans({'%brand%': brand_name}) }}{% endblock %}
 
-{# Current criteria as a query map; pagination links extend it with `page`. #}
-{% set base_query = criteria.toQueryArray %}
-
 {% block body %}
     <div class="grid gap-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <aside aria-label="{{ 'catalog.filters.heading'|trans }}"
-               class="flex flex-col gap-6">
-            <header>
-                <twig:Eyebrow as="p" class="mb-2">{{ 'catalog.filters.eyebrow'|trans }}</twig:Eyebrow>
-                <h2 class="font-display text-2xl font-medium tracking-tight text-ink">
-                    {{ 'catalog.filters.heading'|trans }}
-                </h2>
-            </header>
+        <twig:Filter:Rail
+            action="{{ path('app_assistant_catalog') }}"
+            reset="{{ not criteria.isEmpty }}"
+        >
+            <twig:Filter:Group label="catalog.filters.language_model">
+                {% for value, count in facets.language_model %}
+                    <twig:Filter:FacetItem
+                        name="language_model[]"
+                        value="{{ value }}"
+                        label="{{ value }}"
+                        count="{{ count }}"
+                        checked="{{ value in criteria.languageModels }}"
+                    />
+                {% endfor %}
+            </twig:Filter:Group>
 
-            <form method="get"
-                  action="{{ path('app_assistant_catalog') }}"
-                  class="flex flex-col gap-6">
-                <fieldset class="flex flex-col gap-2">
-                    <legend class="mb-2 text-sm font-semibold uppercase tracking-widest text-text-muted">
-                        {{ 'catalog.filters.language_model'|trans }}
-                    </legend>
-                    {% for value, count in facets.language_model %}
-                        <label class="flex items-center justify-between gap-3 text-sm text-text">
-                            <span class="flex items-center gap-2">
-                                <input type="checkbox"
-                                       name="language_model[]"
-                                       value="{{ value }}"
-                                       {% if value in criteria.languageModels %}checked{% endif %}>
-                                <span>{{ value }}</span>
-                            </span>
-                            <span class="text-xs text-text-muted">{{ count }}</span>
-                        </label>
-                    {% endfor %}
-                </fieldset>
-
-                <fieldset class="flex flex-col gap-2">
-                    <legend class="mb-2 text-sm font-semibold uppercase tracking-widest text-text-muted">
-                        {{ 'catalog.filters.framework'|trans }}
-                    </legend>
-                    {% for value, count in facets.framework %}
-                        <label class="flex items-center justify-between gap-3 text-sm text-text">
-                            <span class="flex items-center gap-2">
-                                <input type="checkbox"
-                                       name="framework[]"
-                                       value="{{ value }}"
-                                       {% if value in criteria.frameworks %}checked{% endif %}>
-                                <span>{{ value }}</span>
-                            </span>
-                            <span class="text-xs text-text-muted">{{ count }}</span>
-                        </label>
-                    {% endfor %}
-                </fieldset>
-
-                <div class="flex flex-wrap gap-3">
-                    <button type="submit"
-                            class="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover">
-                        {{ 'catalog.filters.apply'|trans }}
-                    </button>
-                    {% if not criteria.isEmpty %}
-                        <a href="{{ path('app_assistant_catalog') }}"
-                           class="inline-flex items-center text-sm text-text-muted no-underline hover:text-primary">
-                            {{ 'catalog.filters.reset'|trans }}
-                        </a>
-                    {% endif %}
-                </div>
-            </form>
-        </aside>
+            <twig:Filter:Group label="catalog.filters.framework">
+                {% for value, count in facets.framework %}
+                    <twig:Filter:FacetItem
+                        name="framework[]"
+                        value="{{ value }}"
+                        label="{{ value }}"
+                        count="{{ count }}"
+                        checked="{{ value in criteria.frameworks }}"
+                    />
+                {% endfor %}
+            </twig:Filter:Group>
+        </twig:Filter:Rail>
 
         <section class="flex flex-col gap-8">
-            <header class="flex flex-col gap-4">
-                <twig:Eyebrow as="p">{{ 'catalog.eyebrow'|trans }}</twig:Eyebrow>
-                <h1 class="font-display text-[clamp(2rem,3vw,2.6rem)] font-medium leading-tight tracking-tight text-ink">
-                    {{ 'catalog.heading'|trans }}
-                </h1>
-                <p class="text-sm text-text-muted">
-                    {% if metadata.total == 1 %}
-                        {{ 'catalog.result_count.one'|trans }}
-                    {% else %}
-                        {{ 'catalog.result_count.many'|trans({'%count%': metadata.total}) }}
-                    {% endif %}
-                </p>
+            <twig:PageHeader eyebrow="catalog.eyebrow" heading="catalog.heading" />
 
-                {% if not criteria.isEmpty %}
-                    <ul role="list"
-                        aria-label="{{ 'catalog.filters.active'|trans }}"
-                        class="flex flex-wrap gap-2">
-                        {% for filter in criteria.activeFilters %}
-                            <li>
-                                <a href="{{ path('app_assistant_catalog', filter.removeQuery) }}"
-                                   class="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text no-underline hover:border-border-strong hover:text-primary"
-                                   aria-label="{{ 'catalog.filters.chip_remove'|trans({'%filter%': filter.label}) }}">
-                                    <span>{{ filter.label }}</span>
-                                    <span aria-hidden="true">×</span>
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
+            <p class="text-sm text-text-muted">
+                {% if metadata.total == 1 %}
+                    {{ 'catalog.result_count.one'|trans }}
+                {% else %}
+                    {{ 'catalog.result_count.many'|trans({'%count%': metadata.total}) }}
                 {% endif %}
-            </header>
+            </p>
 
-            {% if metadata.total == 0 %}
-                <div class="rounded-xl border border-line bg-surface px-8 py-16 text-center">
-                    <h2 class="font-display text-xl font-semibold text-ink">{{ 'catalog.empty.heading'|trans }}</h2>
-                    <p class="mt-3 text-sm text-text-muted">{{ 'catalog.empty.help'|trans }}</p>
-                </div>
-            {% else %}
-                <ul role="list"
-                    aria-label="{{ 'catalog.results.label'|trans }}"
-                    class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {% for assistant in results %}
+            {% if not criteria.isEmpty %}
+                <twig:Filter:ActiveBar>
+                    {% for filter in criteria.activeFilters %}
                         <li>
-                            <a class="group flex h-full flex-col gap-3 rounded-xl border border-line bg-surface p-5 no-underline shadow-sm transition-transform hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
-                               href="{{ path('app_assistant_show', {id: assistant.id}) }}">
-                                <span class="text-xs uppercase tracking-widest text-text-muted">
-                                    {{ assistant.languageModel }} · {{ assistant.framework }}
-                                </span>
-                                <h3 class="font-display text-lg font-semibold tracking-normal text-ink group-hover:text-primary">
-                                    {{ assistant.title }}
-                                </h3>
-                                <p class="line-clamp-3 text-sm leading-relaxed text-text">
-                                    {{ assistant.description }}
-                                </p>
-                                {% if assistant.tags is not empty %}
-                                    <ul class="mt-auto flex flex-wrap gap-1.5 pt-2"
-                                        aria-label="{{ 'assistant.detail.tags_heading'|trans }}">
-                                        {% for tag in assistant.tags %}
-                                            <li class="inline-flex items-center rounded-full border border-line bg-surface-2 px-2 py-0.5 text-xs text-text">
-                                                {{ tag }}
-                                            </li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </a>
+                            <twig:Filter:Chip
+                                href="{{ path('app_assistant_catalog', filter.removeQuery) }}"
+                                label="{{ filter.label }}"
+                                removeLabel="{{ 'catalog.filters.chip_remove'|trans({'%filter%': filter.label}) }}"
+                            />
                         </li>
                     {% endfor %}
-                </ul>
+                </twig:Filter:ActiveBar>
+            {% endif %}
+
+            {% if metadata.total == 0 %}
+                <twig:EmptyState heading="catalog.empty.heading" help="catalog.empty.help" />
+            {% else %}
+                <twig:Catalog:ResultGrid>
+                    {% for assistant in results %}
+                        <li>
+                            <twig:Catalog:AssistantCard
+                                assistant="{{ assistant }}"
+                                href="{{ path('app_assistant_show', {id: assistant.id}) }}"
+                            />
+                        </li>
+                    {% endfor %}
+                </twig:Catalog:ResultGrid>
 
                 {% if metadata.pageCount > 1 %}
-                    <nav aria-label="{{ 'catalog.pagination.label'|trans }}"
-                         class="flex items-center justify-center gap-2">
-                        {% if metadata.page > 1 %}
-                            <a href="{{ path('app_assistant_catalog', base_query|merge({page: metadata.page - 1})) }}"
-                               class="inline-flex items-center rounded-full border border-line px-3 py-1 text-sm text-text no-underline hover:border-border-strong hover:text-primary"
-                               rel="prev">
-                                {{ 'catalog.pagination.previous'|trans }}
-                            </a>
-                        {% endif %}
-
-                        <ul role="list" class="flex items-center gap-1">
-                            {% for n in 1..metadata.pageCount %}
-                                <li>
-                                    {% if n == metadata.page %}
-                                        <span aria-current="page"
-                                              class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-full bg-primary px-3 text-sm font-medium text-white">
-                                            {{ n }}
-                                        </span>
-                                    {% else %}
-                                        <a href="{{ path('app_assistant_catalog', base_query|merge({page: n})) }}"
-                                           class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-full border border-line px-3 text-sm text-text no-underline hover:border-border-strong hover:text-primary"
-                                           aria-label="{{ 'catalog.pagination.page'|trans({'%n%': n}) }}">
-                                            {{ n }}
-                                        </a>
-                                    {% endif %}
-                                </li>
-                            {% endfor %}
-                        </ul>
-
-                        {% if metadata.page < metadata.pageCount %}
-                            <a href="{{ path('app_assistant_catalog', base_query|merge({page: metadata.page + 1})) }}"
-                               class="inline-flex items-center rounded-full border border-line px-3 py-1 text-sm text-text no-underline hover:border-border-strong hover:text-primary"
-                               rel="next">
-                                {{ 'catalog.pagination.next'|trans }}
-                            </a>
-                        {% endif %}
-                    </nav>
+                    <twig:Pagination:Nav
+                        route="app_assistant_catalog"
+                        query="{{ criteria.toQueryArray }}"
+                        metadata="{{ metadata }}"
+                    />
                 {% endif %}
             {% endif %}
         </section>
