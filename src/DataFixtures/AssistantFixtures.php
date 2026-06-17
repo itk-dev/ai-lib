@@ -9,13 +9,15 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
 /**
- * Seed twenty assistants for local development.
+ * Seed twenty-one assistants for local development.
  *
- * Five are hand-written, authentic catalogue entries drawn from the
- * AI Bibliotek prototype. The remaining fifteen are generated
- * deterministically from a fixed set of topics, kommuner and
- * language models — same input on every run, no randomness — so
- * test assertions and design previews stay reproducible.
+ * Six are hand-written catalogue entries — five are authentic rows
+ * drawn from the AI Bibliotek prototype, and the sixth is a tagless
+ * row used to cover the detail page's empty-tags branch in tests.
+ * The remaining fifteen are generated deterministically from a fixed
+ * set of topics, kommuner and language models — same input on every
+ * run, no randomness — so test assertions and design previews stay
+ * reproducible.
  */
 final class AssistantFixtures extends Fixture
 {
@@ -63,6 +65,12 @@ final class AssistantFixtures extends Fixture
                 languageModel: 'mistral-large',
                 framework: 'openwebui',
                 tags: ['sundhed', 'tilsyn', 'plejehjem'],
+            ),
+            new Assistant(
+                title: 'Uden kategorier',
+                description: 'Pladsholder uden tags — bruges til at vise hvordan detaljevisningen håndterer en helt umarkeret post.',
+                languageModel: 'gpt-4o',
+                framework: 'openwebui',
             ),
         ];
 

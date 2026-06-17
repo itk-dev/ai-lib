@@ -1,5 +1,6 @@
 <?php
 
+use App\DataFixtures\AssistantFixtures;
 use App\DataFixtures\UserFixtures;
 use App\Kernel;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,5 +34,6 @@ $schemaTool->dropDatabase();
 $schemaTool->createSchema($em->getMetadataFactory()->getAllMetadata());
 
 $container->get(UserFixtures::class)->load($em);
+$container->get(AssistantFixtures::class)->load($em);
 
 $kernel->shutdown();

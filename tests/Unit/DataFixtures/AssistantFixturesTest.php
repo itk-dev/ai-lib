@@ -11,15 +11,15 @@ use PHPUnit\Framework\TestCase;
 
 final class AssistantFixturesTest extends TestCase
 {
-    public function testLoadPersistsFiveDetailedAndFifteenGenerated(): void
+    public function testLoadPersistsSixDetailedAndFifteenGenerated(): void
     {
         $persisted = $this->captureLoad();
 
-        self::assertCount(20, $persisted);
+        self::assertCount(21, $persisted);
 
         $detailedTitles = array_map(
             static fn (Assistant $a) => $a->getTitle(),
-            \array_slice($persisted, 0, 5),
+            \array_slice($persisted, 0, 6),
         );
         self::assertSame(
             [
@@ -28,11 +28,13 @@ final class AssistantFixturesTest extends TestCase
                 'Journaliseringsassistent',
                 'Skole- og dagtilbudssvar',
                 'Tilsynsrapport-assistent',
+                'Uden kategorier',
             ],
             $detailedTitles,
         );
+        self::assertSame([], $persisted[5]->getTags(), 'tagless detailed entry must carry no tags');
 
-        $generated = \array_slice($persisted, 5);
+        $generated = \array_slice($persisted, 6);
         self::assertCount(15, $generated);
         foreach ($generated as $assistant) {
             self::assertStringContainsString(' – ', $assistant->getTitle(), 'generated titles include the kommune');
