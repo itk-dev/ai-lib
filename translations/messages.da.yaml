@@ -33,6 +33,15 @@ tag:
     badge_default: "snart"
     title_default: "Kommer snart"
 
+security:
+    login:
+        title: "Log ind – %brand%"
+        eyebrow: "Log ind"
+        heading: "Velkommen tilbage"
+        email_label: "E-mail"
+        password_label: "Adgangskode"
+        submit: "Log ind"
+
 frontpage:
     title: "%brand% – forhåndsvisning"
     hero:

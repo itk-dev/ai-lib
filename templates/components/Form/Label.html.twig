@@ -1,0 +1,5 @@
+{% props for, text %}
+<label class="grid gap-1 text-sm" for="{{ for }}">
+    <span class="font-medium text-ink">{{ text }}</span>
+    {% block content %}{% endblock %}
+</label>

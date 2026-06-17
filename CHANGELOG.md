@@ -56,6 +56,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `nav_toggle_controller` driving the mobile menu, and a
   `block-on-label` GitHub Action providing a per-PR merge gate
   ([#40](https://github.com/itk-dev/ai-lib/issues/40)).
+- User authentication: `User` Doctrine entity (email, hashed password,
+  roles), `UserRepository` (with `PasswordUpgraderInterface`), the
+  `UserManager` service that hides persistence + hashing, form-login
+  firewall + `/login` + `/logout`, fixtures for two baseline users
+  (`alice@example.test`, `bob@example.test` — password `password`),
+  console commands `app:user:create` and `app:user:change-password`,
+  and end-to-end functional + unit tests
+  ([#2](https://github.com/itk-dev/ai-lib/issues/2)).
+- PHPUnit suite split into `unit` (no database) and `integration` (full
+  kernel) testsuites under `tests/Unit/` and `tests/Integration/`, with
+  transactional database isolation per integration test via
+  `dama/doctrine-test-bundle`. The integration suite uses a dedicated
+  `tests/bootstrap_integration.php` that builds the schema from ORM
+  metadata and loads baseline `UserFixtures` once before any test;
+  DAMA's per-test transaction rolls back mutations so the baseline
+  persists. The default `tests/bootstrap.php` is minimal and is used
+  by `task test-unit`. `task test-unit` and `task test-integration`
+  expose the suites individually.
+- Reusable Twig form components under `templates/components/Form/`:
+  `Form/Label`, `Form/Input`, and `Form/Button` (with `variant` and
+  `size` props for future styling variants). The `/login` template
+  consumes them instead of inlining the input/label/button markup.
 - Site chrome (header with brand + nav, footer) in
   `templates/base.html.twig`, with the Fraunces/Geist font stack
   preloaded from Google Fonts.
