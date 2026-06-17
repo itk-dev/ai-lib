@@ -206,5 +206,5 @@ build.
 ## License
 
 `ai-lib` is licensed under the [Mozilla Public License 2.0](LICENSE).
-See [ADR 002 — Project license: MPL-2.0](docs/adr/002-project-license-mpl-2.md)
+See [ADR 004 — Project license: MPL-2.0](docs/adr/004-project-license-mpl-2.md)
 for the reasoning behind the choice.
