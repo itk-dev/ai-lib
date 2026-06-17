@@ -112,6 +112,13 @@ logic. Push logic into a service class. A controller action looks like:
 inject service → call service method → return `render()` / `Response` /
 `RedirectResponse`.
 
+**Do not add PHPDoc to controllers.** The class name, route attribute,
+action name, parameter types, and return type already describe what an
+action does; class- and method-level docblocks duplicate that. Push the
+explanatory prose into the (fully documented) service the controller
+delegates to. If a controller is so unusual that it needs a docblock to
+explain itself, that's the signal it's doing too much.
+
 ### Service classes are fully documented
 
 Every service class method (public, protected, private) carries a PHPDoc block

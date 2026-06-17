@@ -4,28 +4,63 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller;
 
+use App\Repository\AssistantRepository;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * Functional smoke test for the placeholder frontpage.
- *
- * Ensures that anonymous visitors to `/` receive a 200 response and
- * that the rendered HTML identifies the project. The test is committed
- * ahead of the PHPUnit setup in #31 so it begins to run automatically
- * once the test runner lands.
+ * End-to-end coverage of the frontpage controller and the assistant
+ * rail / stats blocks it renders. Uses the baseline catalogue loaded
+ * by `tests/bootstrap_integration.php` (see `AssistantFixtures`,
+ * 21 entries — 6 detailed and 15 generated).
  */
-class FrontpageControllerTest extends WebTestCase
+final class FrontpageControllerTest extends WebTestCase
 {
-    /**
-     * `GET /` returns 200 and shows the project identifier.
-     */
-    public function testFrontpageReturns200AndShowsProjectName(): void
+    private KernelBrowser $client;
+
+    protected function setUp(): void
     {
-        $client = self::createClient();
-        $client->request('GET', '/');
+        $this->client = self::createClient();
+    }
+
+    public function testCardRailLinksToTheFiveNewestFixtureAssistants(): void
+    {
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $expected = $repository->findBy([], ['id' => 'DESC'], 5);
+        self::assertCount(5, $expected, 'fixture baseline must seed at least five assistants');
+
+        $crawler = $this->client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'AI Bibliotek');
-        self::assertSelectorTextContains('h1', 'kommunale');
+
+        $cardLinks = $crawler->filter('a[href^="/assistant/"]');
+        self::assertCount(5, $cardLinks, 'rail surfaces the controller\'s id-DESC limit of 5');
+
+        $hrefs = $cardLinks->each(static fn ($node) => $node->attr('href'));
+        foreach ($expected as $assistant) {
+            self::assertContains('/assistant/'.$assistant->getId(), $hrefs);
+        }
+        self::assertSame(
+            '/assistant/'.$expected[0]->getId(),
+            $hrefs[0],
+            'newest fixture entry must lead the rail',
+        );
+
+        $railText = $crawler->filter('[aria-label="Eksempler på assistenter"]')->text();
+        self::assertStringContainsString($expected[0]->getTitle(), $railText);
+        self::assertStringContainsString($expected[0]->getLanguageModel(), $railText);
+    }
+
+    public function testStatsReflectFixtureCatalogueCounts(): void
+    {
+        $crawler = $this->client->request('GET', '/');
+
+        self::assertResponseIsSuccessful();
+        $statsText = $crawler->filter('dl')->text();
+        // AssistantFixtures seeds 21 rows across 5 distinct language
+        // models (gpt-4o, gpt-4o-mini, claude-3.5-sonnet,
+        // llama-3.1-70b, mistral-large).
+        self::assertStringContainsString('21', $statsText, 'Assistanter count = 21');
+        self::assertStringContainsString('5', $statsText, 'Sprogmodeller count = 5');
     }
 }

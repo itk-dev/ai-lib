@@ -62,6 +62,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   migration. Organization linkage and the richer #14 scope
   (system prompt, parameters, OpenWebUI mapping, versioning) are
   deferred to follow-on PRs per ADR 005
+  ([#14](https://github.com/itk-dev/ai-lib/issues/14),
+  [#16](https://github.com/itk-dev/ai-lib/issues/16)).
+- Assistant detail page at `/assistant/{id}` rendering the base
+  fields (title, description, framework, language model, tags).
+  Export entry point, organisation / author display, system-prompt
+  preview, and back-link to the catalogue listing all wait for the
+  follow-on data and #15 / #22
+  ([#20](https://github.com/itk-dev/ai-lib/issues/20)).
+- `AssistantFixtures` seeding 20 deterministic assistants — five
+  hand-written authentic catalogue entries (Borgerservice-vejviser,
+  Mødereferent, Journaliseringsassistent, Skole- og dagtilbudssvar,
+  Tilsynsrapport-assistent) plus 15 generated from a fixed set of
+  topics × kommuner × language models, no randomness.
+- Frontpage CardRail and stats now read from the database. The
+  hardcoded `SAMPLE_ASSISTANTS` constant in `FrontpageController` is
+  gone; cards iterate the five most-recent persisted `Assistant`s
+  (newest first) and each card links to `/assistant/{id}`. The
+  Assistanter and Sprogmodeller stat values are computed from real
+  queries; Kommuner stays a placeholder (`10`) until ADR 005 /
+  [#65](https://github.com/itk-dev/ai-lib/issues/65) lands the
+  `Organization` entity.
+- README refocused as human-facing project documentation: project purpose,
+  tech stack, and local development bootstrap. Developer command reference
+  moved to `CLAUDE.md` (and later `CONTRIBUTING.md`, tracked in #9).
+- ITK Dev Docker setup via the `symfony-8` template (phpfpm 8.4, nginx, MariaDB, Mailpit).
+- Dev dependencies for coding standards and composer normalization:
+  `ergebnis/composer-normalize`, `friendsofphp/php-cs-fixer`, `vincentlanglet/twig-cs-fixer`.
+- Project README with local development instructions.
+- Frontend tooling: Tailwind CSS (via `symfonycasts/tailwind-bundle`),
+  Symfony AssetMapper, and Stimulus (via `symfony/stimulus-bundle`).
+  Decision recorded in [ADR 002](docs/adr/002-frontend-tooling.md).
   ([#14](https://github.com/itk-dev/ai-lib/issues/14), [#16](https://github.com/itk-dev/ai-lib/issues/16)).
 - Base Twig layout (`templates/base.html.twig`) and frontend asset
   entrypoints (`assets/app.js`, `assets/styles/app.css`).
