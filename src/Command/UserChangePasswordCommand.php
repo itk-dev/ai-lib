@@ -16,7 +16,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * Console command that updates an existing user's password.
  *
  * Thin adapter over {@see UserManager::changePassword()}.
- * Usage: `task console -- app:user:change-password <email> <password>`.
  */
 #[AsCommand(
     name: 'app:user:change-password',
@@ -45,7 +44,7 @@ final class UserChangePasswordCommand extends Command
     /**
      * Adapt console arguments to the {@see UserManager} call.
      *
-     * @param InputInterface $input CLI arguments
+     * @param InputInterface  $input  CLI arguments
      * @param OutputInterface $output console output stream
      *
      * @return int Command::SUCCESS on a successful change, Command::FAILURE otherwise

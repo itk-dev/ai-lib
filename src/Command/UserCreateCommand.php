@@ -16,7 +16,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * Console command that creates a new application user.
  *
  * Thin adapter over {@see UserManager::createUser()}.
- * Usage: `task console -- app:user:create <email> <password>`.
  */
 #[AsCommand(
     name: 'app:user:create',
@@ -45,7 +44,7 @@ final class UserCreateCommand extends Command
     /**
      * Adapt console arguments to the {@see UserManager} call.
      *
-     * @param InputInterface $input CLI arguments
+     * @param InputInterface  $input  CLI arguments
      * @param OutputInterface $output console output stream
      *
      * @return int Command::SUCCESS on creation, Command::FAILURE on domain or validation error

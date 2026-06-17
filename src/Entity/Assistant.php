@@ -23,12 +23,6 @@ class Assistant
     #[ORM\Column(type: Types::TEXT)]
     private string $description;
 
-    /**
-     * Captured at creation time from the creator's organisation (see
-     * ADR 005); stored on the assistant so an organisation switching
-     * its default later does not silently rewrite older catalogue
-     * rows.
-     */
     #[ORM\Column(length: 255)]
     private string $languageModel;
 
