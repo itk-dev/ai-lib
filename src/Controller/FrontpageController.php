@@ -26,7 +26,7 @@ final class FrontpageController extends AbstractController
                 // ADR 005 / #65 lands the Organization entity. For now we
                 // surface the static count that matches what AssistantFixtures
                 // seeds across its detailed + generated entries.
-                'kommuner' => 10,
+                'organizations' => 10,
                 'models' => $this->assistants->countDistinctLanguageModels(),
             ],
         ]);
