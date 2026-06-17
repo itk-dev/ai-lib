@@ -45,7 +45,7 @@ final class UserChangePasswordCommand extends Command
     /**
      * Adapt console arguments to the {@see UserManager} call.
      *
-     * @param InputInterface $input CLI arguments
+     * @param InputInterface  $input  CLI arguments
      * @param OutputInterface $output console output stream
      *
      * @return int Command::SUCCESS on a successful change, Command::FAILURE otherwise

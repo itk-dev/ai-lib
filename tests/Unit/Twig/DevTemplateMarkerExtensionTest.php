@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Twig;
+namespace App\Tests\Unit\Twig;
 
 use App\Twig\DevTemplateMarkerExtension;
 use App\Twig\DevTemplateMarkerNodeVisitor;

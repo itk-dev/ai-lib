@@ -2,29 +2,24 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Command;
+namespace App\Tests\Integration\Command;
 
-use App\Security\UserManager;
-use App\Tests\Support\ResetsDatabaseSchemaTrait;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
+/**
+ * Relies on the baseline `UserFixtures` (alice + bob) loaded by
+ * `tests/bootstrap_integration.php`. The "create fresh user" path uses
+ * a non-fixture email to avoid colliding with the baseline.
+ */
 final class UserCreateCommandTest extends KernelTestCase
 {
-    use ResetsDatabaseSchemaTrait;
-
     private CommandTester $tester;
-    private UserManager $userManager;
 
     protected function setUp(): void
     {
         self::bootKernel();
-        $container = self::getContainer();
-        self::resetSchema($container->get(EntityManagerInterface::class));
-
-        $this->userManager = $container->get(UserManager::class);
 
         $application = new Application(self::$kernel);
         $command = $application->find('app:user:create');
@@ -34,18 +29,17 @@ final class UserCreateCommandTest extends KernelTestCase
     public function testCreatesUser(): void
     {
         $exit = $this->tester->execute([
-            'email' => 'alice@example.test',
+            'email' => 'charlie@example.test',
             'password' => 'secret',
         ]);
 
         self::assertSame(0, $exit);
-        self::assertStringContainsString('Created user "alice@example.test"', $this->tester->getDisplay());
+        self::assertStringContainsString('Created user "charlie@example.test"', $this->tester->getDisplay());
     }
 
     public function testReportsFailureWhenEmailAlreadyExists(): void
     {
-        $this->userManager->createUser('alice@example.test', 'first');
-
+        // alice@example.test is in the baseline fixtures.
         $exit = $this->tester->execute([
             'email' => 'alice@example.test',
             'password' => 'second',

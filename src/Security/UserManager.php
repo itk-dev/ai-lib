@@ -19,8 +19,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 final class UserManager
 {
     /**
-     * @param EntityManagerInterface $entityManager Doctrine entity manager
-     * @param UserRepository $userRepository read-side lookup of users by email
+     * @param EntityManagerInterface      $entityManager  Doctrine entity manager
+     * @param UserRepository              $userRepository read-side lookup of users by email
      * @param UserPasswordHasherInterface $passwordHasher Symfony Security hasher
      */
     public function __construct(
@@ -33,13 +33,13 @@ final class UserManager
     /**
      * Create a new persisted user with a hashed password.
      *
-     * @param string $email user e-mail; must be unique
-     * @param string $plainPassword clear-text password, hashed before persistence
-     * @param list<string> $roles additional roles beyond the implicit `ROLE_USER`
+     * @param string       $email         user e-mail; must be unique
+     * @param string       $plainPassword clear-text password, hashed before persistence
+     * @param list<string> $roles         additional roles beyond the implicit `ROLE_USER`
      *
      * @return User the persisted user with an assigned id
      *
-     * @throws \DomainException when a user with the same e-mail already exists
+     * @throws \DomainException          when a user with the same e-mail already exists
      * @throws \InvalidArgumentException when `$plainPassword` is empty
      */
     public function createUser(string $email, string $plainPassword, array $roles = []): User
@@ -66,12 +66,12 @@ final class UserManager
     /**
      * Replace a user's password with a freshly hashed copy.
      *
-     * @param string $email e-mail of the user to update
+     * @param string $email            e-mail of the user to update
      * @param string $newPlainPassword new clear-text password, hashed before persistence
      *
      * @return User the updated user
      *
-     * @throws \DomainException when no user with that e-mail exists
+     * @throws \DomainException          when no user with that e-mail exists
      * @throws \InvalidArgumentException when `$newPlainPassword` is empty
      */
     public function changePassword(string $email, string $newPlainPassword): User

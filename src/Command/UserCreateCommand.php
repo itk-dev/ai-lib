@@ -45,7 +45,7 @@ final class UserCreateCommand extends Command
     /**
      * Adapt console arguments to the {@see UserManager} call.
      *
-     * @param InputInterface $input CLI arguments
+     * @param InputInterface  $input  CLI arguments
      * @param OutputInterface $output console output stream
      *
      * @return int Command::SUCCESS on creation, Command::FAILURE on domain or validation error
