@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Catalog\CatalogCriteria;
 use App\Entity\Assistant;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -32,33 +33,34 @@ class AssistantRepository extends ServiceEntityRepository
     }
 
     /**
-     * Paginated catalogue listing filtered by the given facet selections.
+     * Paginated catalogue listing filtered by the given criteria.
      *
-     * Each filter parameter is an OR-within / AND-across set: a non-empty
-     * `$languageModels` keeps rows whose `languageModel` is in that list,
-     * AND a non-empty `$frameworks` further narrows on `framework`. An
-     * empty list means "no filter on this facet". Results are sorted by
-     * `id ASC` for a stable, fixture-friendly ordering.
+     * Each facet selection on the criteria is an OR-within / AND-across
+     * set: a non-empty `languageModels` keeps rows whose `languageModel`
+     * is in that list, AND a non-empty `frameworks` further narrows on
+     * `framework`. An empty facet means "no filter on this facet".
+     * Results are sorted by `id ASC` for a stable, fixture-friendly
+     * ordering. The criteria's `q` field is reserved for the upcoming
+     * free-text search and is intentionally not yet consulted.
      *
-     * @param list<string> $languageModels exact `languageModel` values to keep; empty list = no filter
-     * @param list<string> $frameworks     exact `framework` values to keep; empty list = no filter
-     * @param int          $page           1-based page number; clamped to `>= 1` by the caller
-     * @param int          $perPage        results per page; must be `>= 1`
+     * @param CatalogCriteria $criteria the user's filter selections
+     * @param int             $page     1-based page number; clamped to `>= 1` by the caller
+     * @param int             $perPage  results per page; must be `>= 1`
      *
      * @return Paginator<Assistant>
      */
-    public function findPaginated(array $languageModels, array $frameworks, int $page, int $perPage): Paginator
+    public function findPaginated(CatalogCriteria $criteria, int $page, int $perPage): Paginator
     {
         $qb = $this->createQueryBuilder('a')->orderBy('a.id', 'ASC');
 
-        if ([] !== $languageModels) {
+        if ([] !== $criteria->languageModels) {
             $qb->andWhere('a.languageModel IN (:languageModels)')
-                ->setParameter('languageModels', $languageModels);
+                ->setParameter('languageModels', $criteria->languageModels);
         }
 
-        if ([] !== $frameworks) {
+        if ([] !== $criteria->frameworks) {
             $qb->andWhere('a.framework IN (:frameworks)')
-                ->setParameter('frameworks', $frameworks);
+                ->setParameter('frameworks', $criteria->frameworks);
         }
 
         $qb->setFirstResult(($page - 1) * $perPage)

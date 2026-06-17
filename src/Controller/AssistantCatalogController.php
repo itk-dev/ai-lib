@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Catalog\CatalogCriteria;
 use App\Http\QueryStringList;
-use App\Pagination\PaginationCalculator;
+use App\Pagination\PageMetadata;
 use App\Repository\AssistantRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,30 +20,22 @@ final class AssistantCatalogController extends AbstractController
     public function __construct(
         private readonly AssistantRepository $assistants,
         private readonly QueryStringList $queryStringList,
-        private readonly PaginationCalculator $pagination,
     ) {
     }
 
     #[Route('/search', name: 'app_assistant_catalog', methods: ['GET'])]
     public function index(Request $request): Response
     {
-        $languageModels = $this->queryStringList->fromRequest($request, 'language_model');
-        $frameworks = $this->queryStringList->fromRequest($request, 'framework');
+        $criteria = CatalogCriteria::fromRequest($request, $this->queryStringList);
         $page = max(1, $request->query->getInt('page', 1));
 
-        $paginator = $this->assistants->findPaginated($languageModels, $frameworks, $page, self::PER_PAGE);
-        $metadata = $this->pagination->fromPaginator($paginator, $page, self::PER_PAGE);
+        $paginator = $this->assistants->findPaginated($criteria, $page, self::PER_PAGE);
+        $metadata = PageMetadata::fromPaginator($paginator, $page, self::PER_PAGE);
 
         return $this->render('catalog/index.html.twig', [
             'results' => $paginator,
-            'total' => $metadata->total,
-            'page' => $metadata->page,
-            'pageCount' => $metadata->pageCount,
-            'perPage' => $metadata->perPage,
-            'filters' => [
-                'language_model' => $languageModels,
-                'framework' => $frameworks,
-            ],
+            'criteria' => $criteria,
+            'metadata' => $metadata,
             'facets' => [
                 'language_model' => $this->assistants->languageModelFacetCounts(),
                 'framework' => $this->assistants->frameworkFacetCounts(),
