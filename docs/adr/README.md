@@ -23,4 +23,4 @@ See [adr.github.io](https://adr.github.io/) for background on the format.
 | --------------------------------------------- | ----------------------------------------------- | -------- | ---------- |
 | [001](001-tech-stack-docker-symfony.md)       | Tech stack: Docker + Symfony                    | Accepted | 2026-06-08 |
 | [002](002-project-license-mpl-2.md)           | Project license: MPL-2.0                        | Accepted | 2026-06-08 |
-| [004](004-user-approval-and-account-state.md) | User registration, approval, and account state  | Draft    | 2026-06-12 |
+| [006](006-user-approval-and-account-state.md) | User registration, approval, and account state  | Draft    | 2026-06-12 |

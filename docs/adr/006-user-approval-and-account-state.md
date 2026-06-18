@@ -1,4 +1,4 @@
-# 004: User registration, approval, and account-state model
+# 006: User registration, approval, and account-state model
 
 | Field              | Value                                              |
 | ------------------ | -------------------------------------------------- |
