@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Organization` Doctrine entity (name, list of emails, default
-  framework), repository, migration, and `OrganizationFixtures`
-  seeding three baseline kommuner (Aarhus, Aalborg, Odense). First
-  step of ADR 005 — `User → Organization`, CRUD, and assistant
-  autocomplete land in follow-up issues
+- `Organization` Doctrine entity (name, list of email domains,
+  default framework), repository, migration, and
+  `OrganizationFixtures` seeding three baseline kommuner (Aarhus,
+  Aalborg, Odense). First step of ADR 005 — `User → Organization`,
+  CRUD, and assistant autocomplete land in follow-up issues
   ([#75](https://github.com/itk-dev/ai-lib/issues/75)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
   `symfony-8` template (phpfpm 8.4, nginx, MariaDB, Mailpit, Traefik),

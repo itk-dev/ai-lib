@@ -9,18 +9,18 @@ use PHPUnit\Framework\TestCase;
 
 final class OrganizationTest extends TestCase
 {
-    // Tests that the constructor stores name and default framework and re-indexes emails as a list.
-    public function testConstructorPopulatesFieldsAndReindexesEmails(): void
+    // Tests that the constructor stores name and default framework and normalises email domains as a list.
+    public function testConstructorPopulatesFieldsAndNormalisesEmailDomains(): void
     {
         $organization = new Organization(
             'Aarhus Kommune',
-            [5 => 'aarhus.dk', 3 => 'aak.dk'],
+            [5 => ' Aarhus.DK ', 3 => 'AAK.dk'],
             'openwebui',
         );
 
         self::assertNull($organization->getId());
         self::assertSame('Aarhus Kommune', $organization->getName());
-        self::assertSame(['aarhus.dk', 'aak.dk'], $organization->getEmails());
+        self::assertSame(['aarhus.dk', 'aak.dk'], $organization->getEmailDomains());
         self::assertSame('openwebui', $organization->getDefaultFramework());
     }
 
@@ -32,8 +32,8 @@ final class OrganizationTest extends TestCase
         self::assertSame($organization, $organization->setName('Aalborg Kommune'));
         self::assertSame('Aalborg Kommune', $organization->getName());
 
-        self::assertSame($organization, $organization->setEmails([9 => 'aalborg.dk', 1 => 'aalborgkommune.dk']));
-        self::assertSame(['aalborg.dk', 'aalborgkommune.dk'], $organization->getEmails());
+        self::assertSame($organization, $organization->setEmailDomains([9 => ' AALBORG.DK', 1 => 'aalborgkommune.dk']));
+        self::assertSame(['aalborg.dk', 'aalborgkommune.dk'], $organization->getEmailDomains());
 
         self::assertSame($organization, $organization->setDefaultFramework('langflow'));
         self::assertSame('langflow', $organization->getDefaultFramework());

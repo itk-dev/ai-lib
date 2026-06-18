@@ -11,8 +11,8 @@ use PHPUnit\Framework\TestCase;
 
 final class OrganizationFixturesTest extends TestCase
 {
-    // Tests that load() persists the three baseline mmunicipalities with the expected names and default framework.
-    public function testLoadPersistsThreeBaselineOrganisations(): void
+    // Tests that load() persists the three baseline municipalities with the expected names and default framework.
+    public function testLoadPersistsThreeBaselineOrganizations(): void
     {
         $persisted = $this->captureLoad();
 
@@ -29,11 +29,11 @@ final class OrganizationFixturesTest extends TestCase
 
         foreach ($persisted as $organization) {
             self::assertSame('openwebui', $organization->getDefaultFramework());
-            self::assertNotEmpty($organization->getEmails(), 'every fixture organisation has at least one email');
+            self::assertNotEmpty($organization->getEmailDomains(), 'every fixture organization has at least one email domain');
         }
     }
 
-    // Ensures load() emits the same organisations on every run (no randomness).
+    // Ensures load() emits the same organizations on every run (no randomness).
     public function testLoadIsDeterministic(): void
     {
         $first = array_map(

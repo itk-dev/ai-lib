@@ -9,7 +9,7 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
 /**
- * Seed three baseline organisations for local development and tests.
+ * Seed three baseline organizations for local development and tests.
  *
  * Hand-picked Danish kommuner that match the kommune names already used
  * by AssistantFixtures, so downstream features (autocomplete, facet
@@ -23,17 +23,17 @@ final class OrganizationFixtures extends Fixture
         $entries = [
             new Organization(
                 name: 'Aarhus Kommune',
-                emails: ['aarhus.dk'],
+                emailDomains: ['aarhus.dk'],
                 defaultFramework: 'openwebui',
             ),
             new Organization(
                 name: 'Aalborg Kommune',
-                emails: ['aalborg.dk', 'aalborgkommune.dk'],
+                emailDomains: ['aalborg.dk', 'aalborgkommune.dk'],
                 defaultFramework: 'openwebui',
             ),
             new Organization(
                 name: 'Odense Kommune',
-                emails: ['odense.dk'],
+                emailDomains: ['odense.dk'],
                 defaultFramework: 'openwebui',
             ),
         ];

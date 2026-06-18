@@ -33,7 +33,7 @@ final class OrganizationRepositoryTest extends KernelTestCase
 
         self::assertNotNull($reloaded);
         self::assertSame('Aarhus Kommune', $reloaded->getName());
-        self::assertSame(['aarhus.dk'], $reloaded->getEmails());
+        self::assertSame(['aarhus.dk'], $reloaded->getEmailDomains());
         self::assertSame('openwebui', $reloaded->getDefaultFramework());
     }
 }

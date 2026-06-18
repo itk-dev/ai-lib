@@ -23,22 +23,22 @@ class Organization
     /**
      * @var list<string>
      */
-    #[ORM\Column(type: Types::JSON)]
-    private array $emails;
+    #[ORM\Column(name: 'email_domains', type: Types::JSON)]
+    private array $emailDomains;
 
     #[ORM\Column(length: 255)]
     private string $defaultFramework;
 
     /**
-     * @param list<string> $emails
+     * @param list<string> $emailDomains
      */
     public function __construct(
         string $name,
-        array $emails,
+        array $emailDomains,
         string $defaultFramework,
     ) {
         $this->name = $name;
-        $this->emails = array_values($emails);
+        $this->emailDomains = self::normaliseDomains($emailDomains);
         $this->defaultFramework = $defaultFramework;
     }
 
@@ -62,17 +62,17 @@ class Organization
     /**
      * @return list<string>
      */
-    public function getEmails(): array
+    public function getEmailDomains(): array
     {
-        return $this->emails;
+        return $this->emailDomains;
     }
 
     /**
-     * @param list<string> $emails
+     * @param list<string> $emailDomains
      */
-    public function setEmails(array $emails): static
+    public function setEmailDomains(array $emailDomains): static
     {
-        $this->emails = array_values($emails);
+        $this->emailDomains = self::normaliseDomains($emailDomains);
 
         return $this;
     }
@@ -87,5 +87,24 @@ class Organization
         $this->defaultFramework = $defaultFramework;
 
         return $this;
+    }
+
+    /**
+     * Normalise a list of email domains to lowercase + trimmed, re-indexed as a list.
+     *
+     * Keeps stored values comparable to lowercased domains read off the
+     * right-hand side of an e-mail address at signup time, and stops admin
+     * CRUD from accidentally storing "Aarhus.DK " alongside "aarhus.dk".
+     *
+     * @param list<string> $domains
+     *
+     * @return list<string>
+     */
+    private static function normaliseDomains(array $domains): array
+    {
+        return array_values(array_map(
+            static fn (string $domain): string => strtolower(trim($domain)),
+            $domains,
+        ));
     }
 }
