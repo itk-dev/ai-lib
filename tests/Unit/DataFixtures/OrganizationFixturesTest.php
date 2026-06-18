@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 final class OrganizationFixturesTest extends TestCase
 {
-    // Tests that load() persists the three baseline kommuner with the expected names and default framework.
+    // Tests that load() persists the three baseline mmunicipalities with the expected names and default framework.
     public function testLoadPersistsThreeBaselineOrganisations(): void
     {
         $persisted = $this->captureLoad();
