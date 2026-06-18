@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `CLAUDE.md` `Coding practices` section gains Symfony-tooling
+  conventions: install dependencies via Symfony Flex
+  (`task composer -- require`), prefer `symfony/ux-twig-component` for
+  new template markup (and reuse `templates/components/*` before
+  creating new), and use Maker Bundle for scaffolding when a
+  `make:*` recipe exists
+  ([#81](https://github.com/itk-dev/ai-lib/issues/81)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
   `symfony-8` template (phpfpm 8.4, nginx, MariaDB, Mailpit, Traefik),
   including dev dependencies for coding standards (`php-cs-fixer`,
