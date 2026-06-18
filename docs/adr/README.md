@@ -25,3 +25,4 @@ See [adr.github.io](https://adr.github.io/) for background on the format.
 | [002](002-frontend-tooling.md)               | Frontend tooling: Tailwind + AssetMapper + Stimulus | Accepted | 2026-06-08 |
 | [003](003-admin-crud-tooling.md)             | Admin / CRUD tooling                                | Draft    | 2026-06-11 |
 | [004](004-project-license-mpl-2.md)          | Project license: MPL-2.0                            | Accepted | 2026-06-10 |
+| [005](005-organization-entity.md)            | Organization as a first-class entity                | Draft    | 2026-06-18 |
