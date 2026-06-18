@@ -49,10 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHPUnit test harness with a 100 % coverage gate enforced in CI via
   `rregeer/phpunit-coverage-check`
   ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
-
-### Changed
-
-
 - README refocused as human-facing project documentation: project purpose,
   tech stack, and local development bootstrap. Developer command reference
   moved to `CLAUDE.md` (and later `CONTRIBUTING.md`, tracked in #9).
