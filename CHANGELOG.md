@@ -49,40 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHPUnit test harness with a 100 % coverage gate enforced in CI via
   `rregeer/phpunit-coverage-check`
   ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
-- User authentication: `User` Doctrine entity (email, hashed password,
-  roles), `UserRepository` (with `PasswordUpgraderInterface`), the
-  `UserManager` service that hides persistence + hashing, form-login
-  firewall + `/login` + `/logout`, fixtures for two baseline users
-  (`alice@example.test`, `bob@example.test` — password `password`),
-  console commands `app:user:create` and `app:user:change-password`,
-  and end-to-end functional + unit tests
-  ([#2](https://github.com/itk-dev/ai-lib/issues/2)).
-- `Assistant` Doctrine entity with base fields (title, description,
-  language model, framework, tags as a JSON list), repository, and
-  migration. Organization linkage and the richer #14 scope
-  (system prompt, parameters, OpenWebUI mapping, versioning) are
-  deferred to follow-on PRs per ADR 005
-  ([#14](https://github.com/itk-dev/ai-lib/issues/14),
-  [#16](https://github.com/itk-dev/ai-lib/issues/16)).
-- Assistant detail page at `/assistant/{id}` rendering the base
-  fields (title, description, framework, language model, tags).
-  Export entry point, organisation / author display, system-prompt
-  preview, and back-link to the catalogue listing all wait for the
-  follow-on data and #15 / #22
-  ([#20](https://github.com/itk-dev/ai-lib/issues/20)).
-- `AssistantFixtures` seeding 20 deterministic assistants — five
-  hand-written authentic catalogue entries (Borgerservice-vejviser,
-  Mødereferent, Journaliseringsassistent, Skole- og dagtilbudssvar,
-  Tilsynsrapport-assistent) plus 15 generated from a fixed set of
-  topics × kommuner × language models, no randomness.
-- Frontpage CardRail and stats now read from the database. The
-  hardcoded `SAMPLE_ASSISTANTS` constant in `FrontpageController` is
-  gone; cards iterate the five most-recent persisted `Assistant`s
-  (newest first) and each card links to `/assistant/{id}`. The
-  Assistanter and Sprogmodeller stat values are computed from real
-  queries; Kommuner stays a placeholder (`10`) until ADR 005 /
-  [#65](https://github.com/itk-dev/ai-lib/issues/65) lands the
-  `Organization` entity.
 - README refocused as human-facing project documentation: project purpose,
   tech stack, and local development bootstrap. Developer command reference
   moved to `CLAUDE.md` (and later `CONTRIBUTING.md`, tracked in #9).
