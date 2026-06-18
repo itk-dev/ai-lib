@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class OrganizationRepositoryTest extends KernelTestCase
 {
+    // Tests that the repository is service-resolvable and round-trips a persisted Organization.
     public function testRepositoryIsResolvableAndPersistsRoundTrip(): void
     {
         self::bootKernel();

@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 final class OrganizationFixturesTest extends TestCase
 {
+    // Tests that load() persists the three baseline kommuner with the expected names and default framework.
     public function testLoadPersistsThreeBaselineOrganisations(): void
     {
         $persisted = $this->captureLoad();
@@ -32,6 +33,7 @@ final class OrganizationFixturesTest extends TestCase
         }
     }
 
+    // Ensures load() emits the same organisations on every run (no randomness).
     public function testLoadIsDeterministic(): void
     {
         $first = array_map(

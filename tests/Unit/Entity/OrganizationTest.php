@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 final class OrganizationTest extends TestCase
 {
+    // Tests that the constructor stores name and default framework and re-indexes emails as a list.
     public function testConstructorPopulatesFieldsAndReindexesEmails(): void
     {
         $organization = new Organization(
@@ -23,6 +24,7 @@ final class OrganizationTest extends TestCase
         self::assertSame('openwebui', $organization->getDefaultFramework());
     }
 
+    // Tests that each setter updates the underlying field and returns the entity for chaining.
     public function testSettersMutateAndReturnStatic(): void
     {
         $organization = new Organization('Aarhus Kommune', ['aarhus.dk'], 'openwebui');
