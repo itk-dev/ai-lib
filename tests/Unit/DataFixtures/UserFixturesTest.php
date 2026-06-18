@@ -21,6 +21,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  */
 final class UserFixturesTest extends TestCase
 {
+    // Tests that load() persists exactly alice@example.test and bob@example.test, hashing the shared fixture password.
     public function testLoadPersistsAliceAndBobWithFixturePassword(): void
     {
         $entityManager = $this->createMock(EntityManagerInterface::class);

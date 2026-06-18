@@ -33,6 +33,7 @@ final class UserRepositoryTest extends KernelTestCase
         $this->repository = $container->get(UserRepository::class);
     }
 
+    // Tests that upgradePassword() writes the new hash on a fixture user and the change persists across reloads.
     public function testUpgradePasswordWritesTheNewHash(): void
     {
         $alice = $this->repository->findOneBy(['email' => 'alice@example.test']);
@@ -49,6 +50,7 @@ final class UserRepositoryTest extends KernelTestCase
         self::assertNotSame($oldHash, $reloaded->getPassword());
     }
 
+    // Ensures upgradePassword() throws UnsupportedUserException when handed a user not of the App\Entity\User class.
     public function testUpgradePasswordRejectsForeignUserType(): void
     {
         $foreignUser = new class () implements PasswordAuthenticatedUserInterface {

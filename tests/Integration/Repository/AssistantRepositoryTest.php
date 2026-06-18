@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class AssistantRepositoryTest extends KernelTestCase
 {
+    // Tests that the repository is resolvable through the container and can persist + find an assistant.
     public function testRepositoryIsResolvableAndPersistsRoundTrip(): void
     {
         self::bootKernel();

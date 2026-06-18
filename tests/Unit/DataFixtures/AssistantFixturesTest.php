@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 final class AssistantFixturesTest extends TestCase
 {
+    // Tests that load() persists 21 entries — six detailed (including a tagless edge-case) and fifteen generated — with unique signatures and the expected language-model rotation.
     public function testLoadPersistsSixDetailedAndFifteenGenerated(): void
     {
         $persisted = $this->captureLoad();
@@ -58,6 +59,7 @@ final class AssistantFixturesTest extends TestCase
         );
     }
 
+    // Ensures two consecutive load() invocations yield the same title sequence (no randomness in the fixture generator).
     public function testLoadIsDeterministic(): void
     {
         $first = array_map(

@@ -25,6 +25,7 @@ final class SecurityControllerTest extends WebTestCase
         $this->client = self::createClient();
     }
 
+    // Tests that GET /login renders the form with the username, password, and CSRF inputs.
     public function testLoginPageRenders(): void
     {
         $this->client->request('GET', '/login');
@@ -35,6 +36,7 @@ final class SecurityControllerTest extends WebTestCase
         self::assertSelectorExists('input[name="_csrf_token"]');
     }
 
+    // Verifies that valid credentials redirect to the frontpage and populate the security token.
     public function testSuccessfulLoginRedirectsToFrontpage(): void
     {
         $crawler = $this->client->request('GET', '/login');
@@ -53,6 +55,7 @@ final class SecurityControllerTest extends WebTestCase
         self::assertSame('alice@example.test', $token->getUserIdentifier());
     }
 
+    // Ensures invalid credentials redirect back to /login and leave the security token unset.
     public function testFailedLoginShowsErrorAndStaysOnLoginPage(): void
     {
         $crawler = $this->client->request('GET', '/login');
@@ -70,6 +73,7 @@ final class SecurityControllerTest extends WebTestCase
         );
     }
 
+    // Verifies that the logout action throws when invoked directly, since the firewall handles it in production.
     public function testLogoutActionThrowsWhenInvokedDirectly(): void
     {
         // The firewall intercepts /logout in production, so the method body
@@ -81,6 +85,7 @@ final class SecurityControllerTest extends WebTestCase
         $controller->logout();
     }
 
+    // Tests that GET /logout clears the security token after a previously-authenticated session.
     public function testLogoutClearsTheSession(): void
     {
         // Sign in first.
