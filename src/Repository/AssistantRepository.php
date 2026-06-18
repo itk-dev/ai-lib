@@ -48,6 +48,8 @@ class AssistantRepository extends ServiceEntityRepository
      * @param int             $perPage  results per page; must be `>= 1`
      *
      * @return Paginator<Assistant>
+     *
+     * @throws \Doctrine\DBAL\Exception when the underlying connection or query execution fails
      */
     public function findPaginated(CatalogCriteria $criteria, int $page, int $perPage): Paginator
     {
@@ -78,6 +80,8 @@ class AssistantRepository extends ServiceEntityRepository
      * buckets are reachable from the current state.
      *
      * @return array<string, int> ordered by count DESC then value ASC; key is the language-model string
+     *
+     * @throws \Doctrine\DBAL\Exception when the underlying connection or query execution fails
      */
     public function languageModelFacetCounts(): array
     {
@@ -92,6 +96,8 @@ class AssistantRepository extends ServiceEntityRepository
      * documented on {@see self::languageModelFacetCounts()}.
      *
      * @return array<string, int> ordered by count DESC then value ASC; key is the framework string
+     *
+     * @throws \Doctrine\DBAL\Exception when the underlying connection or query execution fails
      */
     public function frameworkFacetCounts(): array
     {
@@ -108,6 +114,8 @@ class AssistantRepository extends ServiceEntityRepository
      * @param string $field DQL field name on the `Assistant` alias `a` (e.g. `languageModel`)
      *
      * @return array<string, int> ordered by count DESC then value ASC
+     *
+     * @throws \Doctrine\DBAL\Exception when the underlying connection or query execution fails
      */
     private function facetCounts(string $field): array
     {

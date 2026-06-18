@@ -21,6 +21,8 @@ final class QueryStringList
      * @param string  $key     the query-string key holding the list (without the trailing `[]`)
      *
      * @return list<string> ordered as in the original request; duplicates preserved
+     *
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException when the parameter cannot be reduced to an array (e.g. `?key=scalar` instead of `?key[]=…`)
      */
     public function fromRequest(Request $request, string $key): array
     {
