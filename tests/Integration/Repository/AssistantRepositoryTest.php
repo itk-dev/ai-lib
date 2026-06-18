@@ -19,6 +19,7 @@ final class AssistantRepositoryTest extends KernelTestCase
         $this->repository = self::getContainer()->get(AssistantRepository::class);
     }
 
+    // Tests that the repository is wired through the container and finds a known fixture row by title.
     public function testRepositoryIsResolvableAndFindsFixtureRow(): void
     {
         self::assertInstanceOf(AssistantRepository::class, $this->repository);
@@ -30,6 +31,7 @@ final class AssistantRepositoryTest extends KernelTestCase
         self::assertSame(['borgerservice', 'social', 'jura'], $assistant->getTags());
     }
 
+    // Tests that empty criteria returns every fixture row (no IN clauses applied).
     public function testFindPaginatedReturnsAllRowsForEmptyCriteria(): void
     {
         $paginator = $this->repository->findPaginated(new CatalogCriteria(), page: 1, perPage: 100);
@@ -38,6 +40,7 @@ final class AssistantRepositoryTest extends KernelTestCase
         self::assertSame(21, iterator_count($paginator->getIterator()));
     }
 
+    // Tests that the languageModels criterion narrows results to rows whose languageModel is in the selected list.
     public function testFindPaginatedFiltersByLanguageModel(): void
     {
         $criteria = new CatalogCriteria(languageModels: ['gpt-4o']);
@@ -54,6 +57,7 @@ final class AssistantRepositoryTest extends KernelTestCase
         self::assertCount(\count($models), $paginator);
     }
 
+    // Tests that the frameworks criterion narrows results by framework value via the IN clause.
     public function testFindPaginatedFiltersByFramework(): void
     {
         $criteria = new CatalogCriteria(frameworks: ['openwebui']);
@@ -70,6 +74,7 @@ final class AssistantRepositoryTest extends KernelTestCase
         self::assertSame(['openwebui'], array_values(array_unique($frameworks)));
     }
 
+    // Ensures pagination yields disjoint pages in id-ASC order.
     public function testFindPaginatedAppliesOffsetForPaging(): void
     {
         $perPage = 10;
@@ -86,6 +91,7 @@ final class AssistantRepositoryTest extends KernelTestCase
         self::assertGreaterThan(max($firstIds), min($secondIds), 'page 2 starts after page 1 by id-ASC order');
     }
 
+    // Verifies the facet-count helpers reflect the fixture baseline (five LM buckets summing to 21, single openwebui bucket).
     public function testFacetCountsReflectFixtureBaseline(): void
     {
         $languageModels = $this->repository->languageModelFacetCounts();

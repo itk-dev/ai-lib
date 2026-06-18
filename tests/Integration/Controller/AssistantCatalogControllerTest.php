@@ -26,6 +26,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         $this->client = self::createClient();
     }
 
+    // Tests that GET /search renders the page heading and at least one fixture-backed assistant card.
     public function testIndexRendersResultsHeadingAndCards(): void
     {
         $crawler = $this->client->request('GET', '/search');
@@ -39,6 +40,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         );
     }
 
+    // Tests that ?language_model[]=… narrows the card list to the matching facet count and renders the active-filter chip.
     public function testLanguageModelFilterNarrowsResults(): void
     {
         $expected = self::getContainer()->get(AssistantRepository::class)->languageModelFacetCounts()['gpt-4o'] ?? 0;
@@ -55,6 +57,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertSelectorTextContains('[aria-label="Aktive filtre"]', 'gpt-4o');
     }
 
+    // Ensures a filter value that matches nothing renders the empty-state copy and zero card links.
     public function testEmptyStateRendersWhenNoResults(): void
     {
         $crawler = $this->client->request('GET', '/search?language_model%5B%5D=does-not-exist');
@@ -64,6 +67,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertCount(0, $crawler->filter('a[href^="/assistant/"]'));
     }
 
+    // Verifies pagination renders a current-page badge and a working next link when results span multiple pages.
     public function testPaginationShowsForMultiplePages(): void
     {
         // 21 fixture rows / PER_PAGE 12 → 2 pages.
@@ -82,6 +86,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertCount(1, $page2Link, 'numbered page-2 link is present');
     }
 
+    // Ensures an active-filter chip's href drops only its targeted value while preserving the other filters.
     public function testChipRemoveLinkDropsTheFilteredValue(): void
     {
         $crawler = $this->client->request(

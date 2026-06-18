@@ -17,6 +17,7 @@ final class QueryStringListTest extends TestCase
         $this->helper = new QueryStringList();
     }
 
+    // Tests that a missing query key returns an empty list.
     public function testReturnsEmptyListWhenKeyMissing(): void
     {
         $request = Request::create('/search');
@@ -24,6 +25,7 @@ final class QueryStringListTest extends TestCase
         self::assertSame([], $this->helper->fromRequest($request, 'language_model'));
     }
 
+    // Tests that multiple `?key[]=value` entries are returned as a flat ordered list.
     public function testReturnsAllStringValues(): void
     {
         $request = Request::create('/search', 'GET', ['language_model' => ['gpt-4o', 'mistral-large']]);
@@ -34,6 +36,7 @@ final class QueryStringListTest extends TestCase
         );
     }
 
+    // Ensures empty-string entries are filtered out of the result.
     public function testDropsEmptyStrings(): void
     {
         $request = Request::create('/search', 'GET', ['language_model' => ['', 'gpt-4o', '']]);
@@ -41,6 +44,7 @@ final class QueryStringListTest extends TestCase
         self::assertSame(['gpt-4o'], $this->helper->fromRequest($request, 'language_model'));
     }
 
+    // Verifies that nested-array entries are skipped instead of crashing the type check.
     public function testDropsNonStringEntries(): void
     {
         // A nested-array value (e.g. `?language_model[foo]=bar`) reaches the

@@ -18,6 +18,7 @@ final class CatalogCriteriaTest extends TestCase
         $this->lists = new QueryStringList();
     }
 
+    // Tests that an empty request produces a criteria with no `q`, empty facets, and all helpers reporting "nothing set".
     public function testFromRequestWithEmptyQueryReturnsEmptyCriteria(): void
     {
         $criteria = CatalogCriteria::fromRequest(Request::create('/search'), $this->lists);
@@ -30,6 +31,7 @@ final class CatalogCriteriaTest extends TestCase
         self::assertSame([], $criteria->toQueryArray());
     }
 
+    // Ensures a whitespace-only `?q=` is normalised to null.
     public function testFromRequestNormalisesWhitespaceQToNull(): void
     {
         $criteria = CatalogCriteria::fromRequest(
@@ -41,6 +43,7 @@ final class CatalogCriteriaTest extends TestCase
         self::assertTrue($criteria->isEmpty());
     }
 
+    // Verifies that a populated request parses into `q` plus both facet lists and round-trips through toQueryArray().
     public function testFromRequestReadsQAndBothFacets(): void
     {
         $criteria = CatalogCriteria::fromRequest(
@@ -62,6 +65,7 @@ final class CatalogCriteriaTest extends TestCase
         );
     }
 
+    // Tests that activeFilters() yields chips in fixed order — `q` first, then language models, then frameworks — with the search-query label quoted.
     public function testActiveFiltersYieldsQThenLanguageModelsThenFrameworks(): void
     {
         $criteria = new CatalogCriteria(
@@ -83,6 +87,7 @@ final class CatalogCriteriaTest extends TestCase
         self::assertSame('gpt-4o', $filters[1]->label, 'facet chips display the raw value');
     }
 
+    // Ensures a chip's removeQuery drops only its own value while preserving siblings on the same facet and the other facets.
     public function testActiveFilterRemoveQueryDropsOnlyTargetedValue(): void
     {
         $criteria = new CatalogCriteria(
@@ -99,6 +104,7 @@ final class CatalogCriteriaTest extends TestCase
         );
     }
 
+    // Verifies that removing the last value of a facet drops the facet key entirely from removeQuery.
     public function testActiveFilterRemoveQueryDropsKeyWhenLastValueRemoved(): void
     {
         $criteria = new CatalogCriteria(
