@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Catalogue listing page with filters
+  ([#15](https://github.com/itk-dev/ai-lib/issues/15)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
   `symfony-8` template (phpfpm 8.4, nginx, MariaDB, Mailpit, Traefik),
   including dev dependencies for coding standards (`php-cs-fixer`,
