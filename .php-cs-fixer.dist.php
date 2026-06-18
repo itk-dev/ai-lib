@@ -13,8 +13,4 @@ $finder->ignoreVCSIgnored(true);
 $config = new PhpCsFixer\Config();
 $config->setFinder($finder);
 
-$config->setRules([
-  '@Symfony' => true,
-]);
-
 return $config;
