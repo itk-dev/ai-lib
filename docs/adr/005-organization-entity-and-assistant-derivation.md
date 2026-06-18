@@ -22,7 +22,7 @@ pieces of metadata that pull the design in the same direction:
   (a list — an assistant may be shared across kommuner).
 
 In practice, **framework** and **language model** are decided at the
-organisation level: a kommune commits to a deployment of OpenWebUI
+organisation level: a municipality commits to a deployment of OpenWebUI
 plus a chosen LLM, and every assistant they create runs on that
 stack. Asking a user to re-pick those values for every new assistant
 is poor UX and creates a long tail of accidentally-misaligned rows.
