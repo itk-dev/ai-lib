@@ -125,6 +125,29 @@ the user decides whether the production change or the test is wrong.
 Style conventions code in this project follows, on top of the linter
 rules in "Coding standards" above.
 
+### Defer to symfony.com/doc when implementing Symfony features
+
+When you add or change functionality that lives on top of a Symfony
+component — controllers, routing, security, forms, validation,
+Doctrine integration, console commands, messenger, mailer,
+translation, asset mapping, Twig extensions, etc. — open the
+relevant chapter on <https://symfony.com/doc> first and base the
+implementation on the approach the docs show. The docs name the
+component, demonstrate the idiom, and link the configuration
+references; following them keeps the code in step with the
+framework instead of drifting into bespoke shapes that look
+reasonable but miss built-in conventions.
+
+When the docs offer more than one path (e.g. PHP attributes vs.
+YAML config, MapEntity vs. ParamConverter), pick the one that
+matches what's already in this codebase. If nothing comparable
+exists yet, prefer the most recent idiom shown in the docs — the
+attribute-driven, autoconfigured, autowired style.
+
+Cite the relevant doc URL in the PR description for any change
+that introduces a Symfony-component idiom for the first time, so
+reviewers can compare the implementation against the source.
+
 ### Controllers stay thin
 
 Controllers handle routes and template/response rendering only — no business
