@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'profile.edit.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <section class="max-w-md">
+        <twig:Eyebrow as="p" class="mb-4">{{ 'profile.edit.eyebrow'|trans }}</twig:Eyebrow>
+        <h1 class="mb-6 font-display text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-tight tracking-tight text-ink">
+            {{ 'profile.edit.heading'|trans }}
+        </h1>
+
+        {% if error %}
+            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
+                {{ error|trans }}
+            </div>
+        {% endif %}
+
+        <form action="{{ path('app_profile_edit') }}" method="post" class="grid gap-4">
+            <twig:Form:Label for="inputName" text="{{ 'profile.edit.name_label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputName"
+                    name="name"
+                    type="text"
+                    value="{{ submitted_name }}"
+                    autocomplete="name"
+                    required
+                    autofocus
+                />
+            </twig:Form:Label>
+
+            <input type="hidden" name="_token" value="{{ csrf_token('profile-edit') }}">
+
+            <div class="flex items-center gap-4">
+                <twig:Form:Button type="submit">
+                    {{ 'profile.edit.submit'|trans }}
+                </twig:Form:Button>
+                <a class="text-sm text-text underline hover:text-primary" href="{{ path('app_profile_show') }}">
+                    {{ 'profile.edit.cancel'|trans }}
+                </a>
+            </div>
+        </form>
+    </section>
+{% endblock %}

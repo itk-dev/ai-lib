@@ -79,6 +79,28 @@ final class UserManager
     }
 
     /**
+     * Update a user's display name in place.
+     *
+     * Empty names are rejected so the admin user list and the
+     * profile UI never have to render a blank cell.
+     *
+     * @param User   $user the user whose name to update
+     * @param string $name the new display name; must be non-empty after trimming
+     *
+     * @throws \InvalidArgumentException when `$name` is empty after trimming
+     */
+    public function updateName(User $user, string $name): void
+    {
+        $trimmed = trim($name);
+        if ('' === $trimmed) {
+            throw new \InvalidArgumentException('Name must not be empty.');
+        }
+
+        $user->setName($trimmed);
+        $this->entityManager->flush();
+    }
+
+    /**
      * Replace a user's password with a freshly hashed copy.
      *
      * @param string $email            e-mail of the user to update
