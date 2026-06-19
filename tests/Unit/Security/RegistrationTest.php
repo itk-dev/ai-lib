@@ -17,6 +17,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class RegistrationTest extends TestCase
 {
+    // Ensures malformed emails are rejected with the invalid_email translation key.
     public function testRejectsInvalidEmail(): void
     {
         $reg = $this->registration(allowList: 'example.test');
@@ -27,6 +28,7 @@ final class RegistrationTest extends TestCase
         $reg->register('not-an-email', 'Carol', 'secret', 'secret');
     }
 
+    // Ensures emails outside the allow-list raise domain_not_allowed.
     public function testRejectsDomainNotOnAllowList(): void
     {
         $reg = $this->registration(allowList: 'aarhus.dk');
@@ -37,6 +39,7 @@ final class RegistrationTest extends TestCase
         $reg->register('carol@example.test', 'Carol', 'secret', 'secret');
     }
 
+    // Ensures mismatched password + confirmation raise password_mismatch.
     public function testRejectsPasswordMismatch(): void
     {
         $reg = $this->registration(allowList: 'example.test');
@@ -47,6 +50,7 @@ final class RegistrationTest extends TestCase
         $reg->register('carol@example.test', 'Carol', 'secret', 'different');
     }
 
+    // Ensures whitespace-only names raise empty_name.
     public function testRejectsEmptyName(): void
     {
         $reg = $this->registration(allowList: 'example.test');
@@ -57,6 +61,7 @@ final class RegistrationTest extends TestCase
         $reg->register('carol@example.test', '   ', 'secret', 'secret');
     }
 
+    // Ensures empty passwords raise empty_password.
     public function testRejectsEmptyPassword(): void
     {
         $reg = $this->registration(allowList: 'example.test');
@@ -67,6 +72,7 @@ final class RegistrationTest extends TestCase
         $reg->register('carol@example.test', 'Carol', '', '');
     }
 
+    // Verifies UserManager's duplicate-email DomainException is translated into a localised RegistrationException.
     public function testTranslatesDuplicateEmailIntoRegistrationException(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);
@@ -87,6 +93,7 @@ final class RegistrationTest extends TestCase
         $reg->register('carol@example.test', 'Carol', 'secret', 'secret');
     }
 
+    // Tests the happy path: valid submission persists a Pending user with trimmed name and hashed password.
     public function testPersistsPendingUserOnHappyPath(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);

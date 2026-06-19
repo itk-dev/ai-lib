@@ -26,6 +26,7 @@ final class RegistrationControllerTest extends WebTestCase
         $this->client = self::createClient();
     }
 
+    // Tests that the /register form renders the expected fields and CSRF token.
     public function testRegisterPageRenders(): void
     {
         $this->client->request('GET', '/register');
@@ -38,6 +39,7 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertSelectorExists('input[name="_token"]');
     }
 
+    // Verifies a valid submission creates a Pending user and redirects to the pending page.
     public function testSuccessfulRegistrationCreatesPendingUserAndRedirects(): void
     {
         $crawler = $this->client->request('GET', '/register');
@@ -59,6 +61,7 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertSame(UserStatus::Pending, $user->getStatus());
     }
 
+    // Verifies the hand-off through AccountStatusChecker: a freshly-registered user cannot log in.
     public function testPendingUserCreatedByRegistrationCannotLogIn(): void
     {
         $crawler = $this->client->request('GET', '/register');
@@ -84,6 +87,7 @@ final class RegistrationControllerTest extends WebTestCase
         );
     }
 
+    // Ensures emails outside the allow-list are rejected with 422 and no user persisted.
     public function testRejectsNonAllowListedDomain(): void
     {
         $crawler = $this->client->request('GET', '/register');
@@ -101,6 +105,7 @@ final class RegistrationControllerTest extends WebTestCase
         );
     }
 
+    // Ensures mismatched password + confirmation are rejected with 422.
     public function testRejectsPasswordMismatch(): void
     {
         $crawler = $this->client->request('GET', '/register');
@@ -115,6 +120,7 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertStringContainsString('ikke ens', $crawler->filter('body')->text());
     }
 
+    // Ensures registering with an existing email is rejected with 422.
     public function testRejectsDuplicateEmail(): void
     {
         $crawler = $this->client->request('GET', '/register');
@@ -130,6 +136,7 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertStringContainsString('allerede en konto', $crawler->filter('body')->text());
     }
 
+    // Ensures an invalid CSRF token yields 403 and no user is persisted.
     public function testRejectsInvalidCsrfToken(): void
     {
         $this->client->request('POST', '/register', [
@@ -146,6 +153,7 @@ final class RegistrationControllerTest extends WebTestCase
         );
     }
 
+    // Tests that an authenticated visitor hitting /register is redirected to the frontpage.
     public function testLoggedInUserIsRedirectedAwayFromRegister(): void
     {
         $this->loginAsAlice();
@@ -155,6 +163,7 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertResponseRedirects('/');
     }
 
+    // Tests that an authenticated visitor hitting /register/pending is redirected to the frontpage.
     public function testLoggedInUserIsRedirectedAwayFromPendingPage(): void
     {
         $this->loginAsAlice();
