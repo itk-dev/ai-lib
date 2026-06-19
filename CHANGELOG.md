@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Anonymous self-signup at `/register` per ADR 006. The route is
+- Anonymous self-signup at `/register`. The route is
   open to unauthenticated visitors; submissions go through
   `App\Security\Registration` which validates the email format,
   checks the right-hand-side domain against an env-backed allow-list
