@@ -1,17 +1,24 @@
 {% props
     type = 'submit',
     variant = 'primary',
+    shape = 'rounded',
     size = 'md',
 %}
-{# `variant` and `size` map to Tailwind utility groups so future variants #}
-{# (secondary, danger, etc.) and sizes (sm, lg) can be added in one place. #}
+{# `variant`, `shape`, and `size` map to Tailwind utility groups so future #}
+{# variants (secondary, danger, etc.), shapes, and sizes can be added in #}
+{# one place. #}
 {% set variants = {
     primary: 'bg-primary text-primary-ink hover:bg-primary-hover',
 } %}
+{% set shapes = {
+    rounded: 'rounded-lg',
+    pill: 'rounded-full',
+} %}
 {% set sizes = {
-    md: 'px-4 py-2',
+    sm: 'px-3 py-1.5 text-sm font-medium',
+    md: 'px-4 py-2 font-semibold',
 } %}
 <button type="{{ type }}"
-        class="rounded-lg font-semibold transition-colors {{ sizes[size] }} {{ variants[variant] }}">
+        class="inline-flex items-center transition-colors {{ shapes[shape] }} {{ sizes[size] }} {{ variants[variant] }}">
     {% block content %}{% endblock %}
 </button>
