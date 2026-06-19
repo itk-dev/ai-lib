@@ -23,6 +23,7 @@ final class ProfileControllerTest extends WebTestCase
         $this->client = self::createClient();
     }
 
+    // Tests that an anonymous visitor is redirected to /login when hitting /profile.
     public function testProfilePageRedirectsAnonymousToLogin(): void
     {
         $this->client->request('GET', '/profile');
@@ -31,6 +32,7 @@ final class ProfileControllerTest extends WebTestCase
         self::assertStringContainsString('/login', (string) $this->client->getResponse()->headers->get('Location'));
     }
 
+    // Tests that an anonymous visitor is redirected to /login when hitting /profile/edit.
     public function testEditPageRedirectsAnonymousToLogin(): void
     {
         $this->client->request('GET', '/profile/edit');
@@ -39,6 +41,7 @@ final class ProfileControllerTest extends WebTestCase
         self::assertStringContainsString('/login', (string) $this->client->getResponse()->headers->get('Location'));
     }
 
+    // Tests that the profile page renders the signed-in user's name and email.
     public function testShowRendersTheCurrentUsersNameAndEmail(): void
     {
         $this->loginAsAlice();
@@ -51,6 +54,7 @@ final class ProfileControllerTest extends WebTestCase
         self::assertStringContainsString('alice@example.test', $body);
     }
 
+    // Ensures the edit form is pre-filled with the user's current name on GET.
     public function testEditRendersFormPrefilledWithTheCurrentName(): void
     {
         $this->loginAsAlice();
@@ -61,6 +65,7 @@ final class ProfileControllerTest extends WebTestCase
         self::assertSame('Alice', $crawler->filter('input[name="name"]')->attr('value'));
     }
 
+    // Verifies a successful edit persists the new name and surfaces the success flash.
     public function testEditPersistsTheNewNameAndShowsTheFlash(): void
     {
         $this->loginAsAlice();
@@ -85,6 +90,7 @@ final class ProfileControllerTest extends WebTestCase
         self::assertSame('Alice Andersen', $reloaded->getName());
     }
 
+    // Ensures a whitespace-only name is rejected with 422 and the persisted name is unchanged.
     public function testEditRejectsEmptyNameAndKeepsTheCurrentValue(): void
     {
         $this->loginAsAlice();
@@ -106,6 +112,7 @@ final class ProfileControllerTest extends WebTestCase
         self::assertSame('Alice', $reloaded->getName(), 'Empty submit must not have mutated the persisted name.');
     }
 
+    // Ensures an invalid CSRF token yields 403 and the persisted name is unchanged.
     public function testEditRejectsInvalidCsrfTokenAndDoesNotUpdate(): void
     {
         $this->loginAsAlice();
