@@ -1,0 +1,9 @@
+{% props name, value, checked = false, id = null %}
+<input
+    type="checkbox"
+    {% if id %}id="{{ id }}"{% endif %}
+    name="{{ name }}"
+    value="{{ value }}"
+    {% if checked %}checked{% endif %}
+    class="h-4 w-4 rounded border-line text-primary accent-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+>

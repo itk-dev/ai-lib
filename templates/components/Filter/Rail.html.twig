@@ -1,0 +1,31 @@
+{% props
+    action,
+    reset = false,
+    eyebrow = 'catalog.filters.eyebrow',
+    heading = 'catalog.filters.heading',
+    applyLabel = 'catalog.filters.apply',
+    resetLabel = 'catalog.filters.reset',
+%}
+<aside aria-label="{{ heading|trans }}"
+       class="flex flex-col gap-6 rounded-xl border border-line bg-surface p-5 lg:sticky lg:top-28">
+    <header>
+        <twig:Eyebrow as="p" class="mb-2">{{ eyebrow|trans }}</twig:Eyebrow>
+        <h2 class="font-display text-2xl font-medium tracking-tight text-ink">
+            {{ heading|trans }}
+        </h2>
+    </header>
+
+    <form method="get" action="{{ action }}" class="flex flex-col gap-6">
+        {% block content %}{% endblock %}
+
+        <div class="flex flex-wrap items-center gap-3">
+            <twig:Form:Button shape="pill" size="sm">{{ applyLabel|trans }}</twig:Form:Button>
+            {% if reset %}
+                <a href="{{ action }}"
+                   class="text-sm text-text-muted no-underline hover:text-primary">
+                    {{ resetLabel|trans }}
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</aside>
