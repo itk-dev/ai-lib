@@ -13,6 +13,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 final class AccountStatusCheckerTest extends TestCase
 {
+    // Tests that an Approved user passes the pre-auth hook without raising.
     public function testApprovedUserPassesPreAuth(): void
     {
         $user = (new User())
@@ -25,6 +26,7 @@ final class AccountStatusCheckerTest extends TestCase
         self::assertTrue(true);
     }
 
+    // Ensures a Pending user is rejected with the 'account.pending' message key.
     public function testPendingUserIsRejectedWithLocalisedMessage(): void
     {
         $user = (new User())
@@ -37,6 +39,7 @@ final class AccountStatusCheckerTest extends TestCase
         (new AccountStatusChecker())->checkPreAuth($user);
     }
 
+    // Ensures a Blocked user is rejected with the 'account.blocked' message key.
     public function testBlockedUserIsRejectedWithLocalisedMessage(): void
     {
         $user = (new User())
@@ -49,6 +52,7 @@ final class AccountStatusCheckerTest extends TestCase
         (new AccountStatusChecker())->checkPreAuth($user);
     }
 
+    // Verifies non-App User implementations fall through to the password checker.
     public function testForeignUserImplementationsAreIgnored(): void
     {
         $foreignUser = $this->createMock(UserInterface::class);
@@ -58,6 +62,7 @@ final class AccountStatusCheckerTest extends TestCase
         self::assertTrue(true);
     }
 
+    // Tests that checkPostAuth does nothing (required by the interface).
     public function testCheckPostAuthIsANoOp(): void
     {
         $user = (new User())->setStatus(UserStatus::Approved);

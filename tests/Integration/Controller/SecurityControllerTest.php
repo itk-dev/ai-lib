@@ -103,6 +103,7 @@ final class SecurityControllerTest extends WebTestCase
         );
     }
 
+    // Tests that a Pending user is rejected at login with the localised pending message.
     public function testPendingUserCannotLogIn(): void
     {
         $this->client->getContainer()->get(UserManager::class)->createUser(
@@ -132,6 +133,7 @@ final class SecurityControllerTest extends WebTestCase
         );
     }
 
+    // Tests that a Blocked user is rejected at login with the localised blocked message.
     public function testBlockedUserCannotLogIn(): void
     {
         $this->client->getContainer()->get(UserManager::class)->createUser(
