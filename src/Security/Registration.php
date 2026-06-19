@@ -19,7 +19,7 @@ use App\Enum\UserStatus;
  *    {@see AllowedEmailDomains}.
  * 3. The two password fields must match.
  * 4. The name must be non-empty (rule shared with {@see UserManager}).
- 
+
  *
  * On success the new {@see User} is persisted with
  * `status = Pending`. The {@see \App\Security\AccountStatusChecker}
