@@ -14,6 +14,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
 final class ManageUserVoterTest extends TestCase
 {
+    // Tests that the voter denies access when the token has no User actor.
     public function testDeniesWhenActorIsNotAUser(): void
     {
         $voter = $this->voterAllowing();
@@ -25,6 +26,7 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Ensures access is denied when the actor lacks ROLE_DOMAIN_MANAGER even within the same domain.
     public function testDeniesWhenActorLacksDomainManagerRole(): void
     {
         $voter = $this->voterWithRoles([]);
@@ -36,6 +38,7 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Verifies ROLE_ADMIN short-circuits the same-domain check and grants across any domain.
     public function testGrantsAdminAcrossDomains(): void
     {
         $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER, Roles::ADMIN]);
@@ -47,6 +50,7 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Tests that a domain manager can act on a subject in the same email domain.
     public function testGrantsDomainManagerWithinSameDomain(): void
     {
         $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
@@ -58,6 +62,7 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Ensures a domain manager cannot act on subjects in a different email domain.
     public function testDeniesDomainManagerAcrossDifferentDomains(): void
     {
         $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
@@ -69,6 +74,7 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Verifies the domain comparison is case-insensitive on both actor and subject.
     public function testIsCaseInsensitiveOnTheDomainComparison(): void
     {
         $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
@@ -80,6 +86,7 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Tests that the voter denies when the subject has no email to derive a domain from.
     public function testDeniesWhenSubjectHasNoEmail(): void
     {
         $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
@@ -92,6 +99,7 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Tests that the voter denies when the actor has no email to derive a domain from.
     public function testDeniesWhenActorHasNoEmail(): void
     {
         $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
@@ -103,6 +111,7 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Ensures the voter abstains on attributes it doesn't claim to support.
     public function testAbstainsOnUnsupportedAttribute(): void
     {
         $voter = $this->voterAllowing();
@@ -114,6 +123,7 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Ensures the voter abstains on subjects that aren't User instances.
     public function testAbstainsOnUnsupportedSubject(): void
     {
         $voter = $this->voterAllowing();
