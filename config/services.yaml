@@ -7,12 +7,19 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    registration_allowed_email_domains_default: 'example.test'
 
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            # ADR 006: registration self-signup allow-list. The env var is the
+            # production source of truth; the default below keeps dev / test
+            # bootable when the var is unset (only `example.test` lets through,
+            # matching the baseline fixtures and the integration test domain).
+            $allowedEmailDomainsRaw: '%env(default:registration_allowed_email_domains_default:REGISTRATION_ALLOWED_EMAIL_DOMAINS)%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
