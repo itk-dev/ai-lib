@@ -21,8 +21,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  * {@see CustomUserMessageAccountStatusException} halts the flow and
  * surfaces the (localised) translation key on the login form.
  *
- * Identity state (this checker) stays orthogonal to authorisation
- * (roles, voters) per ADR 006. A `Blocked` user retains the roles
+ * A `Blocked` user retains the roles
  * they had before being blocked — they just can't sign in to exercise
  * them.
  */
