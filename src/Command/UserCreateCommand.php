@@ -38,6 +38,7 @@ final class UserCreateCommand extends Command
     {
         $this
             ->addArgument('email', InputArgument::REQUIRED, 'The user\'s e-mail address (must be unique).')
+            ->addArgument('name', InputArgument::REQUIRED, 'The user\'s display name.')
             ->addArgument('password', InputArgument::REQUIRED, 'The user\'s password in clear-text — will be hashed.');
     }
 
@@ -53,10 +54,11 @@ final class UserCreateCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $email = (string) $input->getArgument('email');
+        $name = (string) $input->getArgument('name');
         $password = (string) $input->getArgument('password');
 
         try {
-            $user = $this->userManager->createUser($email, $password);
+            $user = $this->userManager->createUser($email, $name, $password);
         } catch (\DomainException|\InvalidArgumentException $e) {
             $io->error($e->getMessage());
 

@@ -19,6 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   queue (#64) and the scoped user-management list view (#85) per
   ADR 006
   ([#84](https://github.com/itk-dev/ai-lib/issues/84)).
+- `User.name` (display name) and `User.status` (lifecycle enum:
+  `pending | approved | blocked`) per ADR 006, plus the
+  `App\Enum\UserStatus` PHP enum. `UserManager::createUser()` now
+  requires `name` and accepts an optional `status` (default
+  `Approved` for the console / fixture path; the registration flow
+  in #62 will pass `Pending`). The `app:user:create` console command
+  takes a third `name` argument; fixtures seed Alice + Bob with
+  display names. Schema is added via a single migration that
+  backfills any existing rows with `name = ''` and
+  `status = 'approved'`
+  ([#45](https://github.com/itk-dev/ai-lib/issues/45),
+  [#83](https://github.com/itk-dev/ai-lib/issues/83)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
   `symfony-8` template (phpfpm 8.4, nginx, MariaDB, Mailpit, Traefik),
   including dev dependencies for coding standards (`php-cs-fixer`,

@@ -5,10 +5,20 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Entity;
 
 use App\Entity\User;
+use App\Enum\UserStatus;
 use PHPUnit\Framework\TestCase;
 
 final class UserTest extends TestCase
 {
+    public function testConstructorDefaultsStatusToPending(): void
+    {
+        $user = new User();
+
+        self::assertSame(UserStatus::Pending, $user->getStatus());
+        self::assertSame('', $user->getName());
+    }
+
+
     public function testGetRolesAlwaysIncludesRoleUser(): void
     {
         $user = new User();
@@ -68,6 +78,12 @@ final class UserTest extends TestCase
 
         self::assertSame($user, $user->setRoles(['ROLE_EDITOR']));
         self::assertSame(['ROLE_EDITOR', 'ROLE_USER'], $user->getRoles());
+
+        self::assertSame($user, $user->setName('Bob'));
+        self::assertSame('Bob', $user->getName());
+
+        self::assertSame($user, $user->setStatus(UserStatus::Approved));
+        self::assertSame(UserStatus::Approved, $user->getStatus());
 
         self::assertNull($user->getId());
     }

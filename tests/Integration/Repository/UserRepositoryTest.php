@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Repository;
 
+use App\Entity\User;
+use App\Enum\UserStatus;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -61,5 +64,25 @@ final class UserRepositoryTest extends KernelTestCase
         $this->expectException(UnsupportedUserException::class);
 
         $this->repository->upgradePassword($foreignUser, 'irrelevant');
+    }
+
+    public function testStatusEnumRoundTripsThroughThePersistedRow(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $user = (new User())
+            ->setEmail('eve@example.test')
+            ->setName('Eve')
+            ->setPassword('hash')
+            ->setStatus(UserStatus::Blocked);
+        $em->persist($user);
+        $em->flush();
+        $em->clear();
+
+        $reloaded = $this->repository->find($user->getId());
+
+        self::assertNotNull($reloaded);
+        self::assertSame('Eve', $reloaded->getName());
+        self::assertSame(UserStatus::Blocked, $reloaded->getStatus());
     }
 }
