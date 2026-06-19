@@ -10,11 +10,11 @@ use App\Entity\User;
  * Pure helpers for extracting an organisation-identifying domain from
  * a {@see User}'s email address.
  *
- * The "domain manager" model in ADR 006 derives a user's organisational
+ * The "domain manager" model derives a user's organisational
  * scope from the right-hand side of their email rather than carrying a
  * separate column. Both the voter ({@see Voter\ManageUserVoter}) and
- * the future scoped user-management repository finder (#85) need the
- * same normalisation, so it lives here in one place.
+ * user-management repository need th same normalisation, so it lives here in
+ * one place.
  */
 final class EmailDomain
 {
