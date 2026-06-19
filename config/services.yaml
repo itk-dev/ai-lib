@@ -15,7 +15,7 @@ services:
         autowire: true # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
         bind:
-            # ADR 006: registration self-signup allow-list. The env var is the
+            # The env var is the
             # production source of truth; the default below keeps dev / test
             # bootable when the var is unset (only `example.test` lets through,
             # matching the baseline fixtures and the integration test domain).
