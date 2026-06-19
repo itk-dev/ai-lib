@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Security;
 
+use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -33,13 +34,15 @@ final class UserManagerTest extends KernelTestCase
         $this->passwordHasher = $container->get(UserPasswordHasherInterface::class);
     }
 
-    // Tests that createUser() persists a new user with the password hashed and verifiable against the original plaintext.
+    // Tests the happy path: createUser persists a user with hashed password, name, default Approved status, and ROLE_USER.
     public function testCreatesAndPersistsUserWithHashedPassword(): void
     {
-        $user = $this->userManager->createUser('charlie@example.test', 'secret');
+        $user = $this->userManager->createUser('charlie@example.test', 'Charlie', 'secret');
 
         self::assertNotNull($user->getId());
         self::assertSame('charlie@example.test', $user->getEmail());
+        self::assertSame('Charlie', $user->getName());
+        self::assertSame(UserStatus::Approved, $user->getStatus());
         self::assertSame(['ROLE_USER'], $user->getRoles());
         self::assertNotSame('secret', $user->getPassword(), 'Password must be hashed.');
         self::assertTrue(
@@ -52,7 +55,7 @@ final class UserManagerTest extends KernelTestCase
     // Verifies that extra roles passed to createUser() are stored alongside the implicit ROLE_USER.
     public function testCreateUserStoresExtraRoles(): void
     {
-        $user = $this->userManager->createUser('admin@example.test', 'secret', ['ROLE_ADMIN']);
+        $user = $this->userManager->createUser('admin@example.test', 'Admin', 'secret', ['ROLE_ADMIN']);
 
         self::assertSame(['ROLE_ADMIN', 'ROLE_USER'], $user->getRoles());
     }
@@ -64,7 +67,7 @@ final class UserManagerTest extends KernelTestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('alice@example.test');
 
-        $this->userManager->createUser('alice@example.test', 'other');
+        $this->userManager->createUser('alice@example.test', 'Alice', 'other');
     }
 
     // Ensures createUser() throws InvalidArgumentException when the password is empty.
@@ -73,7 +76,7 @@ final class UserManagerTest extends KernelTestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Password must not be empty.');
 
-        $this->userManager->createUser('charlie@example.test', '');
+        $this->userManager->createUser('charlie@example.test', 'Charlie', '');
     }
 
     // Tests that changePassword() replaces the stored hash and the new password verifies (while the old one no longer does).
