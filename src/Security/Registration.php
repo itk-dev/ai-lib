@@ -7,26 +7,19 @@ namespace App\Security;
 use App\Entity\User;
 use App\Enum\UserStatus;
 
-// `App\Security\EmailDomain::of()` lives in PR #87 (issue #84). Until
-// that PR lands on develop, this branch can't depend on it without
-// pulling in unrelated security-voter code, so the same one-line
-// extraction is inlined below. When #87 + this PR are both on develop,
-// fold this back into a call to `EmailDomain::of()` (no test churn
-// expected — the contract is identical: lowercased post-`@`, or null).
-
 /**
  * Public-signup orchestration.
  *
  * Sits between {@see \App\Controller\RegistrationController} and the
  * existing {@see UserManager}, owning the rules that distinguish a
- * legitimate self-signup attempt from one that should be rejected
- * (ADR 006):
+ * legitimate self-signup attempt from one that should be rejected.
  *
  * 1. The submitted email must syntactically parse as an email.
  * 2. The right-hand side of the email must be on the allow-list
  *    {@see AllowedEmailDomains}.
  * 3. The two password fields must match.
  * 4. The name must be non-empty (rule shared with {@see UserManager}).
+ 
  *
  * On success the new {@see User} is persisted with
  * `status = Pending`. The {@see \App\Security\AccountStatusChecker}
