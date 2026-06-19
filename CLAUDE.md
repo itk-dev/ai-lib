@@ -105,6 +105,49 @@ These come from the `symfony-8` template — don't edit them without a reason.
 If a project-specific override is needed, override via the template's
 documented mechanism (e.g. `.php-cs-fixer.php` next to `.php-cs-fixer.dist.php`).
 
+### Tests are not modified without approval
+
+Do **not** edit, rename, delete, or skip files under `tests/` (or any other
+test files) without explicit user approval — even when a failure looks like
+a stale assertion. If a change you're making appears to require test
+updates, stop and describe to the user, briefly:
+
+- Which test files / test methods need to change.
+- What the change is (assertion update, fixture change, new case, removal).
+- Why it's needed (production behavior changed, contract widened, etc.).
+
+Wait for the user to approve before touching the files. The 100% coverage
+gate (see "Common commands") means test edits have real consequences;
+the user decides whether the production change or the test is wrong.
+
+## Coding practices
+
+Style conventions code in this project follows, on top of the linter
+rules in "Coding standards" above.
+
+### Defer to symfony.com/doc when implementing Symfony features
+
+When you add or change functionality that lives on top of a Symfony
+component — controllers, routing, security, forms, validation,
+Doctrine integration, console commands, messenger, mailer,
+translation, asset mapping, Twig extensions, etc. — open the
+relevant chapter on <https://symfony.com/doc> first and base the
+implementation on the approach the docs show. The docs name the
+component, demonstrate the idiom, and link the configuration
+references; following them keeps the code in step with the
+framework instead of drifting into bespoke shapes that look
+reasonable but miss built-in conventions.
+
+When the docs offer more than one path (e.g. PHP attributes vs.
+YAML config, MapEntity vs. ParamConverter), pick the one that
+matches what's already in this codebase. If nothing comparable
+exists yet, prefer the most recent idiom shown in the docs — the
+attribute-driven, autoconfigured, autowired style.
+
+Cite the relevant doc URL in the PR description for any change
+that introduces a Symfony-component idiom for the first time, so
+reviewers can compare the implementation against the source.
+
 ### Controllers stay thin
 
 Controllers handle routes and template/response rendering only — no business
@@ -112,11 +155,36 @@ logic. Push logic into a service class. A controller action looks like:
 inject service → call service method → return `render()` / `Response` /
 `RedirectResponse`.
 
+**Do not add PHPDoc to controllers.** The class name, route attribute,
+action name, parameter types, and return type already describe what an
+action does; class- and method-level docblocks duplicate that. Push the
+explanatory prose into the (fully documented) service the controller
+delegates to. If a controller is so unusual that it needs a docblock to
+explain itself, that's the signal it's doing too much.
+
 ### Service classes are fully documented
 
 Every service class method (public, protected, private) carries a PHPDoc block
 with a one-line summary, a description of intent, `@param` per parameter,
 `@return`, and `@throws` for every exception that can be raised.
+
+### Test methods carry a one-line intent comment
+
+Each `public function test…` opens with a single-line comment that
+names what the test asserts, starting with `// Tests …`,
+`// Ensures …`, or `// Verifies …`. Pick whichever verb reads
+naturally for the assertion in question.
+
+- One line, terse — not a docblock, not a paragraph.
+- Placed immediately above the method declaration.
+- If a block-level docblock already exists on the method (e.g. to
+  explain *why* the test matters in context), keep it and put the
+  one-liner beneath it. The docblock serves the *why*; the one-liner
+  names the *what*.
+
+The comment is for a reader scanning the file's table of contents
+without reading method bodies. Matches the convention applied across
+every test file on the project.
 
 ## Workflows
 
@@ -138,6 +206,10 @@ open a PR upstream rather than patching locally.
   - Pass all required CI checks before merging.
   - Carry a `CHANGELOG.md` update under `## [Unreleased]` for any user-visible
     change.
+- If a PR carries the `do-not-merge` label, the PR description must spell
+  out **what blocks the merge and why** (e.g. waiting on upstream change,
+  dependent PR, unresolved decision). Keep this up to date — remove or
+  rewrite the block reason as blockers resolve.
 
 ## Commits
 
@@ -158,6 +230,18 @@ Keep subject lines under ~70 characters. Use the body for the *why*.
 Add an entry to `## [Unreleased]` under the right section (`Added`, `Changed`,
 `Fixed`, `Removed`, `Deprecated`, `Security`) for every meaningful change.
 
+**Pre-release rule:** while the project has no tagged releases yet,
+*everything* is `Added` — there is no prior released version for a
+change to be `Changed`, `Fixed`, `Removed`, `Deprecated`, or `Security`
+relative to. Keep those sections empty (or omit them) and fold the
+entry into `Added`, even when the work edits or replaces material that
+already exists in `[Unreleased]`. Before adding to any non-`Added`
+section, check `git tag` (or the GitHub releases page) and confirm at
+least one release exists; if none does, use `Added`. Once the first
+release is cut, the standard Keep a Changelog sections apply normally
+from the next `[Unreleased]` onward. See PR #57 for the prior
+consolidation that established this convention.
+
 ## GitHub issue types and labels
 
 Every issue **must** have its native **issue type** set to one of:
@@ -175,6 +259,13 @@ The current `gh` CLI (≤ 2.92) does not expose `--type`. To set a type,
 fall back to the REST API (`PATCH /repos/{owner}/{repo}/issues/{n}` with
 `type=<Name>`) when available, otherwise ask the user to set it in the
 UI. Labels can always be set with `gh issue create --label`.
+
+When creating an issue, use the repository's issue template at
+`.github/ISSUE_TEMPLATE/issue.md`. Preserve its structure — every heading
+and HTML comment marker stays in its original order — and fill each
+section from the available context. Pass it via `gh issue create
+--body-file` (or `--body` with the rendered content) rather than hand-
+rolling a description.
 
 ## Pushing
 

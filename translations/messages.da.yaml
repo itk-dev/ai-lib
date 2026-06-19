@@ -33,6 +33,52 @@ tag:
     badge_default: "snart"
     title_default: "Kommer snart"
 
+security:
+    login:
+        title: "Log ind – %brand%"
+        eyebrow: "Log ind"
+        heading: "Velkommen tilbage"
+        email_label: "E-mail"
+        password_label: "Adgangskode"
+        submit: "Log ind"
+
+catalog:
+    title: "Katalog – %brand%"
+    eyebrow: "Katalog"
+    heading: "Find en assistent"
+    result_count:
+        one: "1 resultat"
+        many: "%count% resultater"
+    empty:
+        heading: "Ingen assistenter matcher"
+        help: "Prøv at slække på filtrene eller fjerne en facet."
+    results:
+        label: "Søgeresultater"
+    filters:
+        eyebrow: "Filtrér"
+        heading: "Filtre"
+        active: "Aktive filtre"
+        chip_remove: "Fjern filter: %filter%"
+        language_model: "Sprogmodel"
+        framework: "Rammeværk"
+        apply: "Anvend filtre"
+        reset: "Nulstil filtre"
+    pagination:
+        label: "Sideinddeling"
+        previous: "← Forrige"
+        next: "Næste →"
+        page: "Side %n%"
+
+assistant:
+    detail:
+        title: "%title% – %brand%"
+        back: "← Tilbage til kataloget"
+        eyebrow: "Assistent"
+        runtime_heading: "Driftsplatform"
+        framework_label: "Framework"
+        language_model_label: "Sprogmodel"
+        tags_heading: "Tags"
+
 frontpage:
     title: "%brand% – forhåndsvisning"
     hero:
@@ -41,11 +87,11 @@ frontpage:
         lead: "Find, del og hjemtag AI-assistenter bygget af danske myndigheder. Når én kommune løser en opgave, kan resten hjemtage assistenten, eksportere konfigurationen og køre den lokalt — så gode løsninger skalerer nationalt."
     stats:
         assistants: "Assistenter"
-        kommuner: "Kommuner"
+        organizations: "Kommuner"
         models: "Sprogmodeller"
     rail:
         eyebrow: "Forhåndsvisning"
-        link: "Kataloget kommer →"
+        link: "Se hele kataloget →"
         list_label: "Eksempler på assistenter"
     steps:
         eyebrow: "Sådan virker det"

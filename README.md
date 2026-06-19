@@ -145,6 +145,21 @@ task open
 The site is served through Traefik on a `*.local.itkdev.dk` domain (the exact
 URL is printed by the start task).
 
+### Creating the first user
+
+```sh
+# Option A — load the local-dev fixtures (alice + bob, password `password`)
+task console -- doctrine:fixtures:load -n
+
+# Option B — create a single user explicitly
+task console -- app:user:create alice@example.test secret
+
+# Change an existing user's password
+task console -- app:user:change-password alice@example.test newsecret
+```
+
+Then sign in at `/login`.
+
 ## Testing
 
 Tests live under `tests/` (PSR-4 namespace `App\Tests\`) and run with
@@ -187,3 +202,9 @@ build.
 
 > The prototype is a client-side mock (data stored locally in the browser),
 > not production code.
+
+## License
+
+`ai-lib` is licensed under the [Mozilla Public License 2.0](LICENSE).
+See [ADR 004 — Project license: MPL-2.0](docs/adr/004-project-license-mpl-2.md)
+for the reasoning behind the choice.

@@ -100,10 +100,3 @@ Rationale:
 - Background processing that would benefit from a long-lived runtime
   must be solved within PHP's model (workers via Symfony Messenger,
   Supervisor, or similar) instead of natively.
-
-### Follow-up Actions
-
-- [ ] Document the convention that all future architectural decisions
-      are recorded as ADRs (in `CLAUDE.md`, tracked in #5).
-- [ ] Open a follow-up ADR for the database choice once the data model
-      stabilises, if it diverges from the template default (MariaDB).

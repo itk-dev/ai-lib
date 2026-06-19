@@ -1,0 +1,85 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'catalog.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <div class="grid gap-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <twig:Filter:Rail
+            action="{{ path('app_assistant_catalog') }}"
+            reset="{{ not criteria.isEmpty }}"
+        >
+            <twig:Filter:Group label="catalog.filters.language_model">
+                {% for value, count in facets.language_model %}
+                    <twig:Filter:FacetItem
+                        name="language_model[]"
+                        value="{{ value }}"
+                        label="{{ value }}"
+                        count="{{ count }}"
+                        checked="{{ value in criteria.languageModels }}"
+                    />
+                {% endfor %}
+            </twig:Filter:Group>
+
+            <twig:Filter:Group label="catalog.filters.framework">
+                {% for value, count in facets.framework %}
+                    <twig:Filter:FacetItem
+                        name="framework[]"
+                        value="{{ value }}"
+                        label="{{ value }}"
+                        count="{{ count }}"
+                        checked="{{ value in criteria.frameworks }}"
+                    />
+                {% endfor %}
+            </twig:Filter:Group>
+        </twig:Filter:Rail>
+
+        <section class="flex flex-col gap-8">
+            <twig:PageHeader eyebrow="catalog.eyebrow" heading="catalog.heading" />
+
+            <p class="text-sm text-text-muted">
+                {% if metadata.total == 1 %}
+                    {{ 'catalog.result_count.one'|trans }}
+                {% else %}
+                    {{ 'catalog.result_count.many'|trans({'%count%': metadata.total}) }}
+                {% endif %}
+            </p>
+
+            {% if not criteria.isEmpty %}
+                <twig:Filter:ActiveBar>
+                    {% for filter in criteria.activeFilters %}
+                        <li>
+                            <twig:Filter:Chip
+                                href="{{ path('app_assistant_catalog', filter.removeQuery) }}"
+                                label="{{ filter.label }}"
+                                removeLabel="{{ 'catalog.filters.chip_remove'|trans({'%filter%': filter.label}) }}"
+                            />
+                        </li>
+                    {% endfor %}
+                </twig:Filter:ActiveBar>
+            {% endif %}
+
+            {% if metadata.total == 0 %}
+                <twig:EmptyState heading="catalog.empty.heading" help="catalog.empty.help" />
+            {% else %}
+                <twig:Catalog:ResultGrid>
+                    {% for assistant in results %}
+                        <li>
+                            <twig:Catalog:AssistantCard
+                                assistant="{{ assistant }}"
+                                href="{{ path('app_assistant_show', {id: assistant.id}) }}"
+                            />
+                        </li>
+                    {% endfor %}
+                </twig:Catalog:ResultGrid>
+
+                {% if metadata.pageCount > 1 %}
+                    <twig:Pagination:Nav
+                        route="app_assistant_catalog"
+                        query="{{ criteria.toQueryArray }}"
+                        metadata="{{ metadata }}"
+                    />
+                {% endif %}
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

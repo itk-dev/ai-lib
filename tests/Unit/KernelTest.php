@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests;
+namespace App\Tests\Unit;
 
 use App\Kernel;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +16,7 @@ final class KernelTest extends TestCase
      * override is load-bearing: removing it silently accepts any
      * APP_ENV value.
      */
+    // Tests that Kernel::getAllowedEnvs() returns the project's `prod`, `dev`, `test` whitelist.
     public function testGetAllowedEnvsReturnsProjectEnvList(): void
     {
         $kernel = new Kernel('test', false);
