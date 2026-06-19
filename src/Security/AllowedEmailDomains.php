@@ -8,11 +8,10 @@ namespace App\Security;
  * Allow-list of email domains accepted by anonymous self-signup.
  *
  * Sourced from a comma-separated env var
- * (`REGISTRATION_ALLOWED_EMAIL_DOMAINS=aarhus.dk,kk.dk,…`) per ADR
- * 006. Domains are normalised to lowercase + trimmed on construction
+ * (`REGISTRATION_ALLOWED_EMAIL_DOMAINS=aarhus.dk,kk.dk,…`).
+ * Domains are normalised to lowercase + trimmed on construction
  * so `aarhus.dk`, `Aarhus.DK`, and `  AARHUS.dk` all match the same
- * way and the `Organization.emailDomains` follow-up (#76) doesn't
- * have to re-normalise the same data on every read.
+ * way.
  *
  * Empty / blank entries are dropped silently — an env var like
  * `,,aarhus.dk,` is interpreted as a single-entry list.
