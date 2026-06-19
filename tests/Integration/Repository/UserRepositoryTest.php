@@ -36,6 +36,7 @@ final class UserRepositoryTest extends KernelTestCase
         $this->repository = $container->get(UserRepository::class);
     }
 
+    // Tests that upgradePassword persists the new hash and a reload reflects it.
     public function testUpgradePasswordWritesTheNewHash(): void
     {
         $alice = $this->repository->findOneBy(['email' => 'alice@example.test']);
@@ -52,6 +53,7 @@ final class UserRepositoryTest extends KernelTestCase
         self::assertNotSame($oldHash, $reloaded->getPassword());
     }
 
+    // Ensures upgradePassword raises UnsupportedUserException for non-App User implementations.
     public function testUpgradePasswordRejectsForeignUserType(): void
     {
         $foreignUser = new class () implements PasswordAuthenticatedUserInterface {
@@ -66,6 +68,7 @@ final class UserRepositoryTest extends KernelTestCase
         $this->repository->upgradePassword($foreignUser, 'irrelevant');
     }
 
+    // Verifies the UserStatus enum mapping round-trips: persisted then reloaded keeps the same enum case.
     public function testStatusEnumRoundTripsThroughThePersistedRow(): void
     {
         $em = self::getContainer()->get(EntityManagerInterface::class);

@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 final class UserTest extends TestCase
 {
+    // Tests that a freshly-constructed User defaults to Pending status and an empty name.
     public function testConstructorDefaultsStatusToPending(): void
     {
         $user = new User();
@@ -18,7 +19,7 @@ final class UserTest extends TestCase
         self::assertSame('', $user->getName());
     }
 
-
+    // Ensures ROLE_USER is always present in getRoles() output, even when not set explicitly.
     public function testGetRolesAlwaysIncludesRoleUser(): void
     {
         $user = new User();
@@ -29,6 +30,7 @@ final class UserTest extends TestCase
         self::assertSame(['ROLE_ADMIN', 'ROLE_USER'], $user->getRoles());
     }
 
+    // Ensures duplicate ROLE_USER entries are deduplicated in getRoles().
     public function testGetRolesDeduplicatesRoleUserWhenAlreadyPresent(): void
     {
         $user = new User();
@@ -37,6 +39,7 @@ final class UserTest extends TestCase
         self::assertSame(['ROLE_USER', 'ROLE_ADMIN'], $user->getRoles());
     }
 
+    // Tests that getUserIdentifier returns '' when no email has been set.
     public function testGetUserIdentifierReturnsEmptyStringWhenEmailIsNull(): void
     {
         $user = new User();
@@ -44,6 +47,7 @@ final class UserTest extends TestCase
         self::assertSame('', $user->getUserIdentifier());
     }
 
+    // Tests that getUserIdentifier returns the email when set.
     public function testGetUserIdentifierReturnsEmailWhenSet(): void
     {
         $user = new User();
@@ -52,6 +56,7 @@ final class UserTest extends TestCase
         self::assertSame('alice@example.test', $user->getUserIdentifier());
     }
 
+    // Verifies __serialize replaces the password hash with a CRC32C hash so the session never carries the original.
     public function testSerializeReplacesPasswordWithCrc32cHash(): void
     {
         $user = new User();
@@ -66,6 +71,7 @@ final class UserTest extends TestCase
         self::assertNotContains('plaintext-hash', $data, 'Serialised payload must not contain the original password hash.');
     }
 
+    // Tests that every setter returns $this (fluent) and mutates the underlying value.
     public function testSettersMutateAndReturnStatic(): void
     {
         $user = new User();
