@@ -42,6 +42,27 @@ security:
         password_label: "Adgangskode"
         submit: "Log ind"
 
+profile:
+    show:
+        title: "Min profil – %brand%"
+        eyebrow: "Min profil"
+        heading: "Profil"
+        name_label: "Navn"
+        email_label: "E-mail"
+        edit_link: "Rediger profil"
+    edit:
+        title: "Rediger profil – %brand%"
+        eyebrow: "Min profil"
+        heading: "Rediger profil"
+        name_label: "Navn"
+        submit: "Gem"
+        cancel: "Annuller"
+        error:
+            empty_name: "Navnet må ikke være tomt."
+            invalid_token: "Sessionen er udløbet. Indsend formularen igen."
+        flash:
+            success: "Dine profiloplysninger er gemt."
+
 assistant:
     detail:
         title: "%title% – %brand%"
