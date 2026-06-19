@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 final class AssistantTest extends TestCase
 {
+    // Tests that the constructor assigns each field and reindexes the tags array via array_values().
     public function testConstructorPopulatesFieldsAndReindexesTags(): void
     {
         $assistant = new Assistant(
@@ -27,6 +28,7 @@ final class AssistantTest extends TestCase
         self::assertSame(['translation', 'summarisation'], $assistant->getTags());
     }
 
+    // Verifies that omitting the tags argument leaves getTags() returning an empty list.
     public function testConstructorDefaultsTagsToEmptyList(): void
     {
         $assistant = new Assistant('t', 'd', 'lm', 'fw');
@@ -34,6 +36,7 @@ final class AssistantTest extends TestCase
         self::assertSame([], $assistant->getTags());
     }
 
+    // Tests that each setter mutates its field, returns `$this`, and that setTags() reindexes its argument.
     public function testSettersMutateAndReturnStatic(): void
     {
         $assistant = new Assistant('t', 'd', 'lm', 'fw');
