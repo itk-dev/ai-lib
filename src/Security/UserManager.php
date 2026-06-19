@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Security;
 
 use App\Entity\User;
+use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -33,17 +34,29 @@ final class UserManager
     /**
      * Create a new persisted user with a hashed password.
      *
+     * Defaults to `UserStatus::Approved` so the console / fixture paths
+     * land a usable account immediately. The registration flow (#62)
+     * passes `UserStatus::Pending` explicitly so a domain manager has
+     * to approve the user before they can sign in.
+     *
      * @param string       $email         user e-mail; must be unique
+     * @param string       $name          display name; required, may be any non-null string
      * @param string       $plainPassword clear-text password, hashed before persistence
      * @param list<string> $roles         additional roles beyond the implicit `ROLE_USER`
+     * @param UserStatus   $status        identity-lifecycle status; defaults to {@see UserStatus::Approved}
      *
      * @return User the persisted user with an assigned id
      *
      * @throws \DomainException          when a user with the same e-mail already exists
      * @throws \InvalidArgumentException when `$plainPassword` is empty
      */
-    public function createUser(string $email, string $plainPassword, array $roles = []): User
-    {
+    public function createUser(
+        string $email,
+        string $name,
+        string $plainPassword,
+        array $roles = [],
+        UserStatus $status = UserStatus::Approved,
+    ): User {
         if ('' === $plainPassword) {
             throw new \InvalidArgumentException('Password must not be empty.');
         }
@@ -54,7 +67,9 @@ final class UserManager
 
         $user = (new User())
             ->setEmail($email)
-            ->setRoles($roles);
+            ->setName($name)
+            ->setRoles($roles)
+            ->setStatus($status);
         $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
 
         $this->entityManager->persist($user);

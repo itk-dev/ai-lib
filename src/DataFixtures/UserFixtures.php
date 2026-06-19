@@ -31,7 +31,7 @@ final class UserFixtures extends Fixture
      */
     public function load(ObjectManager $manager): void
     {
-        $this->userManager->createUser('alice@example.test', 'password');
-        $this->userManager->createUser('bob@example.test', 'password');
+        $this->userManager->createUser('alice@example.test', 'Alice', 'password');
+        $this->userManager->createUser('bob@example.test', 'Bob', 'password');
     }
 }

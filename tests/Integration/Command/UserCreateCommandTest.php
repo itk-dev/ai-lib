@@ -30,6 +30,7 @@ final class UserCreateCommandTest extends KernelTestCase
     {
         $exit = $this->tester->execute([
             'email' => 'charlie@example.test',
+            'name' => 'Charlie',
             'password' => 'secret',
         ]);
 
@@ -42,6 +43,7 @@ final class UserCreateCommandTest extends KernelTestCase
         // alice@example.test is in the baseline fixtures.
         $exit = $this->tester->execute([
             'email' => 'alice@example.test',
+            'name' => 'Alice',
             'password' => 'second',
         ]);
 

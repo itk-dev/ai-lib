@@ -6,6 +6,7 @@ namespace App\Tests\Unit\DataFixtures;
 
 use App\DataFixtures\UserFixtures;
 use App\Entity\User;
+use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Security\UserManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,12 +31,12 @@ final class UserFixturesTest extends TestCase
         $userRepository->method('findOneBy')->willReturn(null);
         $passwordHasher->method('hashPassword')->willReturn('hashed');
 
-        $persistedEmails = [];
+        $persisted = [];
         $entityManager->expects(self::exactly(2))
             ->method('persist')
-            ->willReturnCallback(function (object $entity) use (&$persistedEmails): void {
+            ->willReturnCallback(function (object $entity) use (&$persisted): void {
                 \assert($entity instanceof User);
-                $persistedEmails[] = $entity->getEmail();
+                $persisted[] = $entity;
             });
         $entityManager->expects(self::exactly(2))->method('flush');
 
@@ -44,6 +45,12 @@ final class UserFixturesTest extends TestCase
 
         $fixture->load($this->createMock(ObjectManager::class));
 
-        self::assertSame(['alice@example.test', 'bob@example.test'], $persistedEmails);
+        $emails = array_map(static fn (User $u): ?string => $u->getEmail(), $persisted);
+        $names = array_map(static fn (User $u): string => $u->getName(), $persisted);
+        $statuses = array_map(static fn (User $u): UserStatus => $u->getStatus(), $persisted);
+
+        self::assertSame(['alice@example.test', 'bob@example.test'], $emails);
+        self::assertSame(['Alice', 'Bob'], $names);
+        self::assertSame([UserStatus::Approved, UserStatus::Approved], $statuses);
     }
 }
