@@ -81,8 +81,8 @@ final class UserManager
     /**
      * Update a user's display name in place.
      *
-     * Empty names are rejected so the admin user list (#85) and the
-     * profile UI (#13) never have to render a blank cell.
+     * Empty names are rejected so the admin user list and the
+     * profile UI never have to render a blank cell.
      *
      * @param User   $user the user whose name to update
      * @param string $name the new display name; must be non-empty after trimming
