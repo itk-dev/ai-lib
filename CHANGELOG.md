@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `ROLE_DOMAIN_MANAGER` + `ROLE_ADMIN` role identifiers
+  (`App\Security\Roles`), `role_hierarchy` wiring in `security.yaml`
+  so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and a
+  domain-scoped `ManageUserVoter` that grants the `MANAGE_USER` /
+  `APPROVE_USER` / `BLOCK_USER` attributes when the acting user is a
+  domain manager in the subject's email domain (or a site-wide
+  admin). Lays the authorisation foundation for the admin approval
+  queue (#64) and the scoped user-management list view (#85) per
+  ADR 006
+  ([#84](https://github.com/itk-dev/ai-lib/issues/84)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
   `symfony-8` template (phpfpm 8.4, nginx, MariaDB, Mailpit, Traefik),
   including dev dependencies for coding standards (`php-cs-fixer`,
