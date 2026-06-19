@@ -16,8 +16,6 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
  * Authorises a `User` action ("approve", "block", or the umbrella
  * "manage") on a target {@see User}, scoped by email domain.
  *
- * Decision flow (ADR 006):
- *
  * 1. The acting user must hold {@see Roles::DOMAIN_MANAGER}.
  * 2. If they hold {@see Roles::ADMIN}, allow across all domains
  *    (admins manage everyone).
@@ -60,7 +58,7 @@ final class ManageUserVoter extends Voter
     }
 
     /**
-     * Apply the ADR-006 decision rules to the actor / subject pair.
+     * Apply the decision rules to the actor / subject pair.
      *
      * @param string         $attribute the attribute being checked (already filtered to one of `SUPPORTED`)
      * @param User           $subject   the user being acted on
