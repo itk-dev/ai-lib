@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Anonymous self-signup at `/register`. The route is
+  open to unauthenticated visitors; submissions go through
+  `App\Security\Registration` which validates the email format,
+  checks the right-hand-side domain against an env-backed allow-list
+  (`REGISTRATION_ALLOWED_EMAIL_DOMAINS`, comma-separated; default
+  `example.test` for dev / tests), requires matching password
+  confirmation, and creates the `User` with `status = Pending`. The
+  user is redirected to `/register/pending` ("thanks, awaiting
+  approval") and cannot sign in until a domain manager approves
+  them. CSRF-protected via Symfony's `csrf_token('register')`
+  helper. Localised in the existing `messages` domain
+  ([#62](https://github.com/itk-dev/ai-lib/issues/62)).
 - Self-service profile pages at `/profile` (read-only) and
   `/profile/edit` (form). Authenticated users can update their
   display name; email stays read-only (changing it would interact

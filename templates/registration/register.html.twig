@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'register.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <section class="max-w-md">
+        <twig:Eyebrow as="p" class="mb-4">{{ 'register.eyebrow'|trans }}</twig:Eyebrow>
+        <h1 class="mb-6 font-display text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-tight tracking-tight text-ink">
+            {{ 'register.heading'|trans }}
+        </h1>
+
+        <p class="mb-6 text-sm text-text">{{ 'register.lead'|trans }}</p>
+
+        {% if error %}
+            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
+                {{ error|trans }}
+            </div>
+        {% endif %}
+
+        <form action="{{ path('app_register') }}" method="post" class="grid gap-4">
+            <twig:Form:Label for="inputEmail" text="{{ 'register.email_label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputEmail"
+                    name="email"
+                    type="email"
+                    value="{{ submitted.email }}"
+                    autocomplete="email"
+                    required
+                    autofocus
+                />
+            </twig:Form:Label>
+
+            <twig:Form:Label for="inputName" text="{{ 'register.name_label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputName"
+                    name="name"
+                    type="text"
+                    value="{{ submitted.name }}"
+                    autocomplete="name"
+                    required
+                />
+            </twig:Form:Label>
+
+            <twig:Form:Label for="inputPassword" text="{{ 'register.password_label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputPassword"
+                    name="password"
+                    type="password"
+                    autocomplete="new-password"
+                    required
+                />
+            </twig:Form:Label>
+
+            <twig:Form:Label for="inputPasswordConfirm" text="{{ 'register.password_confirm_label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputPasswordConfirm"
+                    name="password_confirm"
+                    type="password"
+                    autocomplete="new-password"
+                    required
+                />
+            </twig:Form:Label>
+
+            <input type="hidden" name="_token" value="{{ csrf_token('register') }}">
+
+            <div class="flex items-center gap-4">
+                <twig:Form:Button type="submit">
+                    {{ 'register.submit'|trans }}
+                </twig:Form:Button>
+                <a class="text-sm text-text underline hover:text-primary" href="{{ path('app_login') }}">
+                    {{ 'register.login_link'|trans }}
+                </a>
+            </div>
+        </form>
+    </section>
+{% endblock %}
