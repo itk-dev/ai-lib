@@ -6,6 +6,8 @@ namespace App\Tests\Integration\Controller;
 
 use App\Controller\SecurityController;
 use App\Entity\User;
+use App\Enum\UserStatus;
+use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -96,6 +98,63 @@ final class SecurityControllerTest extends WebTestCase
         // Symfony intercepts /logout and redirects to the configured target.
         self::assertResponseRedirects('/');
         $this->client->followRedirect();
+        self::assertNull(
+            $this->client->getContainer()->get('security.token_storage')->getToken(),
+        );
+    }
+
+    public function testPendingUserCannotLogIn(): void
+    {
+        $this->client->getContainer()->get(UserManager::class)->createUser(
+            'carol@example.test',
+            'Carol',
+            'password',
+            status: UserStatus::Pending,
+        );
+
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->form();
+        $form['_username'] = 'carol@example.test';
+        $form['_password'] = 'password';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/login');
+        $crawler = $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+
+        // Localised pending message is rendered on the form.
+        self::assertStringContainsString(
+            'venter på godkendelse',
+            $crawler->filter('body')->text(),
+        );
+        self::assertNull(
+            $this->client->getContainer()->get('security.token_storage')->getToken(),
+        );
+    }
+
+    public function testBlockedUserCannotLogIn(): void
+    {
+        $this->client->getContainer()->get(UserManager::class)->createUser(
+            'dora@example.test',
+            'Dora',
+            'password',
+            status: UserStatus::Blocked,
+        );
+
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->form();
+        $form['_username'] = 'dora@example.test';
+        $form['_password'] = 'password';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/login');
+        $crawler = $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+
+        self::assertStringContainsString(
+            'spærret',
+            $crawler->filter('body')->text(),
+        );
         self::assertNull(
             $this->client->getContainer()->get('security.token_storage')->getToken(),
         );
