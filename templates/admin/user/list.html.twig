@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'admin.users.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <section class="max-w-4xl">
+        <twig:Eyebrow as="p" class="mb-4">{{ 'admin.users.eyebrow'|trans }}</twig:Eyebrow>
+        <h1 class="mb-6 font-display text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-tight tracking-tight text-ink">
+            {{ 'admin.users.heading'|trans }}
+        </h1>
+
+        {% for flash in app.flashes('success') %}
+            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="status">
+                {{ flash|trans }}
+            </div>
+        {% endfor %}
+
+        <nav aria-label="{{ 'admin.users.filter_label'|trans }}" class="mb-6 flex flex-wrap gap-3 text-sm">
+            <a class="rounded-full border border-line px-3 py-1 {% if status_filter is null %}bg-surface-2 text-ink{% else %}text-text hover:bg-surface-2{% endif %}"
+               href="{{ path('app_admin_users') }}">
+                {{ 'admin.users.filter.all'|trans }}
+            </a>
+            <a class="rounded-full border border-line px-3 py-1 {% if status_filter and status_filter.value == 'pending' %}bg-surface-2 text-ink{% else %}text-text hover:bg-surface-2{% endif %}"
+               href="{{ path('app_admin_users', {status: 'pending'}) }}">
+                {{ 'admin.users.filter.pending'|trans }}
+            </a>
+            <a class="rounded-full border border-line px-3 py-1 {% if status_filter and status_filter.value == 'approved' %}bg-surface-2 text-ink{% else %}text-text hover:bg-surface-2{% endif %}"
+               href="{{ path('app_admin_users', {status: 'approved'}) }}">
+                {{ 'admin.users.filter.approved'|trans }}
+            </a>
+            <a class="rounded-full border border-line px-3 py-1 {% if status_filter and status_filter.value == 'blocked' %}bg-surface-2 text-ink{% else %}text-text hover:bg-surface-2{% endif %}"
+               href="{{ path('app_admin_users', {status: 'blocked'}) }}">
+                {{ 'admin.users.filter.blocked'|trans }}
+            </a>
+        </nav>
+
+        {% if users is empty %}
+            <p class="text-sm text-text">{{ 'admin.users.empty'|trans }}</p>
+        {% else %}
+            <ul class="grid gap-3">
+                {% for u in users %}
+                    <li class="rounded-lg border border-line bg-surface px-4 py-3">
+                        <div class="flex flex-wrap items-baseline justify-between gap-3">
+                            <div>
+                                <p class="font-medium text-ink">{{ u.name }}</p>
+                                <p class="text-sm text-text">{{ u.email }}</p>
+                            </div>
+                            <span class="rounded-full border border-line px-2 py-0.5 text-xs text-text">
+                                {{ ('admin.users.status.' ~ u.status.value)|trans }}
+                            </span>
+                        </div>
+
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            {% set back_url = path('app_admin_users', status_filter ? {status: status_filter.value} : {}) %}
+                            {% if u.status.value != 'approved' %}
+                                <form action="{{ path('app_admin_user_approve', {id: u.id}) }}" method="post" class="inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('admin-user-action') }}">
+                                    <input type="hidden" name="back" value="{{ back_url }}">
+                                    <twig:Form:Button type="submit">
+                                        {{ 'admin.users.action.approve'|trans }}
+                                    </twig:Form:Button>
+                                </form>
+                            {% endif %}
+
+                            {% if u.status.value != 'blocked' %}
+                                <form action="{{ path('app_admin_user_block', {id: u.id}) }}" method="post" class="inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('admin-user-action') }}">
+                                    <input type="hidden" name="back" value="{{ back_url }}">
+                                    <twig:Form:Button type="submit">
+                                        {{ 'admin.users.action.block'|trans }}
+                                    </twig:Form:Button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -7,6 +7,8 @@ namespace App\Tests\Integration\Repository;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
+use App\Security\Roles;
+use App\Security\UserManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -84,5 +86,64 @@ final class UserRepositoryTest extends KernelTestCase
         self::assertNotNull($reloaded);
         self::assertSame('Eve', $reloaded->getName());
         self::assertSame(UserStatus::Blocked, $reloaded->getStatus());
+    }
+
+    public function testFindVisibleToReturnsEveryUserForAdmin(): void
+    {
+        $manager = self::getContainer()->get(UserManager::class);
+        $admin = $manager->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
+        $manager->createUser('eve@other.test', 'Eve', 'pw', status: UserStatus::Pending);
+
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findVisibleTo($admin),
+        );
+
+        self::assertContains('alice@example.test', $emails);
+        self::assertContains('bob@example.test', $emails);
+        self::assertContains('admin@example.test', $emails);
+        self::assertContains('eve@other.test', $emails);
+    }
+
+    public function testFindVisibleToScopesByDomainForDomainManager(): void
+    {
+        $manager = self::getContainer()->get(UserManager::class);
+        $domainManager = $manager->createUser('dm@example.test', 'DM', 'pw', [Roles::DOMAIN_MANAGER]);
+        $manager->createUser('outsider@other.test', 'Outsider', 'pw');
+
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findVisibleTo($domainManager),
+        );
+
+        self::assertContains('alice@example.test', $emails);
+        self::assertContains('bob@example.test', $emails);
+        self::assertContains('dm@example.test', $emails);
+        self::assertNotContains('outsider@other.test', $emails);
+
+        // A plain authenticated user (no DOMAIN_MANAGER / ADMIN role) sees
+        // no one — the repository falls through to an empty result.
+        $alice = $this->repository->findOneBy(['email' => 'alice@example.test']);
+        self::assertNotNull($alice);
+        self::assertSame([], $this->repository->findVisibleTo($alice));
+
+        // Defensive: a domain manager with no email also gets an empty
+        // result rather than running a query against an unresolved domain.
+        $headless = (new User())->setRoles([Roles::DOMAIN_MANAGER]);
+        self::assertSame([], $this->repository->findVisibleTo($headless));
+    }
+
+    public function testFindVisibleToFiltersByStatus(): void
+    {
+        $manager = self::getContainer()->get(UserManager::class);
+        $admin = $manager->createUser('siteadmin@example.test', 'Site Admin', 'pw', [Roles::ADMIN]);
+        $manager->createUser('pending@example.test', 'Pending', 'pw', status: UserStatus::Pending);
+
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findVisibleTo($admin, UserStatus::Pending),
+        );
+
+        self::assertSame(['pending@example.test'], $emails);
     }
 }

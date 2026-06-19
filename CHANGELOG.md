@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Admin user-management surface at `/admin/users` per ADR 006. Lists
+  users scoped by role — `ROLE_ADMIN` sees every user, a
+  `ROLE_DOMAIN_MANAGER` sees only users whose email domain matches
+  their own. Optional `?status=pending|approved|blocked` filter for
+  the approval queue (`/admin/users/pending` redirects to
+  `?status=pending`). Per-row Approve / Block buttons are gated by
+  the `ManageUserVoter` from #84 (same-domain check) and the new
+  `App\Security\UserApproval` service flips the status. The list
+  view uses a new repository finder
+  `UserRepository::findVisibleTo()`, scoped against the actor's
+  role + email domain via the `EmailDomain` helper. CSRF-protected;
+  `back` parameter on the action forms only honours
+  `/admin/users…` URLs
+  ([#64](https://github.com/itk-dev/ai-lib/issues/64),
+  [#85](https://github.com/itk-dev/ai-lib/issues/85)).
 - `ROLE_DOMAIN_MANAGER` + `ROLE_ADMIN` role identifiers
   (`App\Security\Roles`), `role_hierarchy` wiring in `security.yaml`
   so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and a
