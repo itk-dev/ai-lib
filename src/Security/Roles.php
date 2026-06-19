@@ -7,7 +7,7 @@ namespace App\Security;
 /**
  * Symfony Security role identifiers used by this application.
  *
- * Decided in ADR 006. `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER` via
+ * `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER` via
  * the `role_hierarchy` entry in `security.yaml`. `ROLE_USER` is the
  * implicit floor: every authenticated user holds it via
  * {@see \App\Entity\User::getRoles()}, so this constant exists only
