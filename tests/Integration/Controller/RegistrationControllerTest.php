@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * End-to-end self-signup flow against the real `form_login` firewall
- * and the new `AccountStatusChecker` (PR 3).
+ * and the `AccountStatusChecker`
  *
  * The test env's allow-list default is `example.test` (see
  * `config/services.yaml`), so `*.@example.test` emails are accepted
