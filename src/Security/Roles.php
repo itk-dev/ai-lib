@@ -32,11 +32,4 @@ final class Roles
      * email domain via the role hierarchy.
      */
     public const string ADMIN = 'ROLE_ADMIN';
-
-    /**
-     * @codeCoverageIgnore
-     */
-    private function __construct()
-    {
-    }
 }

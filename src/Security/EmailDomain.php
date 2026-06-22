@@ -44,11 +44,4 @@ final class EmailDomain
 
         return strtolower(substr($email, $at + 1));
     }
-
-    /**
-     * @codeCoverageIgnore
-     */
-    private function __construct()
-    {
-    }
 }
