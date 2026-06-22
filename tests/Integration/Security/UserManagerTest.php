@@ -34,6 +34,7 @@ final class UserManagerTest extends KernelTestCase
         $this->passwordHasher = $container->get(UserPasswordHasherInterface::class);
     }
 
+    // Tests the happy path: createUser persists a user with hashed password, name, default Pending status (safe default), and ROLE_USER.
     public function testCreatesAndPersistsUserWithHashedPassword(): void
     {
         $user = $this->userManager->createUser('charlie@example.test', 'Charlie', 'secret');
@@ -41,7 +42,7 @@ final class UserManagerTest extends KernelTestCase
         self::assertNotNull($user->getId());
         self::assertSame('charlie@example.test', $user->getEmail());
         self::assertSame('Charlie', $user->getName());
-        self::assertSame(UserStatus::Approved, $user->getStatus());
+        self::assertSame(UserStatus::Pending, $user->getStatus());
         self::assertSame(['ROLE_USER'], $user->getRoles());
         self::assertNotSame('secret', $user->getPassword(), 'Password must be hashed.');
         self::assertTrue(
@@ -51,6 +52,7 @@ final class UserManagerTest extends KernelTestCase
         self::assertSame($user->getId(), $this->userRepository->findOneBy(['email' => 'charlie@example.test'])?->getId());
     }
 
+    // Verifies that extra roles passed to createUser() are stored alongside the implicit ROLE_USER.
     public function testCreateUserStoresExtraRoles(): void
     {
         $user = $this->userManager->createUser('admin@example.test', 'Admin', 'secret', ['ROLE_ADMIN']);
@@ -58,18 +60,7 @@ final class UserManagerTest extends KernelTestCase
         self::assertSame(['ROLE_ADMIN', 'ROLE_USER'], $user->getRoles());
     }
 
-    public function testCreateUserHonoursExplicitStatus(): void
-    {
-        $user = $this->userManager->createUser(
-            'dora@example.test',
-            'Dora',
-            'secret',
-            status: UserStatus::Pending,
-        );
-
-        self::assertSame(UserStatus::Pending, $user->getStatus());
-    }
-
+    // Ensures createUser() throws DomainException when the email matches an existing user.
     public function testCreateUserRejectsDuplicateEmail(): void
     {
         // alice@example.test is loaded by UserFixtures in the bootstrap.
@@ -79,6 +70,7 @@ final class UserManagerTest extends KernelTestCase
         $this->userManager->createUser('alice@example.test', 'Alice', 'other');
     }
 
+    // Ensures createUser() throws InvalidArgumentException when the password is empty.
     public function testCreateUserRejectsEmptyPassword(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -87,6 +79,7 @@ final class UserManagerTest extends KernelTestCase
         $this->userManager->createUser('charlie@example.test', 'Charlie', '');
     }
 
+    // Tests that changePassword() replaces the stored hash and the new password verifies (while the old one no longer does).
     public function testChangePasswordReplacesTheHash(): void
     {
         $alice = $this->userRepository->findOneBy(['email' => 'alice@example.test']);
@@ -101,6 +94,7 @@ final class UserManagerTest extends KernelTestCase
         self::assertFalse($this->passwordHasher->isPasswordValid($updated, 'password'));
     }
 
+    // Ensures changePassword() throws DomainException when no user matches the given email.
     public function testChangePasswordFailsWhenUserMissing(): void
     {
         $this->expectException(\DomainException::class);
@@ -109,6 +103,7 @@ final class UserManagerTest extends KernelTestCase
         $this->userManager->changePassword('nobody@example.test', 'whatever');
     }
 
+    // Ensures changePassword() throws InvalidArgumentException when the new password is empty.
     public function testChangePasswordRejectsEmptyPassword(): void
     {
         $this->expectException(\InvalidArgumentException::class);

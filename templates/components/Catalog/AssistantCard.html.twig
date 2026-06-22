@@ -1,0 +1,23 @@
+{% props assistant, href %}
+<a class="group flex h-full flex-col gap-3 rounded-xl border border-line bg-surface p-5 no-underline shadow-sm transition-transform hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
+   href="{{ href }}">
+    <span class="text-xs uppercase tracking-widest text-text-muted">
+        {{ assistant.languageModel }} · {{ assistant.framework }}
+    </span>
+    <h3 class="font-display text-lg font-semibold tracking-normal text-ink group-hover:text-primary">
+        {{ assistant.title }}
+    </h3>
+    <p class="line-clamp-3 text-sm leading-relaxed text-text">
+        {{ assistant.description }}
+    </p>
+    {% if assistant.tags is not empty %}
+        <ul class="mt-auto flex flex-wrap gap-1.5 pt-2"
+            aria-label="{{ 'assistant.detail.tags_heading'|trans }}">
+            {% for tag in assistant.tags %}
+                <li class="inline-flex items-center rounded-full border border-line bg-surface-2 px-2 py-0.5 text-xs text-text">
+                    {{ tag }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</a>
