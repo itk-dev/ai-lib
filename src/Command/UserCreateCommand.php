@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Enum\UserStatus;
 use App\Security\UserManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -58,7 +59,7 @@ final class UserCreateCommand extends Command
         $password = (string) $input->getArgument('password');
 
         try {
-            $user = $this->userManager->createUser($email, $name, $password);
+            $user = $this->userManager->createUser($email, $name, $password, status: UserStatus::Approved);
         } catch (\DomainException|\InvalidArgumentException $e) {
             $io->error($e->getMessage());
 

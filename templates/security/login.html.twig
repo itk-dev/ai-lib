@@ -10,9 +10,9 @@
         </h1>
 
         {% if error %}
-            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
+            <twig:Alert type="error" class="mb-4">
                 {{ error.messageKey|trans(error.messageData, 'security') }}
-            </div>
+            </twig:Alert>
         {% endif %}
 
         <form action="{{ path('app_login') }}" method="post" class="grid gap-4">

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
+use App\Enum\UserStatus;
 use App\Security\UserManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -31,7 +32,7 @@ final class UserFixtures extends Fixture
      */
     public function load(ObjectManager $manager): void
     {
-        $this->userManager->createUser('alice@example.test', 'Alice', 'password');
-        $this->userManager->createUser('bob@example.test', 'Bob', 'password');
+        $this->userManager->createUser('alice@example.test', 'Alice', 'password', status: UserStatus::Approved);
+        $this->userManager->createUser('bob@example.test', 'Bob', 'password', status: UserStatus::Approved);
     }
 }

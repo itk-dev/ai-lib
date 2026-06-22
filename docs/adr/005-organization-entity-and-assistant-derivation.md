@@ -89,14 +89,37 @@ Introduce a first-class **`Organization`** entity (option 1).
 
 ### Schema
 
-| Field                  | Type             | Notes                                                                                  |
-| ---------------------- | ---------------- | -------------------------------------------------------------------------------------- |
-| `id`                   | int              | primary key                                                                            |
-| `name`                 | string           | display name ("Aarhus Kommune")                                                        |
-| `emailDomains`         | json (list)      | one or many domains; matched at signup. Replaces ADR 004's env-var.                    |
-| `defaultFramework`     | string (enum?)   | populated onto new assistants created by users of this org                             |
-| `defaultLanguageModel` | string           | same                                                                                   |
-| `createdAt`            | datetime         | audit                                                                                  |
+| Field              | Type           | Notes                                                               |
+| ------------------ | -------------- | ------------------------------------------------------------------- |
+| `id`               | int            | primary key                                                         |
+| `name`             | string         | display name ("Aarhus Kommune")                                     |
+| `emailDomains`     | json (list)    | one or many domains; matched at signup. Replaces ADR 004's env-var. |
+| `defaultFramework` | string (enum?) | populated onto new assistants created by users of this org          |
+
+#### Dropped fields
+
+The earlier draft of this ADR listed two more columns. Both are
+deliberately left out of the initial migration (PR #80):
+
+- **`defaultLanguageModel`** — landing it now would require choosing
+  a canonical set of model identifiers and a UX for keeping each
+  org's row in sync as those identifiers churn. Until at least one
+  org actually disagrees with the rest on a language model, every
+  new assistant can pick from the same global list the catalog
+  already uses, and the snapshot of the chosen model still lives on
+  the assistant. Add this column the first time an org genuinely
+  needs a different default; the assistant-snapshot field already
+  carries the durability guarantee, so backfill is trivial.
+- **`createdAt`** — there is no current consumer for the audit
+  timestamp (no admin listing sorts by it, no reporting reads it),
+  and Doctrine migrations already record when the row was inserted
+  in environments that need it. Add when an actual UI or audit
+  requirement materialises rather than carrying an unused column
+  through every migration in between.
+
+Neither omission affects the derivation flow below — that flow only
+needs `defaultFramework`. If `defaultLanguageModel` lands later, the
+same flow extends to it by symmetry.
 
 Relations:
 
@@ -109,18 +132,22 @@ Relations:
   on insert; other orgs join by importing / forking later.
 - **`Assistant.framework`** + **`Assistant.languageModel`** — **stored
   on the assistant** (snapshot), not joined through the org at read
-  time. They're populated from `creator.organization.defaultFramework
-  / defaultLanguageModel` at creation, then frozen unless the user
+  time. `framework` is populated from
+  `creator.organization.defaultFramework` at creation;
+  `languageModel` is picked by the user from the catalog's existing
+  global list (no org-level default exists yet — see "Dropped
+  fields"). Both are frozen on the assistant unless the user
   explicitly edits.
 
 ### Derivation flow at assistant creation
 
 1. User submits the assistant-creation form.
 2. Controller (or service) reads `user.organization`.
-3. If the form did not specify them explicitly, `assistant.framework`
-   and `assistant.languageModel` default to
-   `user.organization.defaultFramework`
-   / `…defaultLanguageModel`.
+3. If the form did not specify it explicitly, `assistant.framework`
+   defaults to `user.organization.defaultFramework`.
+   `assistant.languageModel` has no org-level default (see "Dropped
+   fields") and is taken from the form selection against the catalog's
+   global model list.
 4. `assistant.organizations` is initialised to
    `{user.organization}`. Additional orgs can be added later via the
    share/import flow (#23, #24).
@@ -158,8 +185,10 @@ changing an org default is not.
 
 - One canonical place to look up "what does kommune X default to";
   admin tooling for editing those defaults is trivial CRUD.
-- The assistant-creation form gets a sensible default for two fields
-  that are otherwise typed by hand every time.
+- The assistant-creation form gets a sensible default for the
+  framework field that is otherwise typed by hand every time.
+  Language model stays user-chosen for now; a default can be added
+  per "Dropped fields" once it's actually needed.
 - ADR 004's deferred "Domain entity" question is resolved cleanly —
   it's just `Organization`.
 - Per-org future metadata (contact mail, approver email, branding,

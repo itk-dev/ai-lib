@@ -26,6 +26,7 @@ final class UserCreateCommandTest extends KernelTestCase
         $this->tester = new CommandTester($command);
     }
 
+    // Tests that the command creates a new user and reports success on a fresh email.
     public function testCreatesUser(): void
     {
         $exit = $this->tester->execute([
@@ -38,6 +39,7 @@ final class UserCreateCommandTest extends KernelTestCase
         self::assertStringContainsString('Created user "charlie@example.test"', $this->tester->getDisplay());
     }
 
+    // Ensures the command exits non-zero when the email collides with an existing user.
     public function testReportsFailureWhenEmailAlreadyExists(): void
     {
         // alice@example.test is in the baseline fixtures.

@@ -9,7 +9,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Add `name` and `status` columns to `user` per ADR 006.
+ * Add `name` and `status` columns to `user`.
  *
  * `name` is the display name introduced by #45; `status` is the
  * `UserStatus` enum (`pending | approved | blocked`) introduced by

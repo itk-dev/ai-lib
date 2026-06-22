@@ -105,6 +105,49 @@ These come from the `symfony-8` template — don't edit them without a reason.
 If a project-specific override is needed, override via the template's
 documented mechanism (e.g. `.php-cs-fixer.php` next to `.php-cs-fixer.dist.php`).
 
+### Tests are not modified without approval
+
+Do **not** edit, rename, delete, or skip files under `tests/` (or any other
+test files) without explicit user approval — even when a failure looks like
+a stale assertion. If a change you're making appears to require test
+updates, stop and describe to the user, briefly:
+
+- Which test files / test methods need to change.
+- What the change is (assertion update, fixture change, new case, removal).
+- Why it's needed (production behavior changed, contract widened, etc.).
+
+Wait for the user to approve before touching the files. The 100% coverage
+gate (see "Common commands") means test edits have real consequences;
+the user decides whether the production change or the test is wrong.
+
+## Coding practices
+
+Style conventions code in this project follows, on top of the linter
+rules in "Coding standards" above.
+
+### Defer to symfony.com/doc when implementing Symfony features
+
+When you add or change functionality that lives on top of a Symfony
+component — controllers, routing, security, forms, validation,
+Doctrine integration, console commands, messenger, mailer,
+translation, asset mapping, Twig extensions, etc. — open the
+relevant chapter on <https://symfony.com/doc> first and base the
+implementation on the approach the docs show. The docs name the
+component, demonstrate the idiom, and link the configuration
+references; following them keeps the code in step with the
+framework instead of drifting into bespoke shapes that look
+reasonable but miss built-in conventions.
+
+When the docs offer more than one path (e.g. PHP attributes vs.
+YAML config, MapEntity vs. ParamConverter), pick the one that
+matches what's already in this codebase. If nothing comparable
+exists yet, prefer the most recent idiom shown in the docs — the
+attribute-driven, autoconfigured, autowired style.
+
+Cite the relevant doc URL in the PR description for any change
+that introduces a Symfony-component idiom for the first time, so
+reviewers can compare the implementation against the source.
+
 ### Controllers stay thin
 
 Controllers handle routes and template/response rendering only — no business
@@ -125,20 +168,23 @@ Every service class method (public, protected, private) carries a PHPDoc block
 with a one-line summary, a description of intent, `@param` per parameter,
 `@return`, and `@throws` for every exception that can be raised.
 
-### Tests are not modified without approval
+### Test methods carry a one-line intent comment
 
-Do **not** edit, rename, delete, or skip files under `tests/` (or any other
-test files) without explicit user approval — even when a failure looks like
-a stale assertion. If a change you're making appears to require test
-updates, stop and describe to the user, briefly:
+Each `public function test…` opens with a single-line comment that
+names what the test asserts, starting with `// Tests …`,
+`// Ensures …`, or `// Verifies …`. Pick whichever verb reads
+naturally for the assertion in question.
 
-- Which test files / test methods need to change.
-- What the change is (assertion update, fixture change, new case, removal).
-- Why it's needed (production behavior changed, contract widened, etc.).
+- One line, terse — not a docblock, not a paragraph.
+- Placed immediately above the method declaration.
+- If a block-level docblock already exists on the method (e.g. to
+  explain *why* the test matters in context), keep it and put the
+  one-liner beneath it. The docblock serves the *why*; the one-liner
+  names the *what*.
 
-Wait for the user to approve before touching the files. The 100% coverage
-gate (see "Common commands") means test edits have real consequences;
-the user decides whether the production change or the test is wrong.
+The comment is for a reader scanning the file's table of contents
+without reading method bodies. Matches the convention applied across
+every test file on the project.
 
 ## Workflows
 

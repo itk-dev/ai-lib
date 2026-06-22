@@ -26,6 +26,7 @@ final class AssistantControllerTest extends WebTestCase
         $this->client = self::createClient();
     }
 
+    // Tests that GET /assistant/{id} renders the title, description, runtime box, and tag list for a fixture row.
     public function testRendersAssistantDetail(): void
     {
         $repository = self::getContainer()->get(AssistantRepository::class);
@@ -48,6 +49,7 @@ final class AssistantControllerTest extends WebTestCase
         self::assertStringContainsString('jura', $tagsText);
     }
 
+    // Ensures the tags `<ul>` is omitted entirely when the assistant has no tags.
     public function testOmitsTagsSectionWhenAssistantHasNone(): void
     {
         $repository = self::getContainer()->get(AssistantRepository::class);
@@ -60,6 +62,7 @@ final class AssistantControllerTest extends WebTestCase
         self::assertCount(0, $crawler->filter('article ul'), 'tags <ul> must be absent when the list is empty');
     }
 
+    // Verifies that a non-existent assistant id returns a 404 response.
     public function testUnknownAssistantReturns404(): void
     {
         $this->client->request('GET', '/assistant/999999');
