@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `User.name` (display name) and `User.status` (`UserStatus` enum:
+  `awaiting_email_confirmation | pending | approved | blocked`)
+  fields
+  ([#45](https://github.com/itk-dev/ai-lib/issues/45),
+  [#83](https://github.com/itk-dev/ai-lib/issues/83),
+  [#103](https://github.com/itk-dev/ai-lib/issues/103)).
 - `ROLE_DOMAIN_MANAGER` + `ROLE_ADMIN` role identifiers
   (`App\Security\Roles`), `role_hierarchy` wiring in `security.yaml`
   so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and a

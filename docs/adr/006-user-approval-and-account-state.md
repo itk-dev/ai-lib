@@ -84,9 +84,10 @@ Adopt **option 1 — a `status` enum** on the `User` entity:
 ```php
 enum UserStatus: string
 {
-    case Pending  = 'pending';
-    case Approved = 'approved';
-    case Blocked  = 'blocked';
+    case AwaitingEmailConfirmation = 'awaiting_email_confirmation';
+    case Pending                   = 'pending';
+    case Approved                  = 'approved';
+    case Blocked                   = 'blocked';
 }
 ```
 
@@ -94,6 +95,24 @@ enum UserStatus: string
 for the identity lifecycle. Authorisation (`roles`, voters,
 `domainManager`) remains orthogonal — those answer "what may a
 signed-in user do", not "may this person sign in".
+
+The intended state transitions are:
+
+- `AwaitingEmailConfirmation → Pending` once the user has proven they
+  control the email address. Until then they cannot sign in and do
+  not appear in the domain manager's approval queue.
+- `Pending → Approved` once a domain manager (or an admin acting
+  across all domains) approves the account from the queue.
+- `Pending → Blocked` (rejection) and `Approved → Blocked`
+  (revocation) preserve the row for audit; un-blocking is the same
+  action in reverse (`Blocked → Approved`).
+- `AwaitingEmailConfirmation → Blocked` if the email is never
+  confirmed and the row is rejected administratively.
+
+The mechanism that actually sends the confirmation email and
+verifies the token is out of scope for this ADR — it's a separate
+implementation issue. This ADR only commits to the state existing
+and being enforced.
 
 ### Registration
 
@@ -191,10 +210,10 @@ immediate amendment.
 - Doctrine string-backed enums need a small `Type` mapping (or use
   Symfony's built-in support); a tiny amount of extra setup compared
   to a bare boolean column.
-- Adding a fourth state later (e.g. `awaiting_email_verification`,
-  `expired`) means a migration to extend the enum domain. We accept
-  this — it's exactly the kind of change an ADR should make
-  deliberate.
+- Extending the enum domain later (e.g. `expired`) means a small
+  migration. We accept this — it's exactly the kind of change an
+  ADR should make deliberate. The `AwaitingEmailConfirmation` case
+  is already part of the decided model above.
 - The env-var allow-list is the right starting point but will need to
   graduate to a `Domain` entity if domains grow or need per-domain
   metadata (e.g. a different approver per organisation). Tracked as a

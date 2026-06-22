@@ -5,11 +5,21 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Entity;
 
 use App\Entity\User;
+use App\Enum\UserStatus;
 use PHPUnit\Framework\TestCase;
 
 final class UserTest extends TestCase
 {
-    // Tests that getRoles() always appends ROLE_USER, both for a fresh user and for one with extra roles set.
+    // Tests that a freshly-constructed User defaults to Pending status and an empty name.
+    public function testConstructorDefaultsStatusToPending(): void
+    {
+        $user = new User();
+
+        self::assertSame(UserStatus::Pending, $user->getStatus());
+        self::assertSame('', $user->getName());
+    }
+
+    // Ensures ROLE_USER is always present in getRoles() output, even when not set explicitly.
     public function testGetRolesAlwaysIncludesRoleUser(): void
     {
         $user = new User();
@@ -20,7 +30,7 @@ final class UserTest extends TestCase
         self::assertSame(['ROLE_ADMIN', 'ROLE_USER'], $user->getRoles());
     }
 
-    // Ensures getRoles() deduplicates ROLE_USER when the caller has already set it explicitly.
+    // Ensures duplicate ROLE_USER entries are deduplicated in getRoles().
     public function testGetRolesDeduplicatesRoleUserWhenAlreadyPresent(): void
     {
         $user = new User();
@@ -29,7 +39,7 @@ final class UserTest extends TestCase
         self::assertSame(['ROLE_USER', 'ROLE_ADMIN'], $user->getRoles());
     }
 
-    // Verifies that getUserIdentifier() returns '' when the email is null (the `(string) null` fallback).
+    // Tests that getUserIdentifier returns '' when no email has been set.
     public function testGetUserIdentifierReturnsEmptyStringWhenEmailIsNull(): void
     {
         $user = new User();
@@ -37,7 +47,7 @@ final class UserTest extends TestCase
         self::assertSame('', $user->getUserIdentifier());
     }
 
-    // Tests that getUserIdentifier() returns the email value when one is set.
+    // Tests that getUserIdentifier returns the email when set.
     public function testGetUserIdentifierReturnsEmailWhenSet(): void
     {
         $user = new User();
@@ -46,7 +56,7 @@ final class UserTest extends TestCase
         self::assertSame('alice@example.test', $user->getUserIdentifier());
     }
 
-    // Ensures __serialize() replaces the password with its CRC32C hash so the session never carries the original hash.
+    // Verifies __serialize replaces the password hash with a CRC32C hash so the session never carries the original.
     public function testSerializeReplacesPasswordWithCrc32cHash(): void
     {
         $user = new User();
@@ -61,7 +71,17 @@ final class UserTest extends TestCase
         self::assertNotContains('plaintext-hash', $data, 'Serialised payload must not contain the original password hash.');
     }
 
-    // Tests that each setter mutates its field and returns `$this`, and that getId() is null on a fresh user.
+    // Verifies the AwaitingEmailConfirmation case round-trips through setStatus()/getStatus() (issue #103).
+    public function testAwaitingEmailConfirmationStatusRoundTrips(): void
+    {
+        $user = new User();
+        $user->setStatus(UserStatus::AwaitingEmailConfirmation);
+
+        self::assertSame(UserStatus::AwaitingEmailConfirmation, $user->getStatus());
+        self::assertSame('awaiting_email_confirmation', $user->getStatus()->value);
+    }
+
+    // Tests that every setter returns $this (fluent) and mutates the underlying value.
     public function testSettersMutateAndReturnStatic(): void
     {
         $user = new User();
@@ -74,6 +94,12 @@ final class UserTest extends TestCase
 
         self::assertSame($user, $user->setRoles(['ROLE_EDITOR']));
         self::assertSame(['ROLE_EDITOR', 'ROLE_USER'], $user->getRoles());
+
+        self::assertSame($user, $user->setName('Bob'));
+        self::assertSame('Bob', $user->getName());
+
+        self::assertSame($user, $user->setStatus(UserStatus::Approved));
+        self::assertSame(UserStatus::Approved, $user->getStatus());
 
         self::assertNull($user->getId());
     }
