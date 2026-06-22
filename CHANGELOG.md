@@ -15,6 +15,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   label/value pairs. The assistant detail's runtime attribute grid
   adopts it
   ([#94](https://github.com/itk-dev/ai-lib/issues/94)).
+- ADR `005-organization-entity` recording the decision to introduce
+  `Organization` as a first-class entity with name, multiple emails,
+  and a default framework — no language-model field, with the
+  `User → Organization` reference and admin CRUD tracked as separate
+  issues
+  ([#65](https://github.com/itk-dev/ai-lib/issues/65)).
+- `Organization` Doctrine entity (name, list of email domains,
+  default framework), repository, migration, and
+  `OrganizationFixtures` seeding three baseline kommuner (Aarhus,
+  Aalborg, Odense). First step of ADR 005 — `User → Organization`,
+  CRUD, and assistant autocomplete land in follow-up issues
+  ([#75](https://github.com/itk-dev/ai-lib/issues/75)).
+- `User.name` (display name) and `User.status` (`UserStatus` enum:
+  `awaiting_email_confirmation | pending | approved | blocked`)
+  fields
+  ([#45](https://github.com/itk-dev/ai-lib/issues/45),
+  [#83](https://github.com/itk-dev/ai-lib/issues/83),
+  [#103](https://github.com/itk-dev/ai-lib/issues/103)).
+- `ROLE_DOMAIN_MANAGER` + `ROLE_ADMIN` role identifiers
+  (`App\Security\Roles`), `role_hierarchy` wiring in `security.yaml`
+  so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and a
+  domain-scoped `ManageUserVoter` that grants the `MANAGE_USER` /
+  `APPROVE_USER` / `BLOCK_USER` attributes when the acting user is a
+  domain manager in the subject's email domain (or a site-wide
+  admin).
+  ([#84](https://github.com/itk-dev/ai-lib/issues/84)).
 - Test-env `framework.exceptions` override so
   `NotFoundHttpException` logs at `info` instead of `error`, keeping
   PHPUnit output clean when a test deliberately asserts a 404
