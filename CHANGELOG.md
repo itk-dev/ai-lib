@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Organization` Doctrine entity (name, list of email domains,
+  default framework), repository, migration, and
+  `OrganizationFixtures` seeding three baseline kommuner (Aarhus,
+  Aalborg, Odense). First step of ADR 005 — `User → Organization`,
+  CRUD, and assistant autocomplete land in follow-up issues
+  ([#75](https://github.com/itk-dev/ai-lib/issues/75)).
 - `User.name` (display name) and `User.status` (`UserStatus` enum:
   `awaiting_email_confirmation | pending | approved | blocked`)
   fields
