@@ -1,0 +1,11 @@
+{% props type = 'info', class = '' %}
+{# Notification box for flash messages and inline errors. `type` drives #}
+{# the ARIA role: error / warning are assertive (role="alert"), success #}
+{# / info are polite (role="status"). The visual treatment is a single #}
+{# neutral surface today; per-type colour treatments will follow once #}
+{# success / warning / error / info colour tokens land in app.css. #}
+{% set role = type in ['error', 'warning'] ? 'alert' : 'status' %}
+<div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text{{ class ? ' ' ~ class : '' }}"
+     role="{{ role }}">
+    {%- block content -%}{%- endblock -%}
+</div>
