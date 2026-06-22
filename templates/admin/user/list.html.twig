@@ -10,9 +10,9 @@
         </h1>
 
         {% for flash in app.flashes('success') %}
-            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="status">
+            <twig:Alert type="success" class="mb-4">
                 {{ flash|trans }}
-            </div>
+            </twig:Alert>
         {% endfor %}
 
         <nav aria-label="{{ 'admin.users.filter_label'|trans }}" class="mb-6 flex flex-wrap gap-3 text-sm">
