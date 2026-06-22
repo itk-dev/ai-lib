@@ -34,7 +34,7 @@ final class UserManagerTest extends KernelTestCase
         $this->passwordHasher = $container->get(UserPasswordHasherInterface::class);
     }
 
-    // Tests the happy path: createUser persists a user with hashed password, name, default Approved status, and ROLE_USER.
+    // Tests the happy path: createUser persists a user with hashed password, name, default Pending status (safe default), and ROLE_USER.
     public function testCreatesAndPersistsUserWithHashedPassword(): void
     {
         $user = $this->userManager->createUser('charlie@example.test', 'Charlie', 'secret');
@@ -42,7 +42,7 @@ final class UserManagerTest extends KernelTestCase
         self::assertNotNull($user->getId());
         self::assertSame('charlie@example.test', $user->getEmail());
         self::assertSame('Charlie', $user->getName());
-        self::assertSame(UserStatus::Approved, $user->getStatus());
+        self::assertSame(UserStatus::Pending, $user->getStatus());
         self::assertSame(['ROLE_USER'], $user->getRoles());
         self::assertNotSame('secret', $user->getPassword(), 'Password must be hashed.');
         self::assertTrue(

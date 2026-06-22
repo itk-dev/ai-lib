@@ -71,6 +71,16 @@ final class UserTest extends TestCase
         self::assertNotContains('plaintext-hash', $data, 'Serialised payload must not contain the original password hash.');
     }
 
+    // Verifies the AwaitingEmailConfirmation case round-trips through setStatus()/getStatus() (issue #103).
+    public function testAwaitingEmailConfirmationStatusRoundTrips(): void
+    {
+        $user = new User();
+        $user->setStatus(UserStatus::AwaitingEmailConfirmation);
+
+        self::assertSame(UserStatus::AwaitingEmailConfirmation, $user->getStatus());
+        self::assertSame('awaiting_email_confirmation', $user->getStatus()->value);
+    }
+
     // Tests that every setter returns $this (fluent) and mutates the underlying value.
     public function testSettersMutateAndReturnStatic(): void
     {

@@ -13,6 +13,7 @@ namespace App\Enum;
  */
 enum UserStatus: string
 {
+    case AwaitingEmailConfirmation = 'awaiting_email_confirmation';
     case Pending = 'pending';
     case Approved = 'approved';
     case Blocked = 'blocked';
