@@ -26,6 +26,19 @@ final class AccountStatusCheckerTest extends TestCase
         self::assertTrue(true);
     }
 
+    // Ensures an AwaitingEmailConfirmation user is rejected with the 'account.awaiting_email_confirmation' message key (issue #103).
+    public function testAwaitingEmailConfirmationUserIsRejectedWithLocalisedMessage(): void
+    {
+        $user = (new User())
+            ->setName('Awaiting')
+            ->setStatus(UserStatus::AwaitingEmailConfirmation);
+
+        $this->expectException(CustomUserMessageAccountStatusException::class);
+        $this->expectExceptionMessage('account.awaiting_email_confirmation');
+
+        (new AccountStatusChecker())->checkPreAuth($user);
+    }
+
     // Ensures a Pending user is rejected with the 'account.pending' message key.
     public function testPendingUserIsRejectedWithLocalisedMessage(): void
     {

@@ -28,7 +28,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 final class AccountStatusChecker implements UserCheckerInterface
 {
     /**
-     * Refuse pending and blocked users before the password is checked.
+     * Refuse any non-approved user before the password is checked.
      *
      * Non-`User` implementations fall through (the password checker
      * will reject them on its own terms).
@@ -36,7 +36,7 @@ final class AccountStatusChecker implements UserCheckerInterface
      * @param UserInterface       $user  the user attempting to authenticate
      * @param TokenInterface|null $token unused; Symfony 8 added the slot for hooks that need it
      *
-     * @throws CustomUserMessageAccountStatusException when status is Pending or Blocked
+     * @throws CustomUserMessageAccountStatusException when status is AwaitingEmailConfirmation, Pending or Blocked
      */
     public function checkPreAuth(UserInterface $user, ?TokenInterface $token = null): void
     {
@@ -47,6 +47,7 @@ final class AccountStatusChecker implements UserCheckerInterface
         // Keys live in the `security` translation domain — see
         // translations/security.da.yaml.
         match ($user->getStatus()) {
+            UserStatus::AwaitingEmailConfirmation => throw new CustomUserMessageAccountStatusException('account.awaiting_email_confirmation'),
             UserStatus::Pending => throw new CustomUserMessageAccountStatusException('account.pending'),
             UserStatus::Blocked => throw new CustomUserMessageAccountStatusException('account.blocked'),
             UserStatus::Approved => null,

@@ -108,6 +108,36 @@ final class SecurityControllerTest extends WebTestCase
         );
     }
 
+    // Tests that an AwaitingEmailConfirmation user is rejected at login with the localised confirmation-pending message (issue #103).
+    public function testAwaitingEmailConfirmationUserCannotLogIn(): void
+    {
+        $this->client->getContainer()->get(UserManager::class)->createUser(
+            'erin@example.test',
+            'Erin',
+            'password',
+            status: UserStatus::AwaitingEmailConfirmation,
+        );
+
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->form();
+        $form['_username'] = 'erin@example.test';
+        $form['_password'] = 'password';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/login');
+        $crawler = $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+
+        // Localised "must confirm email" message is rendered on the form.
+        self::assertStringContainsString(
+            'bekræfte din e-mailadresse',
+            $crawler->filter('body')->text(),
+        );
+        self::assertNull(
+            $this->client->getContainer()->get('security.token_storage')->getToken(),
+        );
+    }
+
     // Tests that a Pending user is rejected at login with the localised pending message.
     public function testPendingUserCannotLogIn(): void
     {

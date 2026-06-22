@@ -6,5 +6,6 @@
 # below match the messageKeys thrown by App\Security\AccountStatusChecker.
 
 account:
+    awaiting_email_confirmation: "Din konto er oprettet, men du skal bekræfte din e-mailadresse, før du kan logge ind."
     pending: "Din konto venter på godkendelse fra en administrator."
     blocked: "Din konto er spærret. Kontakt en administrator for at få den åbnet igen."
