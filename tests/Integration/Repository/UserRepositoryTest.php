@@ -139,7 +139,9 @@ final class UserRepositoryTest extends KernelTestCase
     public function testFindVisibleToFiltersByStatus(): void
     {
         $manager = self::getContainer()->get(UserManager::class);
-        $admin = $manager->createUser('siteadmin@example.test', 'Site Admin', 'pw', [Roles::ADMIN]);
+        // Admin must start Approved so it doesn't itself match the Pending filter
+        // we're testing — otherwise the result includes two pending users.
+        $admin = $manager->createUser('siteadmin@example.test', 'Site Admin', 'pw', [Roles::ADMIN], status: UserStatus::Approved);
         $manager->createUser('pending@example.test', 'Pending', 'pw', status: UserStatus::Pending);
 
         $emails = array_map(

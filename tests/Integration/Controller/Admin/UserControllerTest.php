@@ -119,7 +119,9 @@ final class UserControllerTest extends WebTestCase
     public function testApproveActionFlipsStatusToApproved(): void
     {
         $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
+        // Admin must start Approved so they don't appear in the `?status=pending`
+        // list and shadow the target's approve form.
+        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN], status: UserStatus::Approved);
         $target = $um->createUser('target@example.test', 'Target', 'pw', status: UserStatus::Pending);
 
         $this->loginAsApproved('admin@example.test');
@@ -176,8 +178,10 @@ final class UserControllerTest extends WebTestCase
     public function testBlockActionRejectsInvalidCsrfToken(): void
     {
         $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
-        $target = $um->createUser('target@example.test', 'Target', 'pw');
+        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN], status: UserStatus::Approved);
+        // Target must start Approved so we can assert the CSRF rejection
+        // didn't flip it to Blocked.
+        $target = $um->createUser('target@example.test', 'Target', 'pw', status: UserStatus::Approved);
 
         $this->loginAsApproved('admin@example.test');
 
