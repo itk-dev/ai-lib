@@ -39,6 +39,16 @@ class Assistant
     private array $tags = [];
 
     /**
+     * Verbatim OpenWebUI export JSON for this assistant, decoded into
+     * an associative array. Null for catalogue entries that pre-date
+     * the upload flow.
+     *
+     * @var array<string, mixed>|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $openwebuiConfig = null;
+
+    /**
      * @param list<string> $tags
      */
     public function __construct(
@@ -122,6 +132,24 @@ class Assistant
     public function setTags(array $tags): static
     {
         $this->tags = array_values($tags);
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getOpenwebuiConfig(): ?array
+    {
+        return $this->openwebuiConfig;
+    }
+
+    /**
+     * @param array<string, mixed>|null $openwebuiConfig
+     */
+    public function setOpenwebuiConfig(?array $openwebuiConfig): static
+    {
+        $this->openwebuiConfig = $openwebuiConfig;
 
         return $this;
     }

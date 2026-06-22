@@ -1,0 +1,114 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'assistant.new.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <section class="max-w-2xl">
+        <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.new.eyebrow'|trans }}</twig:Eyebrow>
+        <h1 class="mb-6 font-display text-[clamp(2rem,3vw,2.6rem)] font-medium leading-tight tracking-tight text-ink">
+            {{ 'assistant.new.heading'|trans }}
+        </h1>
+
+        {% if errors is not empty %}
+            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
+                <ul class="list-disc pl-5">
+                    {% for error in errors %}
+                        <li>{{ error|trans }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form action="{{ path('app_assistant_new') }}"
+              method="post"
+              class="grid gap-4"
+              data-controller="assistant-config-upload"
+              data-assistant-config-upload-validate-url-value="{{ path('app_assistant_new_validate_config') }}">
+            <twig:Form:Label for="inputTitle" text="{{ 'assistant.new.title_label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputTitle"
+                    name="title"
+                    value="{{ submitted.title }}"
+                    required
+                    autofocus
+                />
+            </twig:Form:Label>
+
+            <twig:Form:Label for="inputDescription" text="{{ 'assistant.new.description_label'|trans }}">
+                <textarea id="inputDescription"
+                          name="description"
+                          required
+                          rows="4"
+                          class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.description }}</textarea>
+            </twig:Form:Label>
+
+            <twig:Form:Label for="inputLanguageModel" text="{{ 'assistant.new.language_model_label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputLanguageModel"
+                    name="language_model"
+                    value="{{ submitted.language_model }}"
+                    required
+                />
+            </twig:Form:Label>
+
+            <twig:Form:Label for="inputFramework" text="{{ 'assistant.new.framework_label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputFramework"
+                    name="framework"
+                    value="{{ submitted.framework }}"
+                    required
+                />
+            </twig:Form:Label>
+
+            <twig:Form:Label for="inputTags" text="{{ 'assistant.new.tags_label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputTags"
+                    name="tags"
+                    value="{{ submitted.tags|join(', ') }}"
+                />
+            </twig:Form:Label>
+
+            <div class="grid gap-2">
+                <twig:Form:Label for="inputConfig" text="{{ 'assistant.new.config_label'|trans }}">
+                    <input id="inputConfig"
+                           type="file"
+                           accept="application/json,.json"
+                           data-assistant-config-upload-target="file"
+                           data-action="change->assistant-config-upload#fileChanged"
+                           class="rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-ink hover:file:bg-primary-hover">
+                </twig:Form:Label>
+
+                <input type="hidden"
+                       name="openwebui_config"
+                       value="{{ submitted.openwebui_config }}"
+                       data-assistant-config-upload-target="hidden">
+
+                <progress data-assistant-config-upload-target="progress"
+                          value="0"
+                          max="100"
+                          class="hidden h-2 w-full overflow-hidden rounded-full [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-surface-2 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary">
+                </progress>
+
+                <p data-assistant-config-upload-target="status"
+                   data-validating-text="{{ 'assistant.new.config_validating'|trans }}"
+                   data-valid-text="{{ 'assistant.new.config_valid'|trans }}"
+                   data-invalid-text="{{ 'assistant.new.config_invalid'|trans }}"
+                   class="text-sm text-text-muted"
+                   role="status">
+                    {{ 'assistant.new.config_help'|trans }}
+                </p>
+            </div>
+
+            <input type="hidden" name="_token" value="{{ csrf_token('assistant-create') }}">
+
+            <div class="flex items-center gap-4">
+                <twig:Form:Button type="submit">
+                    {{ 'assistant.new.submit'|trans }}
+                </twig:Form:Button>
+                <a class="text-sm text-text underline hover:text-primary" href="{{ path('app_frontpage') }}">
+                    {{ 'assistant.new.cancel'|trans }}
+                </a>
+            </div>
+        </form>
+    </section>
+{% endblock %}

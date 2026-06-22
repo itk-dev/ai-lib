@@ -78,6 +78,25 @@ assistant:
         framework_label: "Framework"
         language_model_label: "Sprogmodel"
         tags_heading: "Tags"
+    new:
+        title: "Opret assistent – %brand%"
+        eyebrow: "Del assistent"
+        heading: "Opret assistent"
+        title_label: "Titel"
+        description_label: "Beskrivelse"
+        language_model_label: "Sprogmodel"
+        framework_label: "Framework"
+        tags_label: "Tags (komma-separeret)"
+        config_label: "OpenWebUI-konfiguration (JSON)"
+        config_help: "Vælg en JSON-fil for at validere konfigurationen."
+        config_validating: "Validerer konfiguration…"
+        config_valid: "Konfigurationen er gyldig."
+        config_invalid: "Konfigurationen er ugyldig:"
+        submit: "Opret"
+        cancel: "Annuller"
+        error:
+            invalid_token: "Sessionen er udløbet. Indsend formularen igen."
+            missing_config: "Vælg en JSON-fil før indsendelse."
 
 frontpage:
     title: "%brand% – forhåndsvisning"
