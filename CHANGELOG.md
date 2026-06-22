@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   domain manager in the subject's email domain (or a site-wide
   admin).
   ([#84](https://github.com/itk-dev/ai-lib/issues/84)).
+- Test-env `framework.exceptions` override so
+  `NotFoundHttpException` logs at `info` instead of `error`, keeping
+  PHPUnit output clean when a test deliberately asserts a 404
+  ([#95](https://github.com/itk-dev/ai-lib/issues/95)).
+- Shared `Alert` Twig component (`templates/components/Alert.html.twig`)
+  for flash messages and inline errors. `type` (`success` | `error` |
+  `warning` | `info`) drives the ARIA role; the login error block
+  adopts it
+  ([#93](https://github.com/itk-dev/ai-lib/issues/93)).
+- Catalogue listing page with filters
+  ([#15](https://github.com/itk-dev/ai-lib/issues/15)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
   `symfony-8` template (phpfpm 8.4, nginx, MariaDB, Mailpit, Traefik),
   including dev dependencies for coding standards (`php-cs-fixer`,
