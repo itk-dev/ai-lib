@@ -148,6 +148,49 @@ Cite the relevant doc URL in the PR description for any change
 that introduces a Symfony-component idiom for the first time, so
 reviewers can compare the implementation against the source.
 
+### Use Symfony Flex for new dependencies
+
+When a new feature needs additional Symfony or third-party code,
+install it via `task composer -- require <package>` so Symfony Flex
+runs the package's recipe. The recipe wires the bundle into
+`config/bundles.php`, drops default configuration into
+`config/packages/`, and adds any `.env` placeholders the package
+expects. Hand-editing `composer.json` or running composer with
+`--no-scripts` sidesteps that wiring and leaves the project in an
+under-configured state that is easy to miss until something silently
+fails to load.
+
+### Twig components: reuse before creating, prefer `symfony/ux-twig-component`
+
+Templates render reusable UI fragments through the
+`symfony/ux-twig-component` bundle. New markup that is likely to be
+reused — buttons, inputs, cards, page headers, anything with a name
+— lives as a component at
+`templates/components/<Family>/<Name>.html.twig` and is invoked via
+`<twig:Family:Name … />`, not `{% include %}` or hand-rolled
+partials.
+
+Before adding a new component, scan `templates/components/` for one
+that already covers the case. The existing families (`Form/`,
+`Layout/`, `Nav/`, `CardRail/`, `Stats/`, `StepList/`, `TagList/`,
+plus the standalone components alongside them) are the first place to
+look — extending a component with a new prop is almost always cheaper
+than creating a near-duplicate that drifts in styling.
+
+### Use Maker Bundle when a recipe exists
+
+For scaffolding work — new entity, controller, command, form,
+fixture, voter, event subscriber, registration form, and so on —
+start with `task console -- make:<thing>` and edit the generated
+files rather than hand-rolling the boilerplate. Maker Bundle places
+the file in the right location with the right namespace and the
+current attribute-driven idioms, which keeps new code in step with
+what is already in the codebase and with what the
+`symfony.com/doc` rule above points at. Run
+`task console -- list make` to see what is available. If no
+`make:<thing>` exists for the feature, write the file by hand
+following the relevant Symfony docs chapter.
+
 ### Controllers stay thin
 
 Controllers handle routes and template/response rendering only — no business
