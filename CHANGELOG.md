@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- ADR `005-organization-entity` recording the decision to introduce
+  `Organization` as a first-class entity with name, multiple emails,
+  and a default framework — no language-model field, with the
+  `User → Organization` reference and admin CRUD tracked as separate
+  issues
+  ([#65](https://github.com/itk-dev/ai-lib/issues/65)).
 - `Organization` Doctrine entity (name, list of email domains,
   default framework), repository, migration, and
   `OrganizationFixtures` seeding three baseline kommuner (Aarhus,
