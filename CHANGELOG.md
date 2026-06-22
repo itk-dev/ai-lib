@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Self-service profile pages at `/profile` (read-only) and
+  `/profile/edit` (form). Authenticated users can update their
+  display name; email stays read-only (changing it would interact
+  with the domain-derived authorisation from #84 — out of scope
+  here). `UserManager::updateName()` is the persistent home for the
+  mutation, CSRF-protected via Symfony's `csrf_token('profile-edit')`
+  helper. Localised flash + form errors via the existing `messages`
+  domain
+  ([#13](https://github.com/itk-dev/ai-lib/issues/13)).
 - `App\Security\AccountStatusChecker` implementing
   `UserCheckerInterface` — gates the login flow so a `User` with
   `status = Pending` or `status = Blocked` is rejected before the
