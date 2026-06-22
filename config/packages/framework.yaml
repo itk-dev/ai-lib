@@ -13,3 +13,11 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+        # Quiet the stray "[error] Uncaught PHP Exception NotFoundHttpException"
+        # line that 404-asserting tests would otherwise print to STDERR via
+        # the default minimalist HttpKernel logger. Drop the level below the
+        # logger's STDERR threshold so the test output stays clean while the
+        # 404 path itself still runs and is asserted.
+        exceptions:
+            Symfony\Component\HttpKernel\Exception\NotFoundHttpException:
+                log_level: info
