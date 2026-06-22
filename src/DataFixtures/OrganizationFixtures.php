@@ -11,7 +11,7 @@ use Doctrine\Persistence\ObjectManager;
 /**
  * Seed three baseline organizations for local development and tests.
  *
- * Hand-picked Danish kommuner that match the kommune names already used
+ * Hand-picked Danish municipalities that match the municipality names already used
  * by AssistantFixtures, so downstream features (autocomplete, facet
  * counts) can be wired up against consistent data once the
  * `User → Organization` relation lands.
