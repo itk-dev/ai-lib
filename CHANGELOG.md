@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `App\Security\AccountStatusChecker` implementing
+  `UserCheckerInterface` — gates the login flow so a `User` with
+  `status = Pending` or `status = Blocked` is rejected before the
+  password is verified. Throws
+  `CustomUserMessageAccountStatusException` with the localised
+  translation keys `account.pending` and `account.blocked` (rendered
+  in the `security` domain — see `translations/security.da.yaml`).
+  Wired on the `main` firewall via `security.yaml`'s `user_checker:`
+  key
+  ([#63](https://github.com/itk-dev/ai-lib/issues/63)).
+- `User.name` (display name) and `User.status` (lifecycle enum:
+  `pending | approved | blocked`) per ADR 006, plus the
+  `App\Enum\UserStatus` PHP enum. `UserManager::createUser()` now
+  requires `name` and accepts an optional `status` (default
+  `Approved` for the console / fixture path; the registration flow
+  in #62 will pass `Pending`). The `app:user:create` console command
+  takes a third `name` argument; fixtures seed Alice + Bob with
+  display names. Schema is added via a single migration that
+  backfills any existing rows with `name = ''` and
+  `status = 'approved'`
 - `User.name` (display name) and `User.status` (`UserStatus` enum:
   `awaiting_email_confirmation | pending | approved | blocked`)
   fields
