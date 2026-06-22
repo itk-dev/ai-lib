@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `ROLE_DOMAIN_MANAGER` + `ROLE_ADMIN` role identifiers
+  (`App\Security\Roles`), `role_hierarchy` wiring in `security.yaml`
+  so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and a
+  domain-scoped `ManageUserVoter` that grants the `MANAGE_USER` /
+  `APPROVE_USER` / `BLOCK_USER` attributes when the acting user is a
+  domain manager in the subject's email domain (or a site-wide
+  admin).
+  ([#84](https://github.com/itk-dev/ai-lib/issues/84)).
 - Test-env `framework.exceptions` override so
   `NotFoundHttpException` logs at `info` instead of `error`, keeping
   PHPUnit output clean when a test deliberately asserts a 404
