@@ -1,6 +1,6 @@
 {% props heading, help = null %}
 <div class="rounded-xl border border-line bg-surface px-8 py-16 text-center">
-    <h2 class="font-display text-xl font-semibold text-ink">{{ heading|trans }}</h2>
+    <twig:Heading level="2" size="sm">{{ heading|trans }}</twig:Heading>
     {% if help %}
         <p class="mt-3 text-sm text-text-muted">{{ help|trans }}</p>
     {% endif %}

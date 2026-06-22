@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Shared `Heading` Twig component (`templates/components/Heading.html.twig`)
+  that renders `<h1>`–`<h6>` with size tokens centralised in one place.
+  Refactors `assistant/show.html.twig`, `security/login.html.twig`,
+  and the `PageHeader`, `Hero`, `EmptyState`, `Filter/Rail`
+  components to use it
+  ([#92](https://github.com/itk-dev/ai-lib/issues/92)).
 - Catalogue listing page with filters
   ([#15](https://github.com/itk-dev/ai-lib/issues/15)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
