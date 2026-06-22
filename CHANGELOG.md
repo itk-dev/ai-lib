@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Shared `DescriptionList` Twig component family
+  (`templates/components/DescriptionList/List.html.twig` +
+  `templates/components/DescriptionList/Item.html.twig`) for
+  label/value pairs. The assistant detail's runtime attribute grid
+  adopts it
+  ([#94](https://github.com/itk-dev/ai-lib/issues/94)).
 - Catalogue listing page with filters
   ([#15](https://github.com/itk-dev/ai-lib/issues/15)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
