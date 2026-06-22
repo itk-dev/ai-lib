@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Shared `DescriptionList` Twig component family
+  (`templates/components/DescriptionList/List.html.twig` +
+  `templates/components/DescriptionList/Item.html.twig`) for
+  label/value pairs. The assistant detail's runtime attribute grid
+  adopts it
+  ([#94](https://github.com/itk-dev/ai-lib/issues/94)).
 - ADR `005-organization-entity` recording the decision to introduce
   `Organization` as a first-class entity with name, multiple emails,
   and a default framework — no language-model field, with the
