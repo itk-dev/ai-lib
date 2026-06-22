@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Test-env `framework.exceptions` override so
+  `NotFoundHttpException` logs at `info` instead of `error`, keeping
+  PHPUnit output clean when a test deliberately asserts a 404
+  ([#95](https://github.com/itk-dev/ai-lib/issues/95)).
 - Shared `Alert` Twig component (`templates/components/Alert.html.twig`)
   for flash messages and inline errors. `type` (`success` | `error` |
   `warning` | `info`) drives the ARIA role; the login error block
