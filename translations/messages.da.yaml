@@ -62,6 +62,32 @@ profile:
             invalid_token: "Sessionen er udløbet. Indsend formularen igen."
         flash:
             success: "Dine profiloplysninger er gemt."
+catalog:
+    title: "Katalog – %brand%"
+    eyebrow: "Katalog"
+    heading: "Find en assistent"
+    result_count:
+        one: "1 resultat"
+        many: "%count% resultater"
+    empty:
+        heading: "Ingen assistenter matcher"
+        help: "Prøv at slække på filtrene eller fjerne en facet."
+    results:
+        label: "Søgeresultater"
+    filters:
+        eyebrow: "Filtrér"
+        heading: "Filtre"
+        active: "Aktive filtre"
+        chip_remove: "Fjern filter: %filter%"
+        language_model: "Sprogmodel"
+        framework: "Rammeværk"
+        apply: "Anvend filtre"
+        reset: "Nulstil filtre"
+    pagination:
+        label: "Sideinddeling"
+        previous: "← Forrige"
+        next: "Næste →"
+        page: "Side %n%"
 
 assistant:
     detail:
@@ -85,7 +111,7 @@ frontpage:
         models: "Sprogmodeller"
     rail:
         eyebrow: "Forhåndsvisning"
-        link: "Kataloget kommer →"
+        link: "Se hele kataloget →"
         list_label: "Eksempler på assistenter"
     steps:
         eyebrow: "Sådan virker det"

@@ -6,6 +6,8 @@ namespace App\Tests\Integration\Controller;
 
 use App\Controller\SecurityController;
 use App\Entity\User;
+use App\Enum\UserStatus;
+use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -25,6 +27,7 @@ final class SecurityControllerTest extends WebTestCase
         $this->client = self::createClient();
     }
 
+    // Tests that GET /login renders the form with the username, password, and CSRF inputs.
     public function testLoginPageRenders(): void
     {
         $this->client->request('GET', '/login');
@@ -35,6 +38,7 @@ final class SecurityControllerTest extends WebTestCase
         self::assertSelectorExists('input[name="_csrf_token"]');
     }
 
+    // Verifies that valid credentials redirect to the frontpage and populate the security token.
     public function testSuccessfulLoginRedirectsToFrontpage(): void
     {
         $crawler = $this->client->request('GET', '/login');
@@ -53,6 +57,7 @@ final class SecurityControllerTest extends WebTestCase
         self::assertSame('alice@example.test', $token->getUserIdentifier());
     }
 
+    // Ensures invalid credentials redirect back to /login and leave the security token unset.
     public function testFailedLoginShowsErrorAndStaysOnLoginPage(): void
     {
         $crawler = $this->client->request('GET', '/login');
@@ -70,6 +75,7 @@ final class SecurityControllerTest extends WebTestCase
         );
     }
 
+    // Verifies that the logout action throws when invoked directly, since the firewall handles it in production.
     public function testLogoutActionThrowsWhenInvokedDirectly(): void
     {
         // The firewall intercepts /logout in production, so the method body
@@ -81,6 +87,7 @@ final class SecurityControllerTest extends WebTestCase
         $controller->logout();
     }
 
+    // Tests that GET /logout clears the security token after a previously-authenticated session.
     public function testLogoutClearsTheSession(): void
     {
         // Sign in first.
@@ -96,6 +103,65 @@ final class SecurityControllerTest extends WebTestCase
         // Symfony intercepts /logout and redirects to the configured target.
         self::assertResponseRedirects('/');
         $this->client->followRedirect();
+        self::assertNull(
+            $this->client->getContainer()->get('security.token_storage')->getToken(),
+        );
+    }
+
+    // Tests that a Pending user is rejected at login with the localised pending message.
+    public function testPendingUserCannotLogIn(): void
+    {
+        $this->client->getContainer()->get(UserManager::class)->createUser(
+            'carol@example.test',
+            'Carol',
+            'password',
+            status: UserStatus::Pending,
+        );
+
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->form();
+        $form['_username'] = 'carol@example.test';
+        $form['_password'] = 'password';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/login');
+        $crawler = $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+
+        // Localised pending message is rendered on the form.
+        self::assertStringContainsString(
+            'venter på godkendelse',
+            $crawler->filter('body')->text(),
+        );
+        self::assertNull(
+            $this->client->getContainer()->get('security.token_storage')->getToken(),
+        );
+    }
+
+    // Tests that a Blocked user is rejected at login with the localised blocked message.
+    public function testBlockedUserCannotLogIn(): void
+    {
+        $this->client->getContainer()->get(UserManager::class)->createUser(
+            'dora@example.test',
+            'Dora',
+            'password',
+            status: UserStatus::Blocked,
+        );
+
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->form();
+        $form['_username'] = 'dora@example.test';
+        $form['_password'] = 'password';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/login');
+        $crawler = $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+
+        self::assertStringContainsString(
+            'spærret',
+            $crawler->filter('body')->text(),
+        );
         self::assertNull(
             $this->client->getContainer()->get('security.token_storage')->getToken(),
         );

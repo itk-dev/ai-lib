@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 final class DevTemplateMarkerExtensionTest extends TestCase
 {
+    // Tests that the extension registers the marker visitor when the kernel runs in `dev`.
     public function testRegistersVisitorInDevEnvironment(): void
     {
         $visitors = (new DevTemplateMarkerExtension('dev'))->getNodeVisitors();
@@ -18,6 +19,7 @@ final class DevTemplateMarkerExtensionTest extends TestCase
         self::assertInstanceOf(DevTemplateMarkerNodeVisitor::class, $visitors[0]);
     }
 
+    // Ensures the extension registers no visitor when the kernel runs in `prod`.
     public function testRegistersNoVisitorInProdEnvironment(): void
     {
         self::assertSame(
@@ -26,6 +28,7 @@ final class DevTemplateMarkerExtensionTest extends TestCase
         );
     }
 
+    // Ensures the extension registers no visitor when the kernel runs in `test`.
     public function testRegistersNoVisitorInTestEnvironment(): void
     {
         self::assertSame(

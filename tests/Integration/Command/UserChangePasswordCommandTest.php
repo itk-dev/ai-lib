@@ -25,6 +25,7 @@ final class UserChangePasswordCommandTest extends KernelTestCase
         $this->tester = new CommandTester($command);
     }
 
+    // Tests that the command updates the user's password and reports success.
     public function testChangesPassword(): void
     {
         $exit = $this->tester->execute([
@@ -36,6 +37,7 @@ final class UserChangePasswordCommandTest extends KernelTestCase
         self::assertStringContainsString('Updated password for user "alice@example.test"', $this->tester->getDisplay());
     }
 
+    // Ensures the command exits non-zero and explains the failure when the email matches no user.
     public function testReportsFailureWhenUserMissing(): void
     {
         $exit = $this->tester->execute([

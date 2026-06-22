@@ -34,16 +34,17 @@ final class UserManager
     /**
      * Create a new persisted user with a hashed password.
      *
-     * Defaults to `UserStatus::Approved` so the console / fixture paths
-     * land a usable account immediately. The registration flow (#62)
-     * passes `UserStatus::Pending` explicitly so a domain manager has
-     * to approve the user before they can sign in.
+     * Defaults to `UserStatus::Pending` so accidentally omitting
+     * `$status` lands a non-loggable account rather than a usable one
+     * (least-privilege default). Callers that want an immediately
+     * usable account — the console command and the local-development
+     * fixtures — pass `UserStatus::Approved` explicitly.
      *
      * @param string       $email         user e-mail; must be unique
      * @param string       $name          display name; required, may be any non-null string
      * @param string       $plainPassword clear-text password, hashed before persistence
      * @param list<string> $roles         additional roles beyond the implicit `ROLE_USER`
-     * @param UserStatus   $status        identity-lifecycle status; defaults to {@see UserStatus::Approved}
+     * @param UserStatus   $status        identity-lifecycle status; defaults to {@see UserStatus::Pending}
      *
      * @return User the persisted user with an assigned id
      *
@@ -55,7 +56,7 @@ final class UserManager
         string $name,
         string $plainPassword,
         array $roles = [],
-        UserStatus $status = UserStatus::Approved,
+        UserStatus $status = UserStatus::Pending,
     ): User {
         if ('' === $plainPassword) {
             throw new \InvalidArgumentException('Password must not be empty.');

@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   helper. Localised flash + form errors via the existing `messages`
   domain
   ([#13](https://github.com/itk-dev/ai-lib/issues/13)).
+- `App\Security\AccountStatusChecker` implementing
+  `UserCheckerInterface` — gates the login flow so a `User` with
+  `status = Pending` or `status = Blocked` is rejected before the
+  password is verified. Throws
+  `CustomUserMessageAccountStatusException` with the localised
+  translation keys `account.pending` and `account.blocked` (rendered
+  in the `security` domain — see `translations/security.da.yaml`).
+  Wired on the `main` firewall via `security.yaml`'s `user_checker:`
+  key
+  ([#63](https://github.com/itk-dev/ai-lib/issues/63)).
 - `User.name` (display name) and `User.status` (lifecycle enum:
   `pending | approved | blocked`) per ADR 006, plus the
   `App\Enum\UserStatus` PHP enum. `UserManager::createUser()` now
@@ -28,8 +38,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   display names. Schema is added via a single migration that
   backfills any existing rows with `name = ''` and
   `status = 'approved'`
+- `User.name` (display name) and `User.status` (`UserStatus` enum:
+  `awaiting_email_confirmation | pending | approved | blocked`)
+  fields
   ([#45](https://github.com/itk-dev/ai-lib/issues/45),
-  [#83](https://github.com/itk-dev/ai-lib/issues/83)).
+  [#83](https://github.com/itk-dev/ai-lib/issues/83),
+  [#103](https://github.com/itk-dev/ai-lib/issues/103)).
+- `ROLE_DOMAIN_MANAGER` + `ROLE_ADMIN` role identifiers
+  (`App\Security\Roles`), `role_hierarchy` wiring in `security.yaml`
+  so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and a
+  domain-scoped `ManageUserVoter` that grants the `MANAGE_USER` /
+  `APPROVE_USER` / `BLOCK_USER` attributes when the acting user is a
+  domain manager in the subject's email domain (or a site-wide
+  admin).
+  ([#84](https://github.com/itk-dev/ai-lib/issues/84)).
+- Test-env `framework.exceptions` override so
+  `NotFoundHttpException` logs at `info` instead of `error`, keeping
+  PHPUnit output clean when a test deliberately asserts a 404
+  ([#95](https://github.com/itk-dev/ai-lib/issues/95)).
+- Shared `Alert` Twig component (`templates/components/Alert.html.twig`)
+  for flash messages and inline errors. `type` (`success` | `error` |
+  `warning` | `info`) drives the ARIA role; the login error block
+  adopts it
+  ([#93](https://github.com/itk-dev/ai-lib/issues/93)).
+- Catalogue listing page with filters
+  ([#15](https://github.com/itk-dev/ai-lib/issues/15)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
   `symfony-8` template (phpfpm 8.4, nginx, MariaDB, Mailpit, Traefik),
   including dev dependencies for coding standards (`php-cs-fixer`,
