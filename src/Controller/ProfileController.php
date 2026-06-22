@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -20,18 +21,16 @@ final class ProfileController extends AbstractController
     }
 
     #[Route(path: '/profile', name: 'app_profile_show', methods: ['GET'])]
-    public function show(): Response
+    public function show(#[CurrentUser] User $user): Response
     {
         return $this->render('profile/show.html.twig', [
-            'user' => $this->currentUser(),
+            'user' => $user,
         ]);
     }
 
     #[Route(path: '/profile/edit', name: 'app_profile_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request): Response
+    public function edit(Request $request, #[CurrentUser] User $user): Response
     {
-        $user = $this->currentUser();
-
         if ('POST' !== $request->getMethod()) {
             return $this->render('profile/edit.html.twig', [
                 'user' => $user,
@@ -63,13 +62,5 @@ final class ProfileController extends AbstractController
         $this->addFlash('success', 'profile.edit.flash.success');
 
         return $this->redirectToRoute('app_profile_show');
-    }
-
-    private function currentUser(): User
-    {
-        $user = $this->getUser();
-        \assert($user instanceof User);
-
-        return $user;
     }
 }
