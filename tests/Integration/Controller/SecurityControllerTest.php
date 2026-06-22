@@ -6,6 +6,8 @@ namespace App\Tests\Integration\Controller;
 
 use App\Controller\SecurityController;
 use App\Entity\User;
+use App\Enum\UserStatus;
+use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -101,6 +103,95 @@ final class SecurityControllerTest extends WebTestCase
         // Symfony intercepts /logout and redirects to the configured target.
         self::assertResponseRedirects('/');
         $this->client->followRedirect();
+        self::assertNull(
+            $this->client->getContainer()->get('security.token_storage')->getToken(),
+        );
+    }
+
+    // Tests that an AwaitingEmailConfirmation user is rejected at login with the localised confirmation-pending message (issue #103).
+    public function testAwaitingEmailConfirmationUserCannotLogIn(): void
+    {
+        $this->client->getContainer()->get(UserManager::class)->createUser(
+            'erin@example.test',
+            'Erin',
+            'password',
+            status: UserStatus::AwaitingEmailConfirmation,
+        );
+
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->form();
+        $form['_username'] = 'erin@example.test';
+        $form['_password'] = 'password';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/login');
+        $crawler = $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+
+        // Localised "must confirm email" message is rendered on the form.
+        self::assertStringContainsString(
+            'bekræfte din e-mailadresse',
+            $crawler->filter('body')->text(),
+        );
+        self::assertNull(
+            $this->client->getContainer()->get('security.token_storage')->getToken(),
+        );
+    }
+
+    // Tests that a Pending user is rejected at login with the localised pending message.
+    public function testPendingUserCannotLogIn(): void
+    {
+        $this->client->getContainer()->get(UserManager::class)->createUser(
+            'carol@example.test',
+            'Carol',
+            'password',
+            status: UserStatus::Pending,
+        );
+
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->form();
+        $form['_username'] = 'carol@example.test';
+        $form['_password'] = 'password';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/login');
+        $crawler = $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+
+        // Localised pending message is rendered on the form.
+        self::assertStringContainsString(
+            'venter på godkendelse',
+            $crawler->filter('body')->text(),
+        );
+        self::assertNull(
+            $this->client->getContainer()->get('security.token_storage')->getToken(),
+        );
+    }
+
+    // Tests that a Blocked user is rejected at login with the localised blocked message.
+    public function testBlockedUserCannotLogIn(): void
+    {
+        $this->client->getContainer()->get(UserManager::class)->createUser(
+            'dora@example.test',
+            'Dora',
+            'password',
+            status: UserStatus::Blocked,
+        );
+
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->form();
+        $form['_username'] = 'dora@example.test';
+        $form['_password'] = 'password';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/login');
+        $crawler = $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+
+        self::assertStringContainsString(
+            'spærret',
+            $crawler->filter('body')->text(),
+        );
         self::assertNull(
             $this->client->getContainer()->get('security.token_storage')->getToken(),
         );

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `App\Security\AccountStatusChecker` implementing
+  `UserCheckerInterface` — gates the login flow so any `User` whose
+  `status` is not `Approved` is rejected before the password is
+  verified, with distinct localised messages per state
+  (`account.awaiting_email_confirmation`, `account.pending`,
+  `account.blocked`) rendered in the `security` translation domain.
+  Wired on the `main` firewall via `security.yaml`'s `user_checker:`
+  key
+  ([#63](https://github.com/itk-dev/ai-lib/issues/63),
+  [#103](https://github.com/itk-dev/ai-lib/issues/103)).
 - Shared `DescriptionList` Twig component family
   (`templates/components/DescriptionList/List.html.twig` +
   `templates/components/DescriptionList/Item.html.twig`) for
