@@ -23,6 +23,7 @@ final class FrontpageControllerTest extends WebTestCase
         $this->client = self::createClient();
     }
 
+    // Tests that the frontpage rail links to the five newest fixture assistants in id-DESC order.
     public function testCardRailLinksToTheFiveNewestFixtureAssistants(): void
     {
         $repository = self::getContainer()->get(AssistantRepository::class);
@@ -51,6 +52,7 @@ final class FrontpageControllerTest extends WebTestCase
         self::assertStringContainsString($expected[0]->getLanguageModel(), $railText);
     }
 
+    // Verifies the stats block reflects the fixture totals (21 assistants, 5 distinct language models).
     public function testStatsReflectFixtureCatalogueCounts(): void
     {
         $crawler = $this->client->request('GET', '/');

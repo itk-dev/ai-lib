@@ -2,7 +2,9 @@
 
 namespace App\Entity;
 
+use App\Enum\UserStatus;
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -31,6 +33,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
+
+    #[ORM\Column(length: 255)]
+    private string $name = '';
+
+    #[ORM\Column(type: Types::STRING, length: 32, enumType: UserStatus::class)]
+    private UserStatus $status = UserStatus::Pending;
 
     public function getId(): ?int
     {
@@ -92,6 +100,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): static
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    public function getStatus(): UserStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(UserStatus $status): static
+    {
+        $this->status = $status;
 
         return $this;
     }
