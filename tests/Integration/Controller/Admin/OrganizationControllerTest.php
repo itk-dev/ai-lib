@@ -10,16 +10,12 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * Integration coverage of the admin Organization CRUD (issue #76).
+ * Integration coverage of the admin Organization CRUD.
  *
  * Drives the controller through Symfony Form, Doctrine, and Twig
  * so the routing + form-binding + persistence wiring is exercised
  * together. Uses `OrganizationFixtures` from the integration
  * bootstrap (Aarhus / Aalborg / Odense) as the baseline.
- *
- * Auth gating is intentionally omitted in this PR (tracked as a
- * follow-up issue); the routes are reachable without authentication
- * for now.
  */
 final class OrganizationControllerTest extends WebTestCase
 {
@@ -86,6 +82,22 @@ final class OrganizationControllerTest extends WebTestCase
 
         $repository = self::getContainer()->get(OrganizationRepository::class);
         self::assertNull($repository->findOneBy(['emailDomains' => ['incomplete.test']]));
+    }
+
+    // Ensures an empty emailDomains submit renders the translated minMessage rather than a raw translation key.
+    public function testCreateRejectsEmptyEmailDomainsWithTranslatedMessage(): void
+    {
+        $crawler = $this->client->request('GET', '/admin/organization/new');
+        $form = $crawler->filter('form')->form();
+        $form['organization[name]'] = 'Vejle Kommune';
+        $form['organization[emailDomains]'] = '';
+        $form['organization[defaultFramework]'] = 'openwebui';
+        $crawler = $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        $body = $crawler->filter('body')->text();
+        self::assertStringContainsString('Angiv mindst ét e-maildomæne.', $body);
+        self::assertStringNotContainsString('admin.organization.form.email_domains_required', $body);
     }
 
     // Tests that GET /admin/organization/{id}/edit renders the form pre-filled with the entity's values.

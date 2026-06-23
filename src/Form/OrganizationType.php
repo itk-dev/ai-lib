@@ -16,21 +16,15 @@ use Symfony\Component\Validator\Constraints\Count;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
- * Form type backing the admin Organization CRUD per ADR 003.
+ * Form type backing the admin Organization CRUD.
  *
- * Maps directly onto {@see Organization} via `data_class`. The
- * three scalar fields are bound straight to the entity's setters;
- * `emailDomains` is presented as a textarea with one domain per
- * line, transformed to / from the entity's `list<string>` shape.
+ * The {@see Organization} constructor requires every field, so this
+ * form supplies an `empty_data` factory that builds a fresh entity
+ * from the submitted values for the "create" path; the "edit" path
+ * uses the existing entity's setters.
  *
- * The Organization constructor requires every field, so this form
- * supplies an `empty_data` factory that builds a fresh entity from
- * the submitted values for the "create" path. The "edit" path
- * uses the existing entity's setters as normal.
- *
- * Tailwind classes are embedded as field `attr` defaults so the
- * template can render the form via `{{ form_row(form.field) }}`
- * without re-declaring styling at every call site.
+ * `emailDomains` is presented as a textarea with one domain per line
+ * and transformed to / from the entity's `list<string>` shape.
  */
 final class OrganizationType extends AbstractType
 {
@@ -88,7 +82,6 @@ final class OrganizationType extends AbstractType
                 (array) $form->get('emailDomains')->getData(),
                 (string) $form->get('defaultFramework')->getData(),
             ),
-            'translation_domain' => 'messages',
         ]);
     }
 

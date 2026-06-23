@@ -13,15 +13,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * Admin CRUD for {@see Organization} (issue #76).
- *
- * Per ADR 003 ("custom CRUD with Symfony Form + hand-written
- * controllers"), the controller is thin glue: render the list,
- * delegate to the form type on create / edit, and persist on
- * submit. Auth gating (`ROLE_ADMIN`) is tracked as a follow-up
- * issue.
- */
 #[Route(path: '/admin/organization', name: 'app_admin_organization_')]
 final class OrganizationController extends AbstractController
 {
@@ -56,6 +47,8 @@ final class OrganizationController extends AbstractController
             return $this->redirectToRoute('app_admin_organization_index');
         }
 
+        // 422 on invalid submit so Turbo / browsers re-render the form with
+        // errors instead of caching the POST as a successful page.
         return $this->render('admin/organization/new.html.twig', [
             'form' => $form,
         ], new Response('', $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
@@ -75,6 +68,8 @@ final class OrganizationController extends AbstractController
             return $this->redirectToRoute('app_admin_organization_index');
         }
 
+        // 422 on invalid submit so Turbo / browsers re-render the form with
+        // errors instead of caching the POST as a successful page.
         return $this->render('admin/organization/edit.html.twig', [
             'organization' => $organization,
             'form' => $form,
