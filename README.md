@@ -182,6 +182,43 @@ against the report. The same two steps run in the `Tests` GitHub Actions
 workflow on every pull request; a coverage figure below 100% fails the
 build.
 
+## Entities
+
+Domain entities are built on
+[`itk-dev/entity-bundle`](https://github.com/itk-dev/entity-bundle) through the
+project base class `App\Entity\AbstractEntity`. Extending it gives an entity a
+ULID primary key plus the shared cross-cutting concerns the catalogue applies
+everywhere: created/updated timestamps, created-by/modified-by blame,
+archivability, and anonymization status. Which features are active is set once
+in `config/packages/itk_dev_entity.yaml` (all enabled except soft delete — the
+project archives rather than soft-deletes; see
+[ADR 007](docs/adr/007-entity-foundation-entity-bundle.md)).
+
+To add a new entity, extend the base class and opt into the two per-entity
+concerns:
+
+```php
+use App\Entity\AbstractEntity;
+use Doctrine\ORM\Mapping as ORM;
+use ITKDev\EntityBundle\Audit\Attribute\Auditable;
+use ITKDev\EntityBundle\Privacy\Attribute\Anonymize;
+use ITKDev\EntityBundle\Privacy\Strategy;
+
+#[ORM\Entity]
+#[Auditable] // opt into the audit log (writes to <table>_audit)
+class Example extends AbstractEntity
+{
+    #[ORM\Column(length: 255)]
+    #[Anonymize(strategy: Strategy::Redact)] // mark personal data for GDPR erasure
+    private string $fullName = '';
+}
+```
+
+A subclass that declares its own constructor must call `parent::__construct()`
+so the ULID is assigned. The identifier is a `Symfony\Component\Uid\Ulid`
+(`getId()` returns it), and route parameters that carry an entity id use
+`Requirement::ULID`.
+
 ## References
 
 - **Estimation note:** <https://itk-dev.github.io/research-projects/projects/ai-bibliotek/estimeringsnotat>

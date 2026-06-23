@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Integrated [`itk-dev/entity-bundle`](https://github.com/itk-dev/entity-bundle)
+  as the shared entity foundation. New `App\Entity\AbstractEntity` extends the
+  bundle's `AbstractITKDevEntity`, giving every domain entity a ULID primary
+  key plus timestamps, created-by/modified-by blame, archivability, and
+  anonymization status. `User`, `Assistant`, and `Organization` now extend it
+  (integer ids replaced by ULIDs), are marked `#[Auditable]`, and `User`'s PII
+  is annotated with `#[Anonymize]`. All bundle features are enabled except soft
+  delete (`config/packages/itk_dev_entity.yaml`); `damienharper/auditor-bundle`
+  is wired for the audit log. Records the decision in
+  [ADR 007](docs/adr/007-entity-foundation-entity-bundle.md)
+  ([#104](https://github.com/itk-dev/ai-lib/issues/104)).
 - Shared `Heading` Twig component (`templates/components/Heading.html.twig`)
   that renders `<h1>`–`<h6>` with size tokens centralised in one place.
   Refactors `assistant/show.html.twig`, `security/login.html.twig`,

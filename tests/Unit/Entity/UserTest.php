@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Entity;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Uid\Ulid;
 
 final class UserTest extends TestCase
 {
@@ -101,6 +102,6 @@ final class UserTest extends TestCase
         self::assertSame($user, $user->setStatus(UserStatus::Approved));
         self::assertSame(UserStatus::Approved, $user->getStatus());
 
-        self::assertNull($user->getId());
+        self::assertInstanceOf(Ulid::class, $user->getId());
     }
 }

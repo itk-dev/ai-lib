@@ -10,6 +10,7 @@
         "doctrine/doctrine-bundle": "^3.2",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6",
+        "itk-dev/entity-bundle": "^0.1.1",
         "symfony/asset": "^8.1",
         "symfony/asset-mapper": "^8.1",
         "symfony/console": "~8.1.0",
@@ -55,6 +56,12 @@
     "conflict": {
         "symfony/symfony": "*"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/itk-dev/entity-bundle.git"
+        }
+    ],
     "minimum-stability": "stable",
     "prefer-stable": true,
     "autoload": {

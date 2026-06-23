@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Entity;
 
 use App\Entity\Assistant;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Uid\Ulid;
 
 final class AssistantTest extends TestCase
 {
@@ -20,7 +21,7 @@ final class AssistantTest extends TestCase
             [5 => 'translation', 3 => 'summarisation'],
         );
 
-        self::assertNull($assistant->getId());
+        self::assertInstanceOf(Ulid::class, $assistant->getId());
         self::assertSame('Title', $assistant->getTitle());
         self::assertSame('Description', $assistant->getDescription());
         self::assertSame('gpt-4o', $assistant->getLanguageModel());
