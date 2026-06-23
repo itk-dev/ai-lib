@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Admin CRUD for `Organization` at `/admin/organization` (list,
+  create, edit, delete) per ADR 003. Built with `symfony/form`
+  (newly added dependency) + raw Twig templates, multi-value
+  email-domain field via a textarea with a `CallbackTransformer`,
+  and Danish UI copy under `admin.organization.*`. Auth gating
+  intentionally deferred to a follow-up issue
+  ([#76](https://github.com/itk-dev/ai-lib/issues/76)).
 - Shared `Heading` Twig component (`templates/components/Heading.html.twig`)
   that renders `<h1>`–`<h6>` with size tokens centralised in one place.
   Refactors `assistant/show.html.twig`, `security/login.html.twig`,

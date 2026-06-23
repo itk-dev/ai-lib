@@ -42,6 +42,37 @@ security:
         password_label: "Adgangskode"
         submit: "Log ind"
 
+admin:
+    organization:
+        title: "Organisationer – %brand%"
+        eyebrow: "Administration"
+        heading: "Organisationer"
+        empty: "Ingen organisationer er oprettet endnu."
+        default_framework_label: "Standard-framework"
+        new:
+            title: "Opret organisation – %brand%"
+            heading: "Opret organisation"
+        edit:
+            title: "Redigér %name% – %brand%"
+            heading: "Redigér %name%"
+        form:
+            name_label: "Navn"
+            email_domains_label: "E-maildomæner"
+            email_domains_help: 'Ét domæne per linje (fx "aarhus.dk").'
+            default_framework_label: "Standard-framework"
+        action:
+            new: "Opret organisation"
+            edit: "Redigér"
+            delete: "Slet"
+            delete_confirm: "Slet denne organisation? Handlingen kan ikke fortrydes."
+            create: "Opret"
+            update: "Gem"
+            cancel: "Annuller"
+        flash:
+            created: "Organisationen er oprettet."
+            updated: "Ændringerne er gemt."
+            deleted: "Organisationen er slettet."
+
 catalog:
     title: "Katalog – %brand%"
     eyebrow: "Katalog"
