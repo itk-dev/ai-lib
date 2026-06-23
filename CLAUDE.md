@@ -245,13 +245,12 @@ section and may stay as long as it needs to be.
   it's probably two bullets — split it.
 - **Name only the primary file(s) tied to the feature or bug.** Don't
   enumerate every file the diff touches; the file list is in the diff
-  itself. Point at the file(s) carrying the central change so a reviewer
-  knows where to open first.
+  itself.
 - **Include the Leantime link if the linked issue has a milestone with
   one.** Fetch the milestone via
   `gh api repos/itk-dev/ai-lib/milestones/<n>`, look for an `LT: <url>`
   line in the milestone description, and add the URL to the PR description
-  under a short `## Leantime` heading. If the milestone has no `LT:` line,
+  under a short `#### Links to issues` heading. If the milestone has no `LT:` line,
   or the PR has no linked issue / no milestone, skip the section — don't
   fabricate one.
 
