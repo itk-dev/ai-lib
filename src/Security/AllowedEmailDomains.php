@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Security;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
 /**
  * Allow-list of email domains accepted by anonymous self-signup.
  *
@@ -26,8 +28,10 @@ final class AllowedEmailDomains
     /**
      * @param string $allowedEmailDomainsRaw the comma-separated env-var payload
      */
-    public function __construct(string $allowedEmailDomainsRaw)
-    {
+    public function __construct(
+        #[Autowire(env: 'REGISTRATION_ALLOWED_EMAIL_DOMAINS')]
+        string $allowedEmailDomainsRaw,
+    ) {
         $entries = [];
         foreach (explode(',', $allowedEmailDomainsRaw) as $entry) {
             $normalised = strtolower(trim($entry));

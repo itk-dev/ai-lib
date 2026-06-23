@@ -14,12 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `App\Security\Registration` which validates the email format,
   checks the right-hand-side domain against an env-backed allow-list
   (`REGISTRATION_ALLOWED_EMAIL_DOMAINS`, comma-separated; default
-  `example.test` for dev / tests), requires matching password
-  confirmation, and creates the `User` with `status = Pending`. The
-  user is redirected to `/register/pending` ("thanks, awaiting
-  approval") and cannot sign in until a domain manager approves
-  them. CSRF-protected via Symfony's `csrf_token('register')`
-  helper. Localised in the existing `messages` domain
+  empty so production must opt-in by setting the var, with
+  `example.test` set in `.env.test` for the test suite), requires
+  matching password confirmation, and creates the `User` with
+  `status = Pending`. The user is redirected to `/register/pending`
+  ("thanks, awaiting approval") and cannot sign in until a domain
+  manager approves them. CSRF-protected via Symfony's
+  `csrf_token('register')` helper. Localised in the existing
+  `messages` domain
   ([#62](https://github.com/itk-dev/ai-lib/issues/62)).
 - `App\Security\AccountStatusChecker` implementing
   `UserCheckerInterface` — gates the login flow so any `User` whose
