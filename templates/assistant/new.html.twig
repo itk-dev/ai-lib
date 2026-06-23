@@ -23,7 +23,8 @@
               method="post"
               class="grid gap-4"
               data-controller="assistant-config-upload"
-              data-assistant-config-upload-validate-url-value="{{ path('app_assistant_new_validate_config') }}">
+              data-assistant-config-upload-validate-url-value="{{ path('app_assistant_new_validate_config') }}"
+              data-assistant-config-upload-checks-value="{{ checks|json_encode }}">
             <twig:Form:Label for="inputTitle" text="{{ 'assistant.new.title_label'|trans }}">
                 <twig:Form:TextInput
                     id="inputTitle"

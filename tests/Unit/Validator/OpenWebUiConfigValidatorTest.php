@@ -10,12 +10,52 @@ use PHPUnit\Framework\TestCase;
 /**
  * Unit tests for the shared OpenWebUI config validator.
  *
- * `exampleDelay()` and `validate()` invoke `sleep(2)` per spec —
- * the scaffolding test exercises that path once, the syntax path
- * (which doesn't sleep) covers the cheap branch.
+ * The AJAX progress UI consumes `getChecks()` + `runCheck()`; the
+ * form-submit path consumes `validate()`. Both flow through the
+ * same underlying `validate*` methods.
  */
 final class OpenWebUiConfigValidatorTest extends TestCase
 {
+    // Verifies getChecks() returns the declared check identifiers in order.
+    public function testGetChecksReturnsTheDeclaredOrder(): void
+    {
+        $validator = new OpenWebUiConfigValidator();
+
+        self::assertSame(['syntax', 'exampleDelay'], $validator->getChecks());
+    }
+
+    // Tests that runCheck('syntax') dispatches to the syntax validator.
+    public function testRunCheckDispatchesToSyntaxValidator(): void
+    {
+        $validator = new OpenWebUiConfigValidator();
+
+        $valid = $validator->runCheck('syntax', '{"name":"demo"}');
+        $invalid = $validator->runCheck('syntax', '{not json');
+
+        self::assertTrue($valid->isValid());
+        self::assertFalse($invalid->isValid());
+    }
+
+    // Tests that runCheck('exampleDelay') dispatches to the scaffold validator.
+    public function testRunCheckDispatchesToExampleDelayValidator(): void
+    {
+        $validator = new OpenWebUiConfigValidator();
+
+        $result = $validator->runCheck('exampleDelay', '{}');
+
+        self::assertTrue($result->isValid());
+    }
+
+    // Ensures runCheck() throws InvalidArgumentException for an unknown identifier.
+    public function testRunCheckRejectsUnknownIdentifier(): void
+    {
+        $validator = new OpenWebUiConfigValidator();
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $validator->runCheck('no-such-check', '{}');
+    }
+
     // Tests that validateSyntax() returns valid for parseable JSON.
     public function testValidateSyntaxAcceptsValidJson(): void
     {

@@ -8,12 +8,15 @@ import { Controller } from "@hotwired/stimulus";
  * The file input is the `file` target; selecting a file kicks off:
  *
  *   1. Read the file contents via FileReader.
- *   2. Show the `progress` bar and animate toward 90% over ~2s
- *      (matches the temporary server-side delay).
- *   3. POST the JSON content to the validate URL given by the
- *      `validate-url` value. Snap progress to 100% on response.
- *   4. Update the `status` text with the result and copy the raw
- *      JSON string into the `hidden` form field on success.
+ *   2. For each check in the `checks` value, POST the JSON to the
+ *      validate URL with that check's identifier and wait for the
+ *      response. Each completed check moves the progress bar one
+ *      notch forward — the progress is a count of finished checks,
+ *      not a timer.
+ *   3. If any check fails: show its errors, clear the hidden field,
+ *      stop iterating.
+ *   4. If every check passes: populate the hidden form field with
+ *      the JSON content and mark the status as valid.
  *
  * The file itself is never submitted to the server — only its
  * parsed content lives in the hidden field. On invalid uploads the
@@ -22,15 +25,7 @@ import { Controller } from "@hotwired/stimulus";
  */
 export default class extends Controller {
     static targets = ["file", "hidden", "progress", "status"];
-    static values = { validateUrl: String };
-
-    connect() {
-        this.progressTimer = null;
-    }
-
-    disconnect() {
-        this.stopProgress();
-    }
+    static values = { validateUrl: String, checks: Array };
 
     async fileChanged() {
         const file = this.fileTarget.files?.[0];
@@ -46,62 +41,72 @@ export default class extends Controller {
             return;
         }
 
-        this.startProgress();
+        const total = this.checksValue.length;
+        if (total === 0) {
+            // No checks registered — nothing to validate; accept as-is.
+            this.hiddenTarget.value = content;
+            return;
+        }
+
+        this.beginProgress(total);
         this.statusTarget.textContent =
             this.statusTarget.dataset.validatingText || "Validating…";
 
-        try {
-            const response = await fetch(this.validateUrlValue, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                body: JSON.stringify({ json: content }),
-            });
+        let passed = 0;
+        for (const check of this.checksValue) {
+            let result;
+            try {
+                const response = await fetch(this.validateUrlValue, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                    body: JSON.stringify({ json: content, check }),
+                });
+                result = await response.json();
+            } catch (err) {
+                this.endProgress();
+                this.hiddenTarget.value = "";
+                this.showError([err?.message || "Validation request failed."]);
+                return;
+            }
 
-            const result = await response.json();
-            this.stopProgress(true);
-
-            if (result.valid) {
-                this.hiddenTarget.value = content;
-                this.statusTarget.textContent =
-                    this.statusTarget.dataset.validText ||
-                    "Configuration is valid.";
-                this.statusTarget.classList.remove("text-red-600");
-                this.statusTarget.classList.add("text-primary");
-            } else {
+            if (!result.valid) {
+                this.endProgress();
                 this.hiddenTarget.value = "";
                 this.showError(result.errors || []);
+                return;
             }
-        } catch (err) {
-            this.stopProgress(true);
-            this.showError([err?.message || "Validation request failed."]);
+
+            passed += 1;
+            this.advanceProgress(passed, total);
         }
+
+        // All checks passed.
+        this.endProgress();
+        this.hiddenTarget.value = content;
+        this.statusTarget.textContent =
+            this.statusTarget.dataset.validText || "Configuration is valid.";
+        this.statusTarget.classList.remove("text-red-600");
+        this.statusTarget.classList.add("text-primary");
     }
 
-    startProgress() {
+    beginProgress(total) {
         const progress = this.progressTarget;
         progress.classList.remove("hidden");
+        progress.max = total;
         progress.value = 0;
-
-        const start = Date.now();
-        const duration = 2000;
-        this.progressTimer = window.setInterval(() => {
-            const elapsed = Date.now() - start;
-            const pct = Math.min(90, (elapsed / duration) * 90);
-            progress.value = pct;
-        }, 50);
     }
 
-    stopProgress(complete = false) {
-        if (this.progressTimer) {
-            window.clearInterval(this.progressTimer);
-            this.progressTimer = null;
-        }
-        if (complete) {
-            this.progressTarget.value = 100;
-        }
+    advanceProgress(passed, total) {
+        this.progressTarget.max = total;
+        this.progressTarget.value = passed;
+    }
+
+    endProgress() {
+        // Leave the bar at its final value; the value already
+        // reflects the number of completed checks.
     }
 
     showError(errors) {

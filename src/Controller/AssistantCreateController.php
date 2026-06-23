@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Assistant;
+use App\Assistant\AssistantCreator;
+use App\Assistant\InvalidAssistantInputException;
 use App\Validator\OpenWebUiConfigValidator;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,7 +17,7 @@ final class AssistantCreateController extends AbstractController
 {
     public function __construct(
         private readonly OpenWebUiConfigValidator $validator,
-        private readonly EntityManagerInterface $entityManager,
+        private readonly AssistantCreator $creator,
     ) {
     }
 
@@ -32,54 +32,63 @@ final class AssistantCreateController extends AbstractController
             $submitted = $this->readSubmitted($request);
 
             if (!$this->isCsrfTokenValid('assistant-create', (string) $request->request->get('_token'))) {
-                return $this->render('assistant/new.html.twig', [
-                    'submitted' => $submitted,
-                    'errors' => ['assistant.new.error.invalid_token'],
-                ], new Response('', Response::HTTP_FORBIDDEN));
+                return $this->renderForm($submitted, ['assistant.new.error.invalid_token'], Response::HTTP_FORBIDDEN);
             }
 
-            $result = $this->validator->validate($submitted['openwebui_config']);
-            if (!$result->isValid()) {
-                $errors = $result->getErrors();
-                $status = Response::HTTP_UNPROCESSABLE_ENTITY;
-            } else {
-                $assistant = new Assistant(
-                    title: $submitted['title'],
-                    description: $submitted['description'],
-                    languageModel: $submitted['language_model'],
-                    framework: $submitted['framework'],
-                    tags: $submitted['tags'],
+            try {
+                $assistant = $this->creator->create(
+                    $submitted['title'],
+                    $submitted['description'],
+                    $submitted['language_model'],
+                    $submitted['framework'],
+                    $submitted['tags'],
+                    $submitted['openwebui_config'],
                 );
-                /** @var array<string, mixed> $decoded */
-                $decoded = json_decode($submitted['openwebui_config'], associative: true, flags: \JSON_THROW_ON_ERROR);
-                $assistant->setOpenwebuiConfig($decoded);
-
-                $this->entityManager->persist($assistant);
-                $this->entityManager->flush();
 
                 return $this->redirectToRoute('app_assistant_show', ['id' => (int) $assistant->getId()]);
+            } catch (InvalidAssistantInputException $e) {
+                $errors = $e->getErrors();
+                $status = Response::HTTP_UNPROCESSABLE_ENTITY;
             }
         }
 
-        return $this->render('assistant/new.html.twig', [
-            'submitted' => $submitted,
-            'errors' => $errors,
-        ], new Response('', $status));
+        return $this->renderForm($submitted, $errors, $status);
     }
 
     #[Route(path: '/assistant/new/validate-config', name: 'app_assistant_new_validate_config', methods: ['POST'])]
     public function validateConfig(Request $request): JsonResponse
     {
-        /** @var array{json?: string} $payload */
+        /** @var array{json?: string, check?: string} $payload */
         $payload = json_decode((string) $request->getContent(), associative: true) ?? [];
         $json = (string) ($payload['json'] ?? '');
+        $check = (string) ($payload['check'] ?? '');
 
-        $result = $this->validator->validate($json);
+        if (!\in_array($check, $this->validator->getChecks(), true)) {
+            return new JsonResponse(
+                ['valid' => false, 'errors' => [\sprintf('Unknown check "%s".', $check)]],
+                Response::HTTP_BAD_REQUEST,
+            );
+        }
+
+        $result = $this->validator->runCheck($check, $json);
 
         return new JsonResponse([
             'valid' => $result->isValid(),
             'errors' => $result->getErrors(),
         ]);
+    }
+
+    /**
+     * @param array{title: string, description: string, language_model: string, framework: string, tags: list<string>, openwebui_config: string} $submitted
+     * @param list<string>                                                                                                                       $errors
+     */
+    private function renderForm(array $submitted, array $errors, int $status): Response
+    {
+        return $this->render('assistant/new.html.twig', [
+            'submitted' => $submitted,
+            'errors' => $errors,
+            'checks' => $this->validator->getChecks(),
+        ], new Response('', $status));
     }
 
     /**

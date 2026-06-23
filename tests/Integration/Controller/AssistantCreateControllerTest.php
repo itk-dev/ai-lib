@@ -12,11 +12,10 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * End-to-end coverage of the assistant create form and its AJAX
  * validation endpoint.
  *
- * Submit-path tests trigger the validator's `exampleDelay()` scaffold
- * (which sleeps 2 s) so each such test adds ~2 s to the suite. That
- * cost is acknowledged in the plan as the price of keeping the
- * scaffold inline; remove the delay (and these long-running tests'
- * note in their docblocks) when a real slow validation lands.
+ * The AJAX endpoint accepts a `check` identifier and runs only that
+ * check, so the client can step a progress bar forward one notch per
+ * completed check. The form-submit path goes through
+ * `AssistantCreator` which runs the full pipeline.
  */
 final class AssistantCreateControllerTest extends WebTestCase
 {
@@ -43,14 +42,14 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertSelectorExists('input[type="file"]');
     }
 
-    // Verifies the AJAX validation endpoint returns valid=true for parseable JSON.
-    public function testValidateConfigEndpointAcceptsValidJson(): void
+    // Verifies the AJAX validation endpoint returns valid=true for the syntax check on parseable JSON.
+    public function testValidateConfigEndpointAcceptsValidJsonForSyntaxCheck(): void
     {
         $this->client->request(
             'POST',
             '/assistant/new/validate-config',
             server: ['CONTENT_TYPE' => 'application/json'],
-            content: json_encode(['json' => '{"name":"demo"}'], \JSON_THROW_ON_ERROR),
+            content: json_encode(['json' => '{"name":"demo"}', 'check' => 'syntax'], \JSON_THROW_ON_ERROR),
         );
 
         self::assertResponseIsSuccessful();
@@ -60,17 +59,34 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertSame([], $payload['errors']);
     }
 
-    // Ensures the AJAX validation endpoint returns valid=false and an error list for malformed JSON.
-    public function testValidateConfigEndpointRejectsMalformedJson(): void
+    // Ensures the AJAX validation endpoint returns valid=false and an error list for the syntax check on malformed JSON.
+    public function testValidateConfigEndpointRejectsMalformedJsonForSyntaxCheck(): void
     {
         $this->client->request(
             'POST',
             '/assistant/new/validate-config',
             server: ['CONTENT_TYPE' => 'application/json'],
-            content: json_encode(['json' => '{not json'], \JSON_THROW_ON_ERROR),
+            content: json_encode(['json' => '{not json', 'check' => 'syntax'], \JSON_THROW_ON_ERROR),
         );
 
         self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), associative: true);
+        self::assertIsArray($payload);
+        self::assertFalse($payload['valid']);
+        self::assertNotEmpty($payload['errors']);
+    }
+
+    // Ensures the AJAX validation endpoint returns 400 for an unknown check identifier.
+    public function testValidateConfigEndpointRejectsUnknownCheck(): void
+    {
+        $this->client->request(
+            'POST',
+            '/assistant/new/validate-config',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['json' => '{}', 'check' => 'no-such-check'], \JSON_THROW_ON_ERROR),
+        );
+
+        self::assertResponseStatusCodeSame(400);
         $payload = json_decode((string) $this->client->getResponse()->getContent(), associative: true);
         self::assertIsArray($payload);
         self::assertFalse($payload['valid']);
