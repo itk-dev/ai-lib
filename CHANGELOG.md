@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scaffold for UI testing); the uploaded file itself is never
   persisted, only the parsed JSON reaches the database
   ([#14](https://github.com/itk-dev/ai-lib/issues/14)).
+- Shared `Heading` Twig component (`templates/components/Heading.html.twig`)
+  that renders `<h1>`–`<h6>` with size tokens centralised in one place.
+  Refactors `assistant/show.html.twig`, `security/login.html.twig`,
+  and the `PageHeader`, `Hero`, `EmptyState`, `Filter/Rail`
+  components to use it
+  ([#92](https://github.com/itk-dev/ai-lib/issues/92)).
 - `App\Security\AccountStatusChecker` implementing
   `UserCheckerInterface` — gates the login flow so any `User` whose
   `status` is not `Approved` is rejected before the password is

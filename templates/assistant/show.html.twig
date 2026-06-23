@@ -12,9 +12,7 @@
                 </a>
             </p>
             <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.detail.eyebrow'|trans }}</twig:Eyebrow>
-            <h1 class="mb-4 font-display text-[clamp(2rem,3vw,2.6rem)] font-medium leading-tight tracking-tight text-ink">
-                {{ assistant.title }}
-            </h1>
+            <twig:Heading level="1" class="mb-4">{{ assistant.title }}</twig:Heading>
             <p class="max-w-[60ch] text-lg leading-relaxed text-text">
                 {{ assistant.description }}
             </p>
