@@ -3,6 +3,11 @@ security:
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
+    # ADR 006: ROLE_ADMIN implies ROLE_DOMAIN_MANAGER so the same admin
+    # surfaces serve both site-wide admins and domain-scoped approvers.
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_DOMAIN_MANAGER]
+
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
         # used to reload user from session & other features (e.g. switch_user)
@@ -19,6 +24,7 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            user_checker: App\Security\AccountStatusChecker
             form_login:
                 login_path: app_login
                 check_path: app_login

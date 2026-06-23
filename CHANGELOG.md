@@ -15,6 +15,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the `PageHeader`, `Hero`, `EmptyState`, `Filter/Rail`
   components to use it
   ([#92](https://github.com/itk-dev/ai-lib/issues/92)).
+- `App\Security\AccountStatusChecker` implementing
+  `UserCheckerInterface` — gates the login flow so any `User` whose
+  `status` is not `Approved` is rejected before the password is
+  verified, with distinct localised messages per state
+  (`account.awaiting_email_confirmation`, `account.pending`,
+  `account.blocked`) rendered in the `security` translation domain.
+  Wired on the `main` firewall via `security.yaml`'s `user_checker:`
+  key
+  ([#63](https://github.com/itk-dev/ai-lib/issues/63),
+  [#103](https://github.com/itk-dev/ai-lib/issues/103)).
+- Shared `DescriptionList` Twig component family
+  (`templates/components/DescriptionList/List.html.twig` +
+  `templates/components/DescriptionList/Item.html.twig`) for
+  label/value pairs. The assistant detail's runtime attribute grid
+  adopts it
+  ([#94](https://github.com/itk-dev/ai-lib/issues/94)).
+- ADR `005-organization-entity` recording the decision to introduce
+  `Organization` as a first-class entity with name, multiple emails,
+  and a default framework — no language-model field, with the
+  `User → Organization` reference and admin CRUD tracked as separate
+  issues
+  ([#65](https://github.com/itk-dev/ai-lib/issues/65)).
+- `Organization` Doctrine entity (name, list of email domains,
+  default framework), repository, migration, and
+  `OrganizationFixtures` seeding three baseline kommuner (Aarhus,
+  Aalborg, Odense). First step of ADR 005 — `User → Organization`,
+  CRUD, and assistant autocomplete land in follow-up issues
+  ([#75](https://github.com/itk-dev/ai-lib/issues/75)).
+- `User.name` (display name) and `User.status` (`UserStatus` enum:
+  `awaiting_email_confirmation | pending | approved | blocked`)
+  fields
+  ([#45](https://github.com/itk-dev/ai-lib/issues/45),
+  [#83](https://github.com/itk-dev/ai-lib/issues/83),
+  [#103](https://github.com/itk-dev/ai-lib/issues/103)).
+- `ROLE_DOMAIN_MANAGER` + `ROLE_ADMIN` role identifiers
+  (`App\Security\Roles`), `role_hierarchy` wiring in `security.yaml`
+  so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and a
+  domain-scoped `ManageUserVoter` that grants the `MANAGE_USER` /
+  `APPROVE_USER` / `BLOCK_USER` attributes when the acting user is a
+  domain manager in the subject's email domain (or a site-wide
+  admin).
+  ([#84](https://github.com/itk-dev/ai-lib/issues/84)).
+- Test-env `framework.exceptions` override so
+  `NotFoundHttpException` logs at `info` instead of `error`, keeping
+  PHPUnit output clean when a test deliberately asserts a 404
+  ([#95](https://github.com/itk-dev/ai-lib/issues/95)).
+- Shared `Alert` Twig component (`templates/components/Alert.html.twig`)
+  for flash messages and inline errors. `type` (`success` | `error` |
+  `warning` | `info`) drives the ARIA role; the login error block
+  adopts it
+  ([#93](https://github.com/itk-dev/ai-lib/issues/93)).
 - Catalogue listing page with filters
   ([#15](https://github.com/itk-dev/ai-lib/issues/15)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
