@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Controller;
 
 use App\Repository\AssistantRepository;
+use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -21,6 +22,12 @@ final class FrontpageControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        // The frontpage is gated, so log in a baseline fixture user
+        // before each test so the page-render assertions below see
+        // actual content rather than an unauthorised response.
+        $alice = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'alice@example.test']);
+        \assert(null !== $alice, 'UserFixtures must seed alice@example.test.');
+        $this->client->loginUser($alice);
     }
 
     // Tests that the frontpage rail links to the five newest fixture assistants in id-DESC order.

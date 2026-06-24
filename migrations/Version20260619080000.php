@@ -11,9 +11,8 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Add `name` and `status` columns to `user`.
  *
- * `name` is the display name introduced by #45; `status` is the
- * `UserStatus` enum (`pending | approved | blocked`) introduced by
- * #83 that gates login via the `UserCheckerInterface` landing in #63.
+ * `name` is the display name; `status` is the
+ * `UserStatus` enum (`pending | approved | blocked`).
  *
  * Backfill any existing rows in `up()` so the new not-null constraints
  * hold in environments that already have user data (default `name = ''`,
