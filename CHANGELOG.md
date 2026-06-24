@@ -20,6 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   via a new Stimulus controller — Escape and outside-click close
   the menu
   ([#108](https://github.com/itk-dev/ai-lib/issues/108)).
+- Shared admin-list Table Twig component family
+  (`templates/components/Table.html.twig` +
+  `templates/components/Table/Head|Body|Row|HeadCell|Cell.html.twig`)
+  that renders a semantic `<table>` inside a horizontal-scroll
+  wrapper, with zebra-striped body rows and an `align` prop on
+  the cell components for right-flushed action columns. First
+  consumer migrations land alongside their respective PRs
+  ([#112](https://github.com/itk-dev/ai-lib/issues/112)).
 - Anonymous self-signup at `/register`. The route is
   open to unauthenticated visitors; submissions go through
   `App\Security\Registration` which validates the email format,
