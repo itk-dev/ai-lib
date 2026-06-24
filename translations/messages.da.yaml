@@ -23,6 +23,13 @@ nav:
         mine: "Mine assistenter"
         favorites: "Favoritter"
         collections: "Samlinger"
+    user:
+        section_user: "Bruger"
+        section_admin: "Administration"
+        profile_edit: "Redigér profil"
+        logout: "Log ud"
+        admin_organization: "Administrér organisationer"
+        admin_users: "Administrér brugere"
 
 search:
     legend: "Find en assistent"

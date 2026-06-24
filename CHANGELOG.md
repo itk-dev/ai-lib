@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Authenticated-user dropdown menu in the top nav. The user's
+  display name is the trigger; the menu groups into a **Bruger**
+  section (Edit profile, Log out) and a role-gated
+  **Administration** section (Administrér organisationer,
+  Administrér brugere). Each item is only rendered when both the
+  acting user holds the gating role and the target route is
+  registered, so the menu degrades gracefully on branches where
+  later admin PRs haven't landed yet. ARIA "Menu Button" pattern
+  via a new Stimulus controller — Escape and outside-click close
+  the menu
+  ([#108](https://github.com/itk-dev/ai-lib/issues/108)).
 - Shared admin-list Table Twig component family
   (`templates/components/Table.html.twig` +
   `templates/components/Table/Head|Body|Row|HeadCell|Cell.html.twig`)
