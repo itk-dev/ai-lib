@@ -14,10 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  *
  * Every route is gated behind `IS_AUTHENTICATED_FULLY` except a
  * short `PUBLIC_ACCESS` allow-list (login, logout, registration).
- * Anonymous requests to gated routes return 401 — the firewall's
- * configured `UnauthorizedEntryPoint` makes the access decision
- * explicit at the HTTP layer rather than emitting a 302 to the
- * login form.
+ * Anonymous requests to gated routes return 401.
  */
 final class AccessControlTest extends WebTestCase
 {
