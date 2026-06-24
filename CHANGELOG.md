@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Default-deny `access_control` rule on the `main` firewall: every
+  route now requires `IS_AUTHENTICATED_FULLY` except the
+  `PUBLIC_ACCESS` allow-list (`/login`, `/logout`, `/register`,
+  `/register/pending`). Anonymous visitors hitting a gated route
+  get the standard Symfony redirect to `/login`, with the
+  originally requested URL preserved so they land back on the
+  page after signing in
+  ([#97](https://github.com/itk-dev/ai-lib/issues/97)).
 - Authenticated-user dropdown menu in the top nav. The user's
   display name is the trigger; the menu groups into a **Bruger**
   section (Edit profile, Log out) and a role-gated
