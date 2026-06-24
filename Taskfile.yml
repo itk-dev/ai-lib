@@ -42,6 +42,7 @@ tasks:
       - task compose -- up --detach --remove-orphans --wait
       - task composer-install
       - task console -- doctrine:migrations:migrate --no-interaction
+      - task compose -- exec phpfpm bin/console tailwind:build
     silent: true
 
   # ---- Composer ---------------------------------------------------------

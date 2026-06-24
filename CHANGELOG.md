@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added tailwind build to site-install task.
 - Shared `Heading` Twig component (`templates/components/Heading.html.twig`)
   that renders `<h1>`–`<h6>` with size tokens centralised in one place.
   Refactors `assistant/show.html.twig`, `security/login.html.twig`,
