@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Admin CRUD for `Organization` at `/admin/organization` (list,
+  create, edit, delete) per ADR 003. Built with `symfony/form`
+  (newly added dependency) + raw Twig templates, multi-value
+  email-domain field via a textarea with a `CallbackTransformer`,
+  and Danish UI copy under `admin.organization.*`. Auth gating
+  intentionally deferred to a follow-up issue
+  ([#76](https://github.com/itk-dev/ai-lib/issues/76)).
 - Default-deny `access_control` rule on the `main` firewall: every
   route now requires `IS_AUTHENTICATED_FULLY` except the
   `PUBLIC_ACCESS` allow-list (`/login`, `/logout`, `/register`,
