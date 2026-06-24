@@ -46,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `status = 'approved'`
   ([#45](https://github.com/itk-dev/ai-lib/issues/45),
   [#83](https://github.com/itk-dev/ai-lib/issues/83)).
+- Added tailwind build to site-install task.
+- Shared `Heading` Twig component (`templates/components/Heading.html.twig`)
+  that renders `<h1>`–`<h6>` with size tokens centralised in one place.
+  Refactors `assistant/show.html.twig`, `security/login.html.twig`,
+  and the `PageHeader`, `Hero`, `EmptyState`, `Filter/Rail`
+  components to use it
+  ([#92](https://github.com/itk-dev/ai-lib/issues/92)).
 - `App\Security\AccountStatusChecker` implementing
   `UserCheckerInterface` — gates the login flow so any `User` whose
   `status` is not `Approved` is rejected before the password is
