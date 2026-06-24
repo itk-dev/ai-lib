@@ -24,8 +24,11 @@
 } %}
 {% set baseClass = 'inline-flex items-center transition-colors ' ~ shapes[shape] ~ ' ' ~ sizes[size] ~ ' ' ~ variants[variant] %}
 {% set slot %}{% block content %}{% endblock %}{% endset %}
+{# `{{ attributes }}` spreads arbitrary call-site attributes (e.g. `data-*` #}
+{# Stimulus targets/actions, `aria-*` from the WAI-ARIA Menu Button pattern) #}
+{# onto the rendered element. #}
 {% if href is not null %}
-<a href="{{ href }}" class="no-underline {{ baseClass }}">{{ slot }}</a>
+<a href="{{ href }}" class="no-underline {{ baseClass }}" {{ attributes }}>{{ slot }}</a>
 {% else %}
-<button type="{{ type }}" class="{{ baseClass }}">{{ slot }}</button>
+<button type="{{ type }}" class="{{ baseClass }}" {{ attributes }}>{{ slot }}</button>
 {% endif %}

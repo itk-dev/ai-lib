@@ -6,6 +6,9 @@ namespace App\Tests\Integration\Controller\Admin;
 
 use App\Entity\Organization;
 use App\Repository\OrganizationRepository;
+use App\Repository\UserRepository;
+use App\Security\Roles;
+use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -24,6 +27,10 @@ final class OrganizationControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        // `/admin/*` requires authentication after the default-deny rule
+        // landed; every test in this class drives the admin surface, so
+        // log in once in setUp instead of per-test.
+        $this->loginAsAdmin();
     }
 
     // Tests that GET /admin/organization lists every fixture row by name and shows the action links.
@@ -179,5 +186,15 @@ final class OrganizationControllerTest extends WebTestCase
         self::assertNotNull($organization, \sprintf('Fixture "%s" must exist for the test to run.', $name));
 
         return $organization;
+    }
+
+    private function loginAsAdmin(): void
+    {
+        $um = self::getContainer()->get(UserManager::class);
+        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
+
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'admin@example.test']);
+        \assert(null !== $user);
+        $this->client->loginUser($user);
     }
 }
