@@ -34,12 +34,17 @@ security:
                 path: app_logout
                 target: app_frontpage
 
-    # Note: Only the *first* matching rule is applied
+    # Note: Only the *first* matching rule is applied. The catch-all
+    # `^/` rule (issue #97) flips the default to "every route requires
+    # authentication"; routes that must be reachable anonymously
+    # (login, logout, registration, future password reset) are listed
+    # above it as PUBLIC_ACCESS allow-list entries.
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/logout, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_DOMAIN_MANAGER }
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:

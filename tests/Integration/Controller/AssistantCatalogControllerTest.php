@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Controller;
 
 use App\Repository\AssistantRepository;
+use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -24,6 +25,12 @@ final class AssistantCatalogControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        // Issue #97: every route now requires authentication. Log in
+        // a baseline fixture user so the catalogue page-render
+        // assertions below see actual content instead of a 302.
+        $alice = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'alice@example.test']);
+        \assert(null !== $alice, 'UserFixtures must seed alice@example.test.');
+        $this->client->loginUser($alice);
     }
 
     // Tests that GET /search renders the page heading and at least one fixture-backed assistant card.
