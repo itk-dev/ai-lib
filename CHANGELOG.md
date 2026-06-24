@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Data fixtures now assign a creating user (round-robin
+  `alice@example.test` / `bob@example.test`) to each seeded assistant and
+  organization, so the created-by/modified-by blame relation is exercised by
+  local-development data.
 - Integrated [`itk-dev/entity-bundle`](https://github.com/itk-dev/entity-bundle)
   as the shared entity foundation. New `App\Entity\AbstractEntity` extends the
   bundle's `AbstractITKDevEntity`, giving every domain entity a ULID primary

@@ -5,12 +5,19 @@ declare(strict_types=1);
 namespace App\Tests\Unit\DataFixtures;
 
 use App\DataFixtures\AssistantFixtures;
+use App\DataFixtures\UserFixtures;
 use App\Entity\Assistant;
 use Doctrine\Persistence\ObjectManager;
 use PHPUnit\Framework\TestCase;
 
 final class AssistantFixturesTest extends TestCase
 {
+    // Ensures the fixture declares UserFixtures as a dependency so users load — and creators resolve — first.
+    public function testDependsOnUserFixtures(): void
+    {
+        self::assertSame([UserFixtures::class], (new AssistantFixtures())->getDependencies());
+    }
+
     // Tests that load() persists 21 entries — six detailed (including a tagless edge-case) and fifteen generated — with unique signatures and the expected language-model rotation.
     public function testLoadPersistsSixDetailedAndFifteenGenerated(): void
     {

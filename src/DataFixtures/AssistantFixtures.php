@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Assistant;
+use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 
 /**
@@ -19,16 +21,45 @@ use Doctrine\Persistence\ObjectManager;
  * run, no randomness — so test assertions and design previews stay
  * reproducible.
  */
-final class AssistantFixtures extends Fixture
+final class AssistantFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
-        $this->loadDetailed($manager);
-        $this->loadGenerated($manager);
+        // The two fixture users own the catalogue round-robin; resolved once
+        // and reused so every assistant shares the same managed instances.
+        $creators = FixtureCreators::resolve($manager);
+
+        // A running index across both batches drives the round-robin
+        // creator assignment: detailed entries take 0–5, generated 6–20.
+        $index = $this->loadDetailed($manager, $creators, 0);
+        $this->loadGenerated($manager, $creators, $index);
         $manager->flush();
     }
 
-    private function loadDetailed(ObjectManager $manager): void
+    /**
+     * Declare that users must be loaded first.
+     *
+     * The creating users are looked up by e-mail in {@see FixtureCreators},
+     * so {@see UserFixtures} has to run — and commit alice and bob — before
+     * this fixture.
+     *
+     * @return array<class-string> the fixture classes this one depends on
+     */
+    public function getDependencies(): array
+    {
+        return [UserFixtures::class];
+    }
+
+    /**
+     * Persist the six hand-written catalogue entries.
+     *
+     * @param ObjectManager $manager  Doctrine object manager the entries are persisted into
+     * @param list<User>    $creators round-robin creators, or empty when users are unavailable
+     * @param int           $index    running index of the first entry, for creator round-robin
+     *
+     * @return int the next free index after the persisted entries
+     */
+    private function loadDetailed(ObjectManager $manager, array $creators, int $index): int
     {
         $entries = [
             new Assistant(
@@ -75,11 +106,21 @@ final class AssistantFixtures extends Fixture
         ];
 
         foreach ($entries as $assistant) {
+            FixtureCreators::assign($creators, $assistant, $index++);
             $manager->persist($assistant);
         }
+
+        return $index;
     }
 
-    private function loadGenerated(ObjectManager $manager): void
+    /**
+     * Persist the fifteen deterministically generated entries.
+     *
+     * @param ObjectManager $manager  Doctrine object manager the entries are persisted into
+     * @param list<User>    $creators round-robin creators, or empty when users are unavailable
+     * @param int           $index    running index of the first entry, for creator round-robin
+     */
+    private function loadGenerated(ObjectManager $manager, array $creators, int $index): void
     {
         $topics = [
             [
@@ -149,13 +190,15 @@ final class AssistantFixtures extends Fixture
             $kommune = $kommunes[$i % $kommuneCount];
             $languageModel = $languageModels[$i % $modelCount];
 
-            $manager->persist(new Assistant(
+            $assistant = new Assistant(
                 title: $topic['title'].' – '.$kommune,
                 description: $topic['description'].' Delt af '.$kommune.'.',
                 languageModel: $languageModel,
                 framework: 'openwebui',
                 tags: $topic['tags'],
-            ));
+            );
+            FixtureCreators::assign($creators, $assistant, $index + $i);
+            $manager->persist($assistant);
         }
     }
 }
