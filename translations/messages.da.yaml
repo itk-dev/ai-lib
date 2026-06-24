@@ -99,6 +99,32 @@ catalog:
         next: "Næste →"
         page: "Side %n%"
 
+register:
+    title: "Opret bruger – %brand%"
+    eyebrow: "Opret bruger"
+    heading: "Opret bruger"
+    lead: "Brug din arbejds-e-mail. Når du har oprettet kontoen, skal en administrator godkende den, før du kan logge ind."
+    email_label: "E-mail"
+    name_label: "Navn"
+    password_label: "Adgangskode"
+    password_confirm_label: "Bekræft adgangskode"
+    submit: "Opret bruger"
+    login_link: "Har du allerede en konto? Log ind"
+    error:
+        invalid_email: "Indtast en gyldig e-mailadresse."
+        domain_not_allowed: "E-mailens domæne er ikke godkendt til at oprette konti her."
+        password_mismatch: "De to adgangskoder er ikke ens."
+        empty_name: "Navnet må ikke være tomt."
+        empty_password: "Adgangskoden må ikke være tom."
+        email_in_use: "Der findes allerede en konto med den e-mail."
+        invalid_token: "Sessionen er udløbet. Indsend formularen igen."
+    pending:
+        title: "Konto oprettet – %brand%"
+        eyebrow: "Tak"
+        heading: "Tak — vi har modtaget din oprettelse"
+        body: "Din konto venter på godkendelse fra en administrator. Du modtager besked, når kontoen er klar, og kan så logge ind."
+        login_link: "← Tilbage til log ind"
+
 assistant:
     detail:
         title: "%title% – %brand%"
