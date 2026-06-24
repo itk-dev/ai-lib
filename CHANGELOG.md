@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Shared admin-list Table Twig component family
+  (`templates/components/Table.html.twig` +
+  `templates/components/Table/Head|Body|Row|HeadCell|Cell.html.twig`)
+  that renders a semantic `<table>` inside a horizontal-scroll
+  wrapper, with zebra-striped body rows and an `align` prop on
+  the cell components for right-flushed action columns. First
+  consumer migrations land alongside their respective PRs
+  ([#112](https://github.com/itk-dev/ai-lib/issues/112)).
 - Admin user-management surface at `/admin/users` per ADR 006. Lists
   users scoped by role — `ROLE_ADMIN` sees every user, a
   `ROLE_DOMAIN_MANAGER` sees only users whose email domain matches
