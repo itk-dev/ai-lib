@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Twig\Components;
+namespace App\Twig\Components\Layout;
 
 use App\Security\Roles;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -25,7 +25,7 @@ use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
  * `App\Entity\User` accessor in {@see self::getDisplayName()} is
  * safe.
  */
-#[AsTwigComponent('Layout:UserMenu', template: 'components/Layout/UserMenu.html.twig')]
+#[AsTwigComponent]
 final class UserMenu
 {
     /**
