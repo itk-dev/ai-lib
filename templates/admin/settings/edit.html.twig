@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'admin.settings.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <section class="max-w-md">
+        <twig:Eyebrow as="p" class="mb-4">{{ 'admin.settings.eyebrow'|trans }}</twig:Eyebrow>
+        <h1 class="mb-6 font-display text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-tight tracking-tight text-ink">
+            {{ 'admin.settings.heading'|trans }}
+        </h1>
+
+        <p class="mb-6 text-sm text-text">{{ 'admin.settings.lead'|trans }}</p>
+
+        {% for flash in app.flashes('success') %}
+            <twig:Alert type="success" class="mb-4">
+                {{ flash|trans }}
+            </twig:Alert>
+        {% endfor %}
+
+        {% if error %}
+            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
+                {{ error|trans }}
+            </div>
+        {% endif %}
+
+        <form action="{{ path('app_admin_settings') }}" method="post" class="grid gap-4">
+            <twig:Form:Label for="inputAdminRecipient" text="{{ 'admin.settings.fields.admin_recipient.label'|trans }}">
+                <twig:Form:TextInput
+                    id="inputAdminRecipient"
+                    name="admin_recipient"
+                    type="email"
+                    value="{{ submitted.admin_recipient }}"
+                    autocomplete="email"
+                />
+                <p class="mt-1 text-sm text-text">{{ 'admin.settings.fields.admin_recipient.help'|trans }}</p>
+            </twig:Form:Label>
+
+            <input type="hidden" name="_token" value="{{ csrf_token('admin-settings') }}">
+
+            <div class="flex items-center gap-4">
+                <twig:Form:Button type="submit">
+                    {{ 'admin.settings.submit'|trans }}
+                </twig:Form:Button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

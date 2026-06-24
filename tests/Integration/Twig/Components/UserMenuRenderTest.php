@@ -87,6 +87,21 @@ final class UserMenuRenderTest extends WebTestCase
         $menuText = $crawler->filter('[data-controller~="user-menu"]')->text();
         self::assertStringContainsString('Administration', $menuText);
         self::assertStringContainsString('Administrér brugere', $menuText);
+        self::assertStringContainsString('Indstillinger', $menuText);
+    }
+
+    // Ensures the settings item is gated to ROLE_ADMIN — a plain domain manager doesn't see it.
+    public function testDomainManagerDoesNotSeeAdminSettings(): void
+    {
+        $um = self::getContainer()->get(UserManager::class);
+        $um->createUser('dm2@example.test', 'Domain Manager 2', 'pw', [Roles::DOMAIN_MANAGER]);
+
+        $this->loginAs('dm2@example.test');
+
+        $crawler = $this->client->request('GET', '/');
+
+        $menuText = $crawler->filter('[data-controller~="user-menu"]')->text();
+        self::assertStringNotContainsString('Indstillinger', $menuText);
     }
 
     // Ensures the dropdown's trigger has the WAI-ARIA "Menu Button" attributes set.

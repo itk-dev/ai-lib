@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Foundation for outbound transactional mail: `symfony/mailer`
+  installed and wired to the existing `mail` container (Mailpit) via
+  `MAILER_DSN=smtp://mail:1025` in `.env`, with a deploy-overridable
+  `MAILER_FROM` sender. `.env.test` pins `null://null` so the test
+  suite never hits a real transport. Generic `setting` table (`name`
+  unique, `value` nullable text) backs an `App\Settings\SettingsManager`
+  service exposing a typed `getAdminRecipient()` / `setAdminRecipient()`
+  pair. A new admin-only page at `/admin/settings` (`ROLE_ADMIN`, CSRF
+  on POST, 422 on invalid email) lets administrators set the recipient
+  for registration-related notifications; the user-menu surfaces it
+  under **Administration → Indstillinger** when the acting user is a
+  site admin. Mail templates and the actual signup/admin-notification
+  /one-time-login flows land in follow-up work
+  ([#119](https://github.com/itk-dev/ai-lib/issues/119)).
 - Authenticated-user dropdown menu in the top nav. The user's
   display name is the trigger; the menu groups into a **Bruger**
   section (Edit profile, Log out) and a role-gated
