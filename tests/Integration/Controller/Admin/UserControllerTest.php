@@ -27,12 +27,11 @@ final class UserControllerTest extends WebTestCase
         $this->client = self::createClient();
     }
 
-    public function testAnonymousIsRedirectedToLogin(): void
+    public function testAnonymousAccessReturnsUnauthorized(): void
     {
         $this->client->request('GET', '/admin/users');
 
-        self::assertResponseRedirects();
-        self::assertStringContainsString('/login', (string) $this->client->getResponse()->headers->get('Location'));
+        self::assertResponseStatusCodeSame(401);
     }
 
     public function testPlainUserGets403(): void

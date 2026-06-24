@@ -25,6 +25,7 @@ security:
             lazy: true
             provider: app_user_provider
             user_checker: App\Security\AccountStatusChecker
+            entry_point: App\Security\UnauthorizedEntryPoint
             form_login:
                 login_path: app_login
                 check_path: app_login
@@ -35,10 +36,10 @@ security:
                 target: app_frontpage
 
     # Note: Only the *first* matching rule is applied. The catch-all
-    # `^/` rule (issue #97) flips the default to "every route requires
+    # `^/` rule flips the default to "every route requires
     # authentication"; routes that must be reachable anonymously
-    # (login, logout, registration, future password reset) are listed
-    # above it as PUBLIC_ACCESS allow-list entries.
+    # (login, logout, registration) are listed above it as
+    # PUBLIC_ACCESS allow-list entries.
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/logout, roles: PUBLIC_ACCESS }

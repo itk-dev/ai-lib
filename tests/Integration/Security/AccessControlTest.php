@@ -9,15 +9,15 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * End-to-end coverage of the default-deny `access_control` rule
- * introduced by issue #97.
+ * End-to-end coverage of the default-deny `access_control` rule on
+ * the `main` firewall.
  *
  * Every route is gated behind `IS_AUTHENTICATED_FULLY` except a
- * short PUBLIC_ACCESS allow-list (login, logout, registration —
- * the password-reset slot lands when that flow is built). This
- * test asserts both directions: representative gated routes
- * redirect anonymous visitors to `/login`, and every allow-list
- * route stays reachable without a session.
+ * short `PUBLIC_ACCESS` allow-list (login, logout, registration).
+ * Anonymous requests to gated routes return 401 — the firewall's
+ * configured `UnauthorizedEntryPoint` makes the access decision
+ * explicit at the HTTP layer rather than emitting a 302 to the
+ * login form.
  */
 final class AccessControlTest extends WebTestCase
 {
@@ -49,15 +49,13 @@ final class AccessControlTest extends WebTestCase
         yield 'registration pending page' => ['/register/pending'];
     }
 
-    // Verifies anonymous visitors hitting a gated route get a 302 to /login.
+    // Verifies that anonymous requests to gated routes return HTTP 401.
     #[\PHPUnit\Framework\Attributes\DataProvider('gatedRouteProvider')]
-    public function testAnonymousIsRedirectedToLogin(string $path): void
+    public function testAnonymousAccessReturnsUnauthorized(string $path): void
     {
         $this->client->request('GET', $path);
 
-        self::assertResponseRedirects();
-        $location = (string) $this->client->getResponse()->headers->get('Location');
-        self::assertStringContainsString('/login', $location, $path.' must redirect anonymous visitors to /login');
+        self::assertResponseStatusCodeSame(401, $path.' must return 401 for anonymous visitors');
     }
 
     // Tests that every PUBLIC_ACCESS allow-list route renders for anonymous visitors.
@@ -79,28 +77,5 @@ final class AccessControlTest extends WebTestCase
         $this->client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-    }
-
-    // Tests that the firewall preserves the originally-requested URL in the session so the form_login flow lands the user back on the gated page after signing in.
-    public function testFailedAnonymousAccessPreservesTargetUrl(): void
-    {
-        $this->client->request('GET', '/search?model=gpt-4o');
-
-        self::assertResponseRedirects();
-        // The session-stored target URL is what `form_login` uses after a
-        // successful login. The Symfony default behaviour we rely on is
-        // tested indirectly: log in via the form and confirm the redirect
-        // lands on the originally requested URL.
-        $crawler = $this->client->followRedirect();
-        self::assertSelectorExists('form');
-
-        $form = $crawler->filter('form')->form();
-        $form['_username'] = 'alice@example.test';
-        $form['_password'] = 'password';
-        $this->client->submit($form);
-
-        self::assertResponseRedirects();
-        $location = (string) $this->client->getResponse()->headers->get('Location');
-        self::assertStringContainsString('/search', $location, 'firewall must redirect back to the original gated URL after login');
     }
 }
