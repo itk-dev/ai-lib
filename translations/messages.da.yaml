@@ -42,6 +42,29 @@ security:
         password_label: "Adgangskode"
         submit: "Log ind"
 
+admin:
+    users:
+        title: "Brugere – %brand%"
+        eyebrow: "Administration"
+        heading: "Brugere"
+        empty: "Ingen brugere matcher det valgte filter."
+        filter_label: "Filtrer brugere efter status"
+        filter:
+            all: "Alle"
+            pending: "Afventer godkendelse"
+            approved: "Godkendte"
+            blocked: "Spærrede"
+        status:
+            pending: "Afventer"
+            approved: "Godkendt"
+            blocked: "Spærret"
+        action:
+            approve: "Godkend"
+            block: "Spær"
+        flash:
+            approved: "Brugeren er nu godkendt og kan logge ind."
+            blocked: "Brugeren er spærret og kan ikke logge ind."
+
 catalog:
     title: "Katalog – %brand%"
     eyebrow: "Katalog"
