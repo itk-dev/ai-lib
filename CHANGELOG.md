@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Anti-flood protection on both anonymous form surfaces. The
+  registration form gets a per-IP rate limiter (env-tunable
+  via `REGISTRATION_RATE_LIMIT_PER_IP`, defaults to 10/day) and
+  a system-wide ceiling (`REGISTRATION_RATE_LIMIT_SYSTEM`,
+  defaults to 100/day), both wired through Symfony's Rate
+  Limiter component and backed by a dedicated
+  `cache.rate_limiter` pool. Either limiter rejecting the
+  request renders HTTP 429 with a localised
+  `register.error.rate_limited` message. The login form gets
+  Symfony Security's built-in `login_throttling` on the `main`
+  firewall (5 attempts / 15 minutes per `<IP, username>`),
+  which surfaces the bundled Danish "for mange mislykkede
+  loginforsøg" message on the login page. Registration is
+  also now idempotent on a duplicate e-mail — the response
+  matches a fresh signup so a probe can't learn whether the
+  address is taken
+  ([#107](https://github.com/itk-dev/ai-reolen/issues/107)).
 - Higher-contrast zebra striping on the shared `<twig:Table>`
   component. Even rows now use a new dedicated
   `--color-row-alt` (`#f1f3f5`) design token instead of the

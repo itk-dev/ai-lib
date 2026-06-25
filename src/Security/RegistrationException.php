@@ -13,6 +13,6 @@ namespace App\Security;
  * string. The controller renders it through `|trans` so the error
  * stays localised.
  */
-final class RegistrationException extends \RuntimeException
+class RegistrationException extends \RuntimeException
 {
 }

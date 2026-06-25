@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Security\RateLimitedRegistrationException;
 use App\Security\Registration;
 use App\Security\RegistrationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -46,6 +47,7 @@ final class RegistrationController extends AbstractController
 
             try {
                 $this->registration->register(
+                    (string) $request->getClientIp(),
                     $submitted['email'],
                     $submitted['name'],
                     $plainPassword,
@@ -53,6 +55,9 @@ final class RegistrationController extends AbstractController
                 );
 
                 return $this->redirectToRoute('app_register_pending');
+            } catch (RateLimitedRegistrationException $e) {
+                $error = $e->getMessage();
+                $status = Response::HTTP_TOO_MANY_REQUESTS;
             } catch (RegistrationException $e) {
                 $error = $e->getMessage();
                 $status = Response::HTTP_UNPROCESSABLE_ENTITY;
