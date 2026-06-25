@@ -5,16 +5,24 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Enum\UserStatus;
+use App\Security\Roles;
 use App\Security\UserManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
 /**
- * Seed two baseline users for local development.
+ * Seed baseline users covering every `Roles::*` and every
+ * `UserStatus` case so local development and integration tests
+ * can exercise the role-gated screens, the domain-scoped
+ * voter, and the status-aware login checker out of the box.
  *
- * `alice@example.test` and `bob@example.test`, both with the
- * intentionally-weak password `password`, so they're easy to paste
- * into the login form.
+ * Every seed shares the plain password `password` for
+ * paste-friendly local login. The two existing accounts —
+ * `alice@example.test` and `bob@example.test` — are kept as
+ * the cross-fixture lookup points used by
+ * {@see FixtureCreators}; the remaining accounts pick e-mail
+ * domains that line up with {@see OrganizationFixtures} so
+ * `ManageUserVoter` has something to scope against.
  */
 final class UserFixtures extends Fixture
 {
@@ -31,6 +39,34 @@ final class UserFixtures extends Fixture
     public const string BOB_EMAIL = 'bob@example.test';
 
     /**
+     * Site-wide administrator (`ROLE_ADMIN`, status `Approved`).
+     */
+    public const string ADMIN_EMAIL = 'admin@aarhus.dk';
+
+    /**
+     * Domain manager scoped to `aarhus.dk` (`ROLE_DOMAIN_MANAGER`,
+     * status `Approved`).
+     */
+    public const string DOMAIN_MANAGER_EMAIL = 'manager@aarhus.dk';
+
+    /**
+     * Account awaiting moderator approval (default role,
+     * status `Pending`).
+     */
+    public const string PENDING_EMAIL = 'pending@aalborg.dk';
+
+    /**
+     * Account awaiting e-mail confirmation (default role,
+     * status `AwaitingEmailConfirmation`).
+     */
+    public const string AWAITING_EMAIL = 'awaiting@aalborg.dk';
+
+    /**
+     * Blocked account (default role, status `Blocked`).
+     */
+    public const string BLOCKED_EMAIL = 'blocked@odense.dk';
+
+    /**
      * @param UserManager $userManager service that creates the persisted users
      */
     public function __construct(private readonly UserManager $userManager)
@@ -38,7 +74,12 @@ final class UserFixtures extends Fixture
     }
 
     /**
-     * Persist the two baseline users via {@see UserManager::createUser()}.
+     * Persist the seven baseline users via {@see UserManager::createUser()}.
+     *
+     * The two original `example.test` accounts seed the
+     * cross-fixture relations; the remaining five pick domains
+     * already declared by `OrganizationFixtures` so role-scoped
+     * voters and admin screens have a realistic dataset.
      *
      * @param ObjectManager $manager unused — UserManager flushes its own entity manager
      */
@@ -46,5 +87,10 @@ final class UserFixtures extends Fixture
     {
         $this->userManager->createUser(self::ALICE_EMAIL, 'Alice', 'password', status: UserStatus::Approved);
         $this->userManager->createUser(self::BOB_EMAIL, 'Bob', 'password', status: UserStatus::Approved);
+        $this->userManager->createUser(self::ADMIN_EMAIL, 'Admin', 'password', [Roles::ADMIN], UserStatus::Approved);
+        $this->userManager->createUser(self::DOMAIN_MANAGER_EMAIL, 'Manager', 'password', [Roles::DOMAIN_MANAGER], UserStatus::Approved);
+        $this->userManager->createUser(self::PENDING_EMAIL, 'Pending', 'password', status: UserStatus::Pending);
+        $this->userManager->createUser(self::AWAITING_EMAIL, 'Awaiting', 'password', status: UserStatus::AwaitingEmailConfirmation);
+        $this->userManager->createUser(self::BLOCKED_EMAIL, 'Blocked', 'password', status: UserStatus::Blocked);
     }
 }
