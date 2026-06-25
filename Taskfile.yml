@@ -103,7 +103,7 @@ tasks:
     desc: 'Run the PHPUnit test suite (no coverage).'
     cmds:
       - task: db-prepare-test
-      - task compose-exec -- phpfpm vendor/bin/phpunit
+      - task compose-exec -- phpfpm vendor/bin/phpunit --bootstrap=tests/bootstrap_integration.php
     silent: true
 
   test-coverage:
