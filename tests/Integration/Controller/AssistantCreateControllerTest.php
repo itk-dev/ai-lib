@@ -37,7 +37,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertSelectorExists('input[name="language_model"]');
         self::assertSelectorExists('input[name="framework"]');
         self::assertSelectorExists('input[name="tags"]');
-        self::assertSelectorExists('input[name="openwebui_config"]');
+        self::assertSelectorExists('textarea[name="openwebui_config"]');
         self::assertSelectorExists('input[name="_token"]');
         self::assertSelectorExists('input[type="file"]');
     }

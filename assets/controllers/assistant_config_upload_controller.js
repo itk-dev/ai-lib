@@ -5,7 +5,11 @@ import { Controller } from "@hotwired/stimulus";
  * create form.
  *
  * Mounted on the form (`data-controller="assistant-config-upload"`).
- * The file input is the `file` target; selecting a file kicks off:
+ * The file input is the `file` target and the editable JSON
+ * textarea is the `config` target. Selecting a file is a
+ * convenience that overwrites the textarea with the file's
+ * contents; users can also paste or type JSON directly into the
+ * textarea. Selecting a file kicks off:
  *
  *   1. Read the file contents via FileReader.
  *   2. For each check in the `checks` value, POST the JSON to the
@@ -13,18 +17,18 @@ import { Controller } from "@hotwired/stimulus";
  *      response. Each completed check moves the progress bar one
  *      notch forward — the progress is a count of finished checks,
  *      not a timer.
- *   3. If any check fails: show its errors, clear the hidden field,
+ *   3. If any check fails: show its errors, clear the textarea,
  *      stop iterating.
- *   4. If every check passes: populate the hidden form field with
- *      the JSON content and mark the status as valid.
+ *   4. If every check passes: populate the textarea with the JSON
+ *      content and mark the status as valid.
  *
- * The file itself is never submitted to the server — only its
- * parsed content lives in the hidden field. On invalid uploads the
- * hidden field is cleared so the server-side validator catches the
- * same problem on submit.
+ * The file itself is never submitted to the server — only the
+ * textarea's text content ends up on the server. On invalid
+ * uploads the textarea is cleared so the server-side validator
+ * catches the same problem on submit.
  */
 export default class extends Controller {
-    static targets = ["file", "hidden", "progress", "status"];
+    static targets = ["file", "config", "progress", "status"];
     static values = { validateUrl: String, checks: Array };
 
     async fileChanged() {
@@ -44,7 +48,7 @@ export default class extends Controller {
         const total = this.checksValue.length;
         if (total === 0) {
             // No checks registered — nothing to validate; accept as-is.
-            this.hiddenTarget.value = content;
+            this.configTarget.value = content;
             return;
         }
 
@@ -67,14 +71,14 @@ export default class extends Controller {
                 result = await response.json();
             } catch (err) {
                 this.endProgress();
-                this.hiddenTarget.value = "";
+                this.configTarget.value = "";
                 this.showError([err?.message || "Validation request failed."]);
                 return;
             }
 
             if (!result.valid) {
                 this.endProgress();
-                this.hiddenTarget.value = "";
+                this.configTarget.value = "";
                 this.showError(result.errors || []);
                 return;
             }
@@ -85,7 +89,7 @@ export default class extends Controller {
 
         // All checks passed.
         this.endProgress();
-        this.hiddenTarget.value = content;
+        this.configTarget.value = content;
         this.statusTarget.textContent =
             this.statusTarget.dataset.validText || "Configuration is valid.";
         this.statusTarget.classList.remove("text-red-600");

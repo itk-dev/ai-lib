@@ -44,6 +44,7 @@ final class AccessControlTest extends WebTestCase
         yield 'login form' => ['/login'];
         yield 'registration form' => ['/register'];
         yield 'registration pending page' => ['/register/pending'];
+        yield 'assistant create form' => ['/assistant/new'];
     }
 
     // Verifies that anonymous requests to gated routes return HTTP 401.
