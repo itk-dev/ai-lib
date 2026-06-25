@@ -36,11 +36,13 @@ tasks:
   # ---- Lifecycle --------------------------------------------------------
 
   site-install:
-    desc: 'Pull images, start the stack, install Composer dependencies, and apply database migrations.'
+    desc: 'Pull images, start the stack, install Composer dependencies, drop+recreate the database, and apply migrations. Destructive — any existing data in the dev database is wiped.'
     cmds:
       - task compose -- pull
       - task compose -- up --detach --remove-orphans --wait
       - task composer-install
+      - task console -- doctrine:database:drop --force --if-exists --no-interaction
+      - task console -- doctrine:database:create --no-interaction
       - task console -- doctrine:migrations:migrate --no-interaction
       - task compose -- exec phpfpm bin/console tailwind:build
     silent: true

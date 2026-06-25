@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and unknown status strings are rejected with a clear message.
   Sits behind a new `UserManager::updateUser()` service method
   ([#122](https://github.com/itk-dev/ai-reolen/issues/122)).
+- `task site-install` now drops and recreates the database
+  before running migrations, so a fresh install no longer fails
+  with "table already exists" when run on top of an existing
+  schema. The task is now explicitly destructive — any data in
+  the local dev database is wiped.
 - Data fixtures now assign a creating user (round-robin
   `alice@example.test` / `bob@example.test`) to each seeded assistant and
   organization, so the created-by/modified-by blame relation is exercised by
