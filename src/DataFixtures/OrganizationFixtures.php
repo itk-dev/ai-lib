@@ -6,6 +6,7 @@ namespace App\DataFixtures;
 
 use App\Entity\Organization;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 
 /**
@@ -16,7 +17,7 @@ use Doctrine\Persistence\ObjectManager;
  * counts) can be wired up against consistent data once the
  * `User → Organization` relation lands.
  */
-final class OrganizationFixtures extends Fixture
+final class OrganizationFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
@@ -38,9 +39,29 @@ final class OrganizationFixtures extends Fixture
             ),
         ];
 
+        // The two fixture users own the organizations round-robin; resolved
+        // once and reused so they share the same managed instances.
+        $creators = FixtureCreators::resolve($manager);
+
+        $index = 0;
         foreach ($entries as $organization) {
+            FixtureCreators::assign($creators, $organization, $index++);
             $manager->persist($organization);
         }
         $manager->flush();
+    }
+
+    /**
+     * Declare that users must be loaded first.
+     *
+     * The creating users are looked up by e-mail in {@see FixtureCreators},
+     * so {@see UserFixtures} has to run — and commit alice and bob — before
+     * this fixture.
+     *
+     * @return array<class-string> the fixture classes this one depends on
+     */
+    public function getDependencies(): array
+    {
+        return [UserFixtures::class];
     }
 }

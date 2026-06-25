@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Entity;
 
 use App\Entity\Organization;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Uid\Ulid;
 
 final class OrganizationTest extends TestCase
 {
@@ -18,7 +19,7 @@ final class OrganizationTest extends TestCase
             'openwebui',
         );
 
-        self::assertNull($organization->getId());
+        self::assertInstanceOf(Ulid::class, $organization->getId());
         self::assertSame('Aarhus Kommune', $organization->getName());
         self::assertSame(['aarhus.dk', 'aak.dk'], $organization->getEmailDomains());
         self::assertSame('openwebui', $organization->getDefaultFramework());
