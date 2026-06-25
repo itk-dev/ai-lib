@@ -14,6 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted(Roles::DOMAIN_MANAGER)]
@@ -43,7 +44,7 @@ final class UserController extends AbstractController
         return $this->redirectToRoute('app_admin_users', ['status' => UserStatus::Pending->value]);
     }
 
-    #[Route(path: '/admin/users/{id}/approve', name: 'app_admin_user_approve', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route(path: '/admin/users/{id}/approve', name: 'app_admin_user_approve', methods: ['POST'], requirements: ['id' => Requirement::ULID])]
     #[IsGranted(ManageUserVoter::APPROVE, subject: 'user')]
     public function approve(User $user, Request $request): Response
     {
@@ -57,7 +58,7 @@ final class UserController extends AbstractController
         return $this->redirectToBackUrl($request);
     }
 
-    #[Route(path: '/admin/users/{id}/block', name: 'app_admin_user_block', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route(path: '/admin/users/{id}/block', name: 'app_admin_user_block', methods: ['POST'], requirements: ['id' => Requirement::ULID])]
     #[IsGranted(ManageUserVoter::BLOCK, subject: 'user')]
     public function block(User $user, Request $request): Response
     {
