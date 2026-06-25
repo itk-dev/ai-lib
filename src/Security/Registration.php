@@ -6,6 +6,10 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Enum\UserStatus;
+use App\Notification\AdminRegistrationNotifier;
+use App\Notification\RegistrationConfirmationNotifier;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
  * Public-signup orchestration.
@@ -29,12 +33,18 @@ use App\Enum\UserStatus;
 final class Registration
 {
     /**
-     * @param UserManager          $userManager          owns the persistence + password-hashing step
-     * @param AllowedEmailDomains  $allowedEmailDomains  domain allow-list parsed from the env var
+     * @param UserManager                       $userManager                       owns the persistence + password-hashing step
+     * @param AllowedEmailDomains               $allowedEmailDomains               domain allow-list parsed from the env var
+     * @param AdminRegistrationNotifier         $adminNotifier                     fires the moderator-inbox notification
+     * @param RegistrationConfirmationNotifier  $confirmationNotifier              fires the user-facing confirmation
+     * @param LoggerInterface                   $logger                            receives a warning on transient mailer failures
      */
     public function __construct(
         private readonly UserManager $userManager,
         private readonly AllowedEmailDomains $allowedEmailDomains,
+        private readonly AdminRegistrationNotifier $adminNotifier,
+        private readonly RegistrationConfirmationNotifier $confirmationNotifier,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -85,7 +95,7 @@ final class Registration
         }
 
         try {
-            return $this->userManager->createUser(
+            $user = $this->userManager->createUser(
                 $email,
                 trim($name),
                 $plainPassword,
@@ -93,6 +103,41 @@ final class Registration
             );
         } catch (\DomainException) {
             throw new RegistrationException('register.error.email_in_use');
+        }
+
+        $this->dispatchNotifications($user);
+
+        return $user;
+    }
+
+    /**
+     * Fire the two transactional emails triggered by a fresh signup.
+     *
+     * Wrapped in a try/catch around the mailer transport — a
+     * transient delivery failure must not undo the persisted user
+     * (the moderator can still review and approve the row through
+     * `/admin/users`), so failures are logged and swallowed.
+     *
+     * @param User $user the freshly-created pending user
+     */
+    private function dispatchNotifications(User $user): void
+    {
+        try {
+            $this->adminNotifier->notifyOfNewRegistration($user);
+        } catch (TransportExceptionInterface $e) {
+            $this->logger->warning('Failed to deliver admin registration notification.', [
+                'user_email' => $user->getUserIdentifier(),
+                'exception' => $e,
+            ]);
+        }
+
+        try {
+            $this->confirmationNotifier->confirmRegistration($user);
+        } catch (TransportExceptionInterface $e) {
+            $this->logger->warning('Failed to deliver registration confirmation mail.', [
+                'user_email' => $user->getUserIdentifier(),
+                'exception' => $e,
+            ]);
         }
     }
 }

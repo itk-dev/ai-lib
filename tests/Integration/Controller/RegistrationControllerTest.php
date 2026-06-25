@@ -6,7 +6,9 @@ namespace App\Tests\Integration\Controller;
 
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
+use App\Settings\SettingsManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -19,6 +21,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 final class RegistrationControllerTest extends WebTestCase
 {
+    use MailerAssertionsTrait;
+
     private KernelBrowser $client;
 
     protected function setUp(): void
@@ -59,6 +63,32 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertNotNull($user);
         self::assertSame('Eve', $user->getName());
         self::assertSame(UserStatus::Pending, $user->getStatus());
+    }
+
+    // Ensures a successful self-signup fires the admin notification + the user-facing confirmation email.
+    public function testSuccessfulRegistrationFiresBothEmails(): void
+    {
+        self::getContainer()->get(SettingsManager::class)->setAdminRecipient('ops@example.test');
+
+        $crawler = $this->client->request('GET', '/register');
+        $form = $crawler->filter('form')->form();
+        $form['email'] = 'grace@example.test';
+        $form['name'] = 'Grace';
+        $form['password'] = 'secret';
+        $form['password_confirm'] = 'secret';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/register/pending');
+        self::assertEmailCount(2);
+
+        $recipients = array_map(
+            static fn (\Symfony\Component\Mime\RawMessage $message): string => method_exists($message, 'getTo')
+                ? ($message->getTo()[0]?->getAddress() ?? '')
+                : '',
+            self::getMailerMessages(),
+        );
+        sort($recipients);
+        self::assertSame(['grace@example.test', 'ops@example.test'], $recipients);
     }
 
     // Verifies the hand-off through AccountStatusChecker: a freshly-registered user cannot log in.

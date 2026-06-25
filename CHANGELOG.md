@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Transactional registration emails. After a successful
+  `/register` submission, two emails are dispatched: an admin
+  notification to the moderator inbox (the existing
+  `admin_recipient` setting) and a "thanks, awaiting approval"
+  confirmation to the user. Both messages render from
+  admin-editable Markdown templates persisted on the
+  `Setting` entity (`admin_notification_subject` /
+  `_body`, `registration_confirmation_subject` / `_body`),
+  with `%token%` placeholders resolved by a new
+  `App\Mail\EmailTemplateRenderer`. The `/admin/settings/email`
+  page grows two new fieldsets to edit subject + body per
+  email, with the available placeholders listed inline.
+  Transport failures are logged and swallowed so a mailer
+  outage doesn't undo a successful registration. Partially
+  closes #119 — the one-time login link lands in a follow-up
+  ([#119](https://github.com/itk-dev/ai-reolen/issues/119)).
 - Admin-page roundup: `/admin/users` gains a primary
   **"Opret bruger"** button (gated on `ROLE_ADMIN`) and a full
   HTML create form at `/admin/users/new` backed by a non-mapped

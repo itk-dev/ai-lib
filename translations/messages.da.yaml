@@ -157,11 +157,21 @@ admin:
         email:
             title: "E-mailindstillinger – %brand%"
             heading: "E-mail"
-            lead: "Modtagere og afsendere af systemmails."
+            lead: "Modtagere og indhold af systemmails. Lad et felt stå tomt for at gå tilbage til standardindholdet."
+            section:
+                recipient: "Modtager af besked om nye brugere"
+                admin_notification: "Admin: Ny bruger venter godkendelse"
+                registration_confirmation: "Bruger: Velkomst-mail"
+            tokens_label: "Tilgængelige pladsholdere:"
             fields:
                 admin_recipient:
-                    label: "Modtager af administrator-mails"
-                    help: "E-mailadresse der modtager besked, når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
+                    label: "E-mailadresse"
+                    help: "Modtager besked når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
+                subject:
+                    label: "Emne"
+                body:
+                    label: "Indhold (Markdown)"
+                    help: "Skrives som Markdown. Brug pladsholdere fra listen ovenfor."
 
 catalog:
     title: "Katalog – %brand%"

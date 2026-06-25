@@ -46,6 +46,49 @@ class SettingsManager
      */
     public const string BRAND_INITIALS = 'brand_initials';
 
+    /**
+     * Canonical keys for the admin-notification email content.
+     */
+    public const string ADMIN_NOTIFICATION_SUBJECT = 'admin_notification_subject';
+    public const string ADMIN_NOTIFICATION_BODY = 'admin_notification_body';
+
+    /**
+     * Canonical keys for the registration-confirmation email content.
+     */
+    public const string REGISTRATION_CONFIRMATION_SUBJECT = 'registration_confirmation_subject';
+    public const string REGISTRATION_CONFIRMATION_BODY = 'registration_confirmation_body';
+
+    /**
+     * Built-in default subject + Markdown body for each
+     * transactional email. The admin form initialises every field
+     * with these values and a fresh install renders them verbatim
+     * until an operator overrides them. Available `%token%`
+     * placeholders per email are documented in
+     * {@see \App\Notification\AdminRegistrationNotifier} and
+     * {@see \App\Notification\RegistrationConfirmationNotifier}.
+     */
+    public const string DEFAULT_ADMIN_NOTIFICATION_SUBJECT = 'Ny bruger venter godkendelse — %brand_name%';
+    public const string DEFAULT_ADMIN_NOTIFICATION_BODY = <<<'MD'
+        En ny bruger har netop oprettet sig:
+
+        - **Navn:** %name%
+        - **E-mail:** %email%
+
+        Brugeren afventer godkendelse. Gennemse køen på
+        [%approval_url%](%approval_url%).
+        MD;
+
+    public const string DEFAULT_REGISTRATION_CONFIRMATION_SUBJECT = 'Velkommen til %brand_name%';
+    public const string DEFAULT_REGISTRATION_CONFIRMATION_BODY = <<<'MD'
+        Hej %name%,
+
+        Tak for din oprettelse på %brand_name%. Vi har modtaget din
+        forespørgsel og en administrator vil godkende kontoen,
+        før du kan logge ind.
+
+        Du modtager besked, så snart kontoen er klar.
+        MD;
+
     public function __construct(
         private readonly SettingRepository $repository,
         private readonly EntityManagerInterface $em,
@@ -174,6 +217,116 @@ class SettingsManager
     public function setBrandInitials(?string $initials): void
     {
         $this->setString(self::BRAND_INITIALS, $initials);
+    }
+
+    /**
+     * Read the configured subject template for the admin notification email.
+     *
+     * Returns the admin-saved override when set, otherwise the
+     * built-in {@see DEFAULT_ADMIN_NOTIFICATION_SUBJECT} default.
+     *
+     * @return string current subject template (may contain `%token%` placeholders)
+     */
+    public function getAdminNotificationSubject(): string
+    {
+        return $this->getString(self::ADMIN_NOTIFICATION_SUBJECT) ?? self::DEFAULT_ADMIN_NOTIFICATION_SUBJECT;
+    }
+
+    /**
+     * Persist the admin notification subject template, or clear it to revert to the default.
+     *
+     * @param string|null $subject subject template to store, or null to clear
+     */
+    public function setAdminNotificationSubject(?string $subject): void
+    {
+        $this->setString(self::ADMIN_NOTIFICATION_SUBJECT, $subject);
+    }
+
+    /**
+     * Read the configured Markdown body template for the admin notification email.
+     *
+     * Returns the admin-saved override when set, otherwise the
+     * built-in {@see DEFAULT_ADMIN_NOTIFICATION_BODY} default.
+     *
+     * @return string current Markdown body template (may contain `%token%` placeholders)
+     */
+    public function getAdminNotificationBody(): string
+    {
+        return $this->getString(self::ADMIN_NOTIFICATION_BODY) ?? self::DEFAULT_ADMIN_NOTIFICATION_BODY;
+    }
+
+    /**
+     * Persist the admin notification body template, or clear it to revert to the default.
+     *
+     * @param string|null $body Markdown body template to store, or null to clear
+     */
+    public function setAdminNotificationBody(?string $body): void
+    {
+        $this->setString(self::ADMIN_NOTIFICATION_BODY, $body);
+    }
+
+    /**
+     * Read the configured subject template for the signup-confirmation email.
+     *
+     * @return string current subject template
+     */
+    public function getRegistrationConfirmationSubject(): string
+    {
+        return $this->getString(self::REGISTRATION_CONFIRMATION_SUBJECT) ?? self::DEFAULT_REGISTRATION_CONFIRMATION_SUBJECT;
+    }
+
+    /**
+     * Persist the registration-confirmation subject template, or clear it to revert to the default.
+     *
+     * @param string|null $subject subject template to store, or null to clear
+     */
+    public function setRegistrationConfirmationSubject(?string $subject): void
+    {
+        $this->setString(self::REGISTRATION_CONFIRMATION_SUBJECT, $subject);
+    }
+
+    /**
+     * Read the configured Markdown body template for the signup-confirmation email.
+     *
+     * @return string current Markdown body template
+     */
+    public function getRegistrationConfirmationBody(): string
+    {
+        return $this->getString(self::REGISTRATION_CONFIRMATION_BODY) ?? self::DEFAULT_REGISTRATION_CONFIRMATION_BODY;
+    }
+
+    /**
+     * Persist the registration-confirmation body template, or clear it to revert to the default.
+     *
+     * @param string|null $body Markdown body template to store, or null to clear
+     */
+    public function setRegistrationConfirmationBody(?string $body): void
+    {
+        $this->setString(self::REGISTRATION_CONFIRMATION_BODY, $body);
+    }
+
+    /**
+     * Apply the email-content submission (subjects + bodies for both transactional emails) in one call.
+     *
+     * Each argument is trimmed and empty strings collapse to
+     * `null`, so clearing a field reverts that template to the
+     * built-in default.
+     *
+     * @param string|null $adminNotificationSubject        submitted subject for the admin notification email
+     * @param string|null $adminNotificationBody           submitted Markdown body for the admin notification email
+     * @param string|null $registrationConfirmationSubject submitted subject for the signup-confirmation email
+     * @param string|null $registrationConfirmationBody    submitted Markdown body for the signup-confirmation email
+     */
+    public function applyEmailContent(
+        ?string $adminNotificationSubject,
+        ?string $adminNotificationBody,
+        ?string $registrationConfirmationSubject,
+        ?string $registrationConfirmationBody,
+    ): void {
+        $this->setAdminNotificationSubject(self::emptyToNull($adminNotificationSubject));
+        $this->setAdminNotificationBody(self::emptyToNull($adminNotificationBody));
+        $this->setRegistrationConfirmationSubject(self::emptyToNull($registrationConfirmationSubject));
+        $this->setRegistrationConfirmationBody(self::emptyToNull($registrationConfirmationBody));
     }
 
     /**
