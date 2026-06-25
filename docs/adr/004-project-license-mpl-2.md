@@ -6,7 +6,7 @@
 | **Date**           | 2026-06-08                                             |
 | **Decision Maker** | ITK Dev team (decision by @lilosti)                    |
 | **Stakeholders**   | ITK Dev developers, future external contributors,      |
-|                    | Danish public-sector projects reusing ai-reolen           |
+|                    | Danish public-sector projects reusing ai-reolen        |
 | **Status**         | Accepted                                               |
 
 ## Context
