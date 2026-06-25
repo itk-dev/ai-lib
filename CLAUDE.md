@@ -9,7 +9,7 @@ this file wins — project-specific rules override the global defaults.
 
 ## Project overview
 
-`ai-lib` is a shared catalog of AI assistants for the Danish public sector.
+`ai-reolen` is a shared catalog of AI assistants for the Danish public sector.
 The application is a Symfony 8 web app built on the ITK Dev Docker
 development setup.
 
@@ -17,10 +17,10 @@ development setup.
 
 - **PHP 8.4** running under `phpfpm` (Symfony 8 skeleton, PSR-4 `App\\` at `src/`).
 - **Nginx** in front of `phpfpm`, served via the shared **Traefik** proxy at
-  `https://ai-lib.local.itkdev.dk`.
+  `https://ai-reolen.local.itkdev.dk`.
 - **MariaDB** for persistence.
 - **Mailpit** for outbound mail capture at
-  `https://mail-ai-lib.local.itkdev.dk`.
+  `https://mail-ai-reolen.local.itkdev.dk`.
 - **ITK Dev Docker** template `symfony-8` provides the container orchestration.
 
 ## Project structure
@@ -248,7 +248,7 @@ section and may stay as long as it needs to be.
   itself.
 - **Include the Leantime link if the linked issue has a milestone with
   one.** Fetch the milestone via
-  `gh api repos/itk-dev/ai-lib/milestones/<n>`, look for an `LT: <url>`
+  `gh api repos/itk-dev/ai-reolen/milestones/<n>`, look for an `LT: <url>`
   line in the milestone description, and add the URL to the PR description
   under a short `#### Links to issues` heading. If the milestone has no `LT:` line,
   or the PR has no linked issue / no milestone, skip the section — don't
@@ -315,7 +315,7 @@ rolling a description.
 SSH keys aren't available to the Claude session. Push one-off via HTTPS:
 
 ```sh
-git push https://github.com/itk-dev/ai-lib.git HEAD:<branch>
+git push https://github.com/itk-dev/ai-reolen.git HEAD:<branch>
 ```
 
 Do not change the `origin` remote URL — SSH is wanted for normal use outside

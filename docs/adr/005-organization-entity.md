@@ -6,7 +6,7 @@
 | **Date**           | 2026-06-18                                           |
 | **Decision Maker** | ITK Dev team                                         |
 | **Stakeholders**   | ITK Dev developers, future contributors,             |
-|                    | downstream public-sector consumers of `ai-lib`       |
+|                    | downstream public-sector consumers of `ai-reolen`       |
 | **Status**         | Draft                                                |
 
 ## Context

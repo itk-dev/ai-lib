@@ -1,16 +1,16 @@
 # 001: Tech stack — Docker + Symfony
 
-| Field              | Value                                              |
-| ------------------ | -------------------------------------------------- |
-| **Created By**     | Martin Yde Granath                                 |
-| **Date**           | 2026-06-08                                         |
-| **Decision Maker** | ITK Dev team                                       |
-| **Stakeholders**   | ITK Dev developers, future maintainers of ai-lib   |
-| **Status**         | Accepted                                           |
+| Field              | Value                                  |
+| ------------------ |----------------------------------------|
+| **Created By**     | Martin Yde Granath                     |
+| **Date**           | 2026-06-08                             |
+| **Decision Maker** | ITK Dev team                           |
+| **Stakeholders**   | ITK Dev developers, future maintainers |
+| **Status**         | Accepted                               |
 
 ## Context
 
-ai-lib is a new application that needs a runtime, a web framework, and a
+ai-reolen is a new application that needs a runtime, a web framework, and a
 reproducible local development environment. The project is built and
 maintained inside the ITK Dev team, which already operates a fleet of
 PHP services and has an established convention for Docker-based local
@@ -61,7 +61,7 @@ pipeline) can build on it.
 4. **Python / FastAPI on a bespoke Docker setup.**
    - Pros: convenient for AI/ML adjacent code paths.
    - Cons: same divergence problem as option 3; the AI integration
-     surface of ai-lib does not require running models locally, so the
+     surface of ai-reolen does not require running models locally, so the
      Python ecosystem advantage does not pay off here.
 
 ## Decision
@@ -75,7 +75,7 @@ Rationale:
 - The team already maintains Symfony services with this exact stack, so
   developer onboarding cost is effectively zero.
 - The `symfony-8` template encodes the team's local-development and CI
-  conventions; using it keeps ai-lib consistent with the rest of the
+  conventions; using it keeps ai-ai-reolen consistent with the rest of the
   ITK Dev portfolio and lets us inherit improvements over time.
 - Symfony 8 is an LTS release with a multi-year support window, which
   fits the expected lifetime of this project.

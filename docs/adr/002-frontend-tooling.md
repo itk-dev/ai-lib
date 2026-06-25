@@ -1,16 +1,16 @@
 # 002: Frontend tooling — Tailwind + AssetMapper + Stimulus
 
-| Field              | Value                                              |
-| ------------------ | -------------------------------------------------- |
-| **Created By**     | Martin Yde Granath                                 |
-| **Date**           | 2026-06-08                                         |
-| **Decision Maker** | ITK Dev team                                       |
-| **Stakeholders**   | ITK Dev developers, future maintainers of ai-lib   |
-| **Status**         | Accepted                                           |
+| Field              | Value                                  |
+| ------------------ |----------------------------------------|
+| **Created By**     | Martin Yde Granath                     |
+| **Date**           | 2026-06-08                             |
+| **Decision Maker** | ITK Dev team                           |
+| **Stakeholders**   | ITK Dev developers, future maintainers |
+| **Status**         | Accepted                               |
 
 ## Context
 
-ai-lib is a Symfony 8 application with no real frontend stack yet.
+ai-reolen is a Symfony 8 application with no real frontend stack yet.
 `assets/app.css` and `assets/app.js` are placeholders, there is no
 `package.json`, and no asset bundler is configured. Before UI work
 starts in earnest (frontpage, catalogue listing, login, assistant
@@ -19,7 +19,7 @@ pipeline, and a JavaScript layer so subsequent UI issues have stable
 ground to build on.
 
 This ADR records that decision and supersedes the deferral noted on
-[#38](https://github.com/itk-dev/ai-lib/issues/38).
+[#38](https://github.com/itk-dev/ai-reolen/issues/38).
 
 ### Drivers
 

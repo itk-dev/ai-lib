@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
 This directory contains Architecture Decision Records (ADRs) for the
-**ai-lib** project. An ADR captures a single significant architectural
+**ai-reolen** project. An ADR captures a single significant architectural
 decision, the context around it, and its consequences, so the reasoning
 remains discoverable long after the decision has been made.
 
