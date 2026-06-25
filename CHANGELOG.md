@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `app:user:update` console command that updates an existing
+  user's display name, roles, and / or lifecycle status. Each
+  field is optional — omitting it leaves the value untouched.
+  `--role` may be repeated to set multiple roles and replaces
+  the current role list wholesale; unknown role identifiers
+  and unknown status strings are rejected with a clear message.
+  Sits behind a new `UserManager::updateUser()` service method
+  ([#122](https://github.com/itk-dev/ai-reolen/issues/122)).
 - Admin CRUD for `Organization` at `/admin/organization` (list,
   create, edit, delete) per ADR 003. Built with `symfony/form`
   (newly added dependency) + raw Twig templates, multi-value
