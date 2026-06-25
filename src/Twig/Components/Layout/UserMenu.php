@@ -79,6 +79,7 @@ final class UserMenu
         $adminItems = array_values(array_filter([
             $this->item('nav.user.admin_organization', 'app_admin_organization_index', Roles::ADMIN),
             $this->item('nav.user.admin_users', 'app_admin_users', Roles::DOMAIN_MANAGER),
+            $this->item('nav.user.admin_settings', 'app_admin_settings', Roles::ADMIN),
         ]));
         if ([] !== $adminItems) {
             $sections[] = ['label_key' => 'nav.user.section_admin', 'items' => $adminItems];
