@@ -14,10 +14,7 @@ use Twig\Extension\GlobalsInterface;
  *
  * Delegates to {@see SettingsManager} so an admin-typed value in
  * the `Setting` table wins over the `BRAND_*` env vars, which
- * remain the deploy-time defaults. The globals were previously
- * wired directly from env in `config/packages/twig.yaml`;
- * routing them through this extension lets the admin settings
- * surface override them at runtime.
+ * remain the deploy-time defaults.
  */
 final class BrandExtension extends AbstractExtension implements GlobalsInterface
 {

@@ -51,6 +51,38 @@ final class UserManager
      * @throws \DomainException          when a user with the same e-mail already exists
      * @throws \InvalidArgumentException when `$plainPassword` is empty
      */
+    /**
+     * Create a new user from an `UserCreateType` form submission.
+     *
+     * Thin shim that unpacks the form's associative array shape
+     * and forwards to {@see createUser()} so the admin create-form
+     * controller stays free of array-key plumbing. Missing keys
+     * fall back to the same defaults as the underlying call.
+     *
+     * @param array{
+     *     email?: string,
+     *     name?: string,
+     *     password?: string,
+     *     roles?: list<string>,
+     *     status?: UserStatus
+     * } $input form submission payload
+     *
+     * @return User the persisted user with an assigned id
+     *
+     * @throws \DomainException          when a user with the same e-mail already exists
+     * @throws \InvalidArgumentException when the password is empty
+     */
+    public function createFromInput(array $input): User
+    {
+        return $this->createUser(
+            $input['email'] ?? '',
+            $input['name'] ?? '',
+            $input['password'] ?? '',
+            $input['roles'] ?? [],
+            $input['status'] ?? UserStatus::Pending,
+        );
+    }
+
     public function createUser(
         string $email,
         string $name,

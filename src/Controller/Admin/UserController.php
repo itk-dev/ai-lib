@@ -56,17 +56,8 @@ final class UserController extends AbstractController
 
         $domainError = null;
         if ($form->isSubmitted() && $form->isValid()) {
-            /** @var array{email: string, name: string, password: string, roles: list<string>, status: UserStatus} $data */
-            $data = $form->getData();
-
             try {
-                $this->userManager->createUser(
-                    $data['email'],
-                    $data['name'],
-                    $data['password'],
-                    $data['roles'],
-                    $data['status'],
-                );
+                $this->userManager->createFromInput($form->getData());
 
                 $this->addFlash('success', 'admin.users.flash.created');
 

@@ -177,6 +177,71 @@ class SettingsManager
     }
 
     /**
+     * Apply a raw brand-identity submission in one call.
+     *
+     * Each argument is trimmed and empty strings are treated as
+     * `null`, so a form that submits empty fields reverts the
+     * override and lets the `BRAND_*` env-var defaults win again.
+     * Every key is persisted on the same flush.
+     *
+     * @param string|null $name     submitted brand name, or null to leave alone the trimming branch
+     * @param string|null $tagline  submitted brand tagline
+     * @param string|null $initials submitted brand initials
+     */
+    public function applyBrandIdentity(?string $name, ?string $tagline, ?string $initials): void
+    {
+        $this->setBrandName(self::emptyToNull($name));
+        $this->setBrandTagline(self::emptyToNull($tagline));
+        $this->setBrandInitials(self::emptyToNull($initials));
+    }
+
+    /**
+     * Try to apply an admin notification recipient submission.
+     *
+     * Accepts the raw form value, trims it, and clears the
+     * setting when the result is empty. A non-empty value is
+     * validated against `FILTER_VALIDATE_EMAIL`; an invalid
+     * address is rejected and nothing is persisted.
+     *
+     * @param string|null $address raw submitted recipient address
+     *
+     * @return bool true on accept (cleared or persisted), false on a syntactically invalid non-empty address
+     */
+    public function applyAdminRecipient(?string $address): bool
+    {
+        $normalised = self::emptyToNull($address);
+        if (null !== $normalised && !filter_var($normalised, \FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        $this->setAdminRecipient($normalised);
+
+        return true;
+    }
+
+    /**
+     * Trim a string and return `null` when the result is empty.
+     *
+     * Centralises the "empty form field → unset the setting"
+     * convention so the typed apply-* methods all behave the
+     * same way. Internal helper — callers go through the typed
+     * apply-* methods instead.
+     *
+     * @param string|null $value raw input from a form submission
+     *
+     * @return string|null trimmed value, or null when input is null or only whitespace
+     */
+    private static function emptyToNull(?string $value): ?string
+    {
+        if (null === $value) {
+            return null;
+        }
+        $trimmed = trim($value);
+
+        return '' === $trimmed ? null : $trimmed;
+    }
+
+    /**
      * Look up a stored string setting by key.
      *
      * Returns the row's `value`, or `null` when the row doesn't

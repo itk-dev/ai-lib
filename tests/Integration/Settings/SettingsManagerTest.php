@@ -72,4 +72,14 @@ final class SettingsManagerTest extends KernelTestCase
 
         self::assertNull($manager->getAdminRecipient());
     }
+
+    // Verifies applyAdminRecipient accepts a null payload as "clear the setting" without going through the trim path.
+    public function testApplyAdminRecipientAcceptsNullAsAClear(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setAdminRecipient('ops@example.test');
+
+        self::assertTrue($manager->applyAdminRecipient(null));
+        self::assertNull($manager->getAdminRecipient());
+    }
 }
