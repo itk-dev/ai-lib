@@ -111,4 +111,84 @@ final class UserManagerTest extends KernelTestCase
 
         $this->userManager->changePassword('alice@example.test', '');
     }
+
+    // Tests that updateUser() rewrites every provided field and leaves the rest as-is.
+    public function testUpdateUserAppliesEveryProvidedField(): void
+    {
+        $alice = $this->userRepository->findOneBy(['email' => 'alice@example.test']);
+        self::assertNotNull($alice);
+        $originalPassword = $alice->getPassword();
+
+        $updated = $this->userManager->updateUser(
+            'alice@example.test',
+            name: 'Alice A.',
+            roles: ['ROLE_ADMIN'],
+            status: UserStatus::Blocked,
+        );
+
+        self::assertSame($alice->getId(), $updated->getId());
+        self::assertSame('Alice A.', $updated->getName());
+        self::assertSame(['ROLE_ADMIN', 'ROLE_USER'], $updated->getRoles());
+        self::assertSame(UserStatus::Blocked, $updated->getStatus());
+        self::assertSame($originalPassword, $updated->getPassword(), 'Password must not be touched by updateUser().');
+    }
+
+    // Verifies that omitting every option is a no-op success and leaves the user untouched.
+    public function testUpdateUserWithoutAnyFieldIsANoOp(): void
+    {
+        $alice = $this->userRepository->findOneBy(['email' => 'alice@example.test']);
+        self::assertNotNull($alice);
+        $beforeName = $alice->getName();
+        $beforeRoles = $alice->getRoles();
+        $beforeStatus = $alice->getStatus();
+
+        $updated = $this->userManager->updateUser('alice@example.test');
+
+        self::assertSame($beforeName, $updated->getName());
+        self::assertSame($beforeRoles, $updated->getRoles());
+        self::assertSame($beforeStatus, $updated->getStatus());
+    }
+
+    // Ensures passing an empty roles array clears every custom role (ROLE_USER floor stays via getRoles()).
+    public function testUpdateUserClearsRolesWhenEmptyArrayPassed(): void
+    {
+        // Set a non-default role first so the clear has something to clear.
+        $this->userManager->updateUser('alice@example.test', roles: ['ROLE_DOMAIN_MANAGER']);
+
+        $updated = $this->userManager->updateUser('alice@example.test', roles: []);
+
+        self::assertSame(['ROLE_USER'], $updated->getRoles());
+    }
+
+    // Ensures updateUser() rejects an unknown role with InvalidArgumentException and persists nothing.
+    public function testUpdateUserRejectsUnknownRole(): void
+    {
+        $alice = $this->userRepository->findOneBy(['email' => 'alice@example.test']);
+        self::assertNotNull($alice);
+        $beforeName = $alice->getName();
+
+        try {
+            $this->userManager->updateUser(
+                'alice@example.test',
+                name: 'Should not stick',
+                roles: ['ROLE_BOGUS'],
+            );
+            self::fail('Expected InvalidArgumentException for unknown role.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('ROLE_BOGUS', $e->getMessage());
+        }
+
+        $reloaded = $this->userRepository->findOneBy(['email' => 'alice@example.test']);
+        self::assertNotNull($reloaded);
+        self::assertSame($beforeName, $reloaded->getName(), 'Validation must run before any mutation is persisted.');
+    }
+
+    // Ensures updateUser() throws DomainException when the email matches no user.
+    public function testUpdateUserFailsWhenUserMissing(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('nobody@example.test');
+
+        $this->userManager->updateUser('nobody@example.test', name: 'x');
+    }
 }

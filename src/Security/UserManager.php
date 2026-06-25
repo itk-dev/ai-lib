@@ -80,6 +80,67 @@ final class UserManager
     }
 
     /**
+     * Update an existing user's mutable identity fields.
+     *
+     * Each optional argument follows the same rule: `null` means
+     * "leave the field untouched". When `$roles` is provided it
+     * replaces the user's role list wholesale — pass an empty
+     * array to clear all custom roles (the implicit `ROLE_USER`
+     * floor lives on the entity and is not stored). Each role is
+     * validated against {@see Roles}; an unknown identifier is
+     * rejected before any change is persisted. The status string
+     * is parsed with `UserStatus::tryFrom()`.
+     *
+     * @param string         $email  e-mail of the user to update
+     * @param string|null    $name   new display name, or null to leave unchanged
+     * @param list<string>|null $roles  new role list, or null to leave unchanged
+     * @param UserStatus|null $status new lifecycle status, or null to leave unchanged
+     *
+     * @return User the updated user
+     *
+     * @throws \DomainException          when no user with that e-mail exists
+     * @throws \InvalidArgumentException when any provided role is not declared on {@see Roles}
+     */
+    public function updateUser(
+        string $email,
+        ?string $name = null,
+        ?array $roles = null,
+        ?UserStatus $status = null,
+    ): User {
+        $user = $this->userRepository->findOneBy(['email' => $email]);
+        if (null === $user) {
+            throw new \DomainException(\sprintf('No user with the e-mail "%s" was found.', $email));
+        }
+
+        if (null !== $roles) {
+            $allowed = [Roles::USER, Roles::DOMAIN_MANAGER, Roles::ADMIN];
+            foreach ($roles as $role) {
+                if (!\in_array($role, $allowed, true)) {
+                    throw new \InvalidArgumentException(\sprintf(
+                        'Unknown role "%s". Allowed roles: %s.',
+                        $role,
+                        implode(', ', $allowed),
+                    ));
+                }
+            }
+        }
+
+        if (null !== $name) {
+            $user->setName($name);
+        }
+        if (null !== $roles) {
+            $user->setRoles($roles);
+        }
+        if (null !== $status) {
+            $user->setStatus($status);
+        }
+
+        $this->entityManager->flush();
+
+        return $user;
+    }
+
+    /**
      * Replace a user's password with a freshly hashed copy.
      *
      * @param string $email            e-mail of the user to update
