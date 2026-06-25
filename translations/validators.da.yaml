@@ -1,0 +1,4 @@
+admin:
+    organization:
+        form:
+            email_domains_required: "Angiv mindst ét e-maildomæne."

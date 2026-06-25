@@ -1,5 +1,5 @@
 {
-    "name": "itk-dev/ai-lib",
+    "name": "itk-dev/ai-reolen",
     "description": "AI Lib — Symfony application for itk-dev.",
     "license": "MPL-2.0",
     "type": "project",
@@ -15,6 +15,7 @@
         "symfony/console": "~8.1.0",
         "symfony/dotenv": "~8.1.0",
         "symfony/flex": "^2",
+        "symfony/form": "~8.1.0",
         "symfony/framework-bundle": "~8.1.0",
         "symfony/mailer": "~8.1.0",
         "symfony/runtime": "~8.1.0",
@@ -23,6 +24,7 @@
         "symfony/translation": "~8.1.0",
         "symfony/twig-bundle": "~8.1.0",
         "symfony/ux-twig-component": "^3.1",
+        "symfony/validator": "~8.1.0",
         "symfony/yaml": "~8.1.0",
         "symfonycasts/tailwind-bundle": "^0.13.0",
         "twig/extra-bundle": "^2.12 || ^3.0",

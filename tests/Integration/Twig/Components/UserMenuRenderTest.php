@@ -30,7 +30,9 @@ final class UserMenuRenderTest extends WebTestCase
     // Tests that anonymous visitors don't get the user menu at all.
     public function testAnonymousDoesNotSeeUserMenu(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        // `/` requires authentication; `/login` is the only base-layout
+        // page an anonymous visitor can reach.
+        $crawler = $this->client->request('GET', '/login');
 
         self::assertResponseIsSuccessful();
         self::assertCount(0, $crawler->filter('[data-controller~="user-menu"]'));

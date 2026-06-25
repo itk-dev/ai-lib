@@ -1,17 +1,17 @@
 # 005: Organization entity and assistant-creation derivation
 
-| Field              | Value                                              |
-| ------------------ | -------------------------------------------------- |
-| **Created By**     | Martin Yde Granath                                 |
-| **Date**           | 2026-06-12                                         |
-| **Decision Maker** | ITK Dev team                                       |
-| **Stakeholders**   | ITK Dev developers, future maintainers of ai-lib   |
-| **Status**         | Draft                                              |
+| Field              | Value                                  |
+| ------------------ |----------------------------------------|
+| **Created By**     | Martin Yde Granath                     |
+| **Date**           | 2026-06-12                             |
+| **Decision Maker** | ITK Dev team                           |
+| **Stakeholders**   | ITK Dev developers, future maintainers |
+| **Status**         | Draft                                  |
 
 ## Context
 
 The assistant entity (tracked in
-[#14](https://github.com/itk-dev/ai-lib/issues/14)) needs three
+[#14](https://github.com/itk-dev/ai-reolen/issues/14)) needs three
 pieces of metadata that pull the design in the same direction:
 
 - **framework** — the AI framework the assistant runs on (OpenWebUI
@@ -38,7 +38,7 @@ Two threads converge here:
    language model are exactly that metadata.
 
 Tracked in
-[#65](https://github.com/itk-dev/ai-lib/issues/65).
+[#65](https://github.com/itk-dev/ai-reolen/issues/65).
 
 ### Drivers
 

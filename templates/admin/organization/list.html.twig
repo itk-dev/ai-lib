@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'admin.organization.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <section class="max-w-4xl">
+        <twig:Eyebrow as="p" class="mb-4">{{ 'admin.organization.eyebrow'|trans }}</twig:Eyebrow>
+        <twig:Heading level="1" size="lg" class="mb-6">{{ 'admin.organization.heading'|trans }}</twig:Heading>
+
+        {% for flash in app.flashes('success') %}
+            <twig:Alert type="success" class="mb-4">
+                {{ flash|trans }}
+            </twig:Alert>
+        {% endfor %}
+
+        <p class="mb-6">
+            <twig:Form:Button href="{{ path('app_admin_organization_new') }}">
+                {{ 'admin.organization.action.new'|trans }}
+            </twig:Form:Button>
+        </p>
+
+        {% if organizations is empty %}
+            <p class="text-sm text-text">{{ 'admin.organization.empty'|trans }}</p>
+        {% else %}
+            <ul class="grid gap-3">
+                {% for organization in organizations %}
+                    <li class="rounded-lg border border-line bg-surface px-4 py-3">
+                        <div class="flex flex-wrap items-baseline justify-between gap-3">
+                            <div>
+                                <p class="font-medium text-ink">{{ organization.name }}</p>
+                                <p class="text-sm text-text">
+                                    {{ organization.emailDomains|join(', ') }}
+                                </p>
+                                <p class="text-xs text-text-muted">
+                                    {{ 'admin.organization.default_framework_label'|trans }}:
+                                    {{ organization.defaultFramework }}
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <a class="text-sm text-primary underline hover:text-primary-hover"
+                                   href="{{ path('app_admin_organization_edit', {id: organization.id}) }}">
+                                    {{ 'admin.organization.action.edit'|trans }}
+                                </a>
+                                <form action="{{ path('app_admin_organization_delete', {id: organization.id}) }}"
+                                      method="post"
+                                      class="inline"
+                                      onsubmit="return confirm('{{ 'admin.organization.action.delete_confirm'|trans|e('js') }}');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('admin-organization-delete') }}">
+                                    <twig:Form:Button type="submit" size="sm">
+                                        {{ 'admin.organization.action.delete'|trans }}
+                                    </twig:Form:Button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+{% endblock %}
