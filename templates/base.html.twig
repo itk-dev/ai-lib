@@ -28,6 +28,9 @@
                 <twig:Nav:Link href="#">{{ 'nav.links.mine'|trans }}</twig:Nav:Link>
                 <twig:Nav:Link href="#">{{ 'nav.links.favorites'|trans }}</twig:Nav:Link>
                 <twig:Nav:Link href="#">{{ 'nav.links.collections'|trans }}</twig:Nav:Link>
+                {% if app.user %}
+                    <twig:Layout:UserMenu />
+                {% endif %}
             </twig:Nav:Menu>
         </twig:Layout:SiteHeader>
 

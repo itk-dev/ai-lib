@@ -9,7 +9,7 @@ this file wins — project-specific rules override the global defaults.
 
 ## Project overview
 
-`ai-lib` is a shared catalog of AI assistants for the Danish public sector.
+`ai-reolen` is a shared catalog of AI assistants for the Danish public sector.
 The application is a Symfony 8 web app built on the ITK Dev Docker
 development setup.
 
@@ -17,10 +17,10 @@ development setup.
 
 - **PHP 8.4** running under `phpfpm` (Symfony 8 skeleton, PSR-4 `App\\` at `src/`).
 - **Nginx** in front of `phpfpm`, served via the shared **Traefik** proxy at
-  `https://ai-lib.local.itkdev.dk`.
+  `https://ai-reolen.local.itkdev.dk`.
 - **MariaDB** for persistence.
 - **Mailpit** for outbound mail capture at
-  `https://mail-ai-lib.local.itkdev.dk`.
+  `https://mail-ai-reolen.local.itkdev.dk`.
 - **ITK Dev Docker** template `symfony-8` provides the container orchestration.
 
 ## Project structure
@@ -168,6 +168,30 @@ Every service class method (public, protected, private) carries a PHPDoc block
 with a one-line summary, a description of intent, `@param` per parameter,
 `@return`, and `@throws` for every exception that can be raised.
 
+### Docblocks describe code, not project context
+
+Docblocks (PHPDoc, Twig file comments, JSDoc, etc.) describe what the code
+does and how to use it. They do **not** carry project history. Do not
+reference:
+
+- ADRs (`per ADR 003`, `see docs/adr/...`).
+- Issue numbers (`(issue #76)`, `[#62]`).
+- PR numbers (`see PR #109`).
+- Follow-up issues, parent issues, milestones, or sprint codes.
+
+Project context — *why* the work was done, what ticket drove it, which ADR
+governs it — belongs in the PR description, the commit message body, or the
+CHANGELOG entry. Those surfaces have a natural shelf life; a docblock is
+read for years and shouldn't anchor a future reader to a closed ticket.
+
+If the *why* matters to a reader of the code, the *why* goes inline in
+plain language: "the entity constructor requires every field, so the form
+supplies an `empty_data` factory" belongs in the docblock. "Per ADR 003"
+does not.
+
+Applies uniformly across controllers (which carry no docblock at all),
+services, entities, forms, Twig template comments, and tests.
+
 ### Test methods carry a one-line intent comment
 
 Each `public function test…` opens with a single-line comment that
@@ -210,6 +234,25 @@ open a PR upstream rather than patching locally.
   out **what blocks the merge and why** (e.g. waiting on upstream change,
   dependent PR, unresolved decision). Keep this up to date — remove or
   rewrite the block reason as blockers resolve.
+
+### PR description style
+
+Write the human-facing description so a reviewer can scan it in 30 seconds.
+The detailed AI brief lives in the template's `# Details - AI specificities`
+section and may stay as long as it needs to be.
+
+- **Bullets are one or two lines each.** If a bullet needs a paragraph,
+  it's probably two bullets — split it.
+- **Name only the primary file(s) tied to the feature or bug.** Don't
+  enumerate every file the diff touches; the file list is in the diff
+  itself.
+- **Include the Leantime link if the linked issue has a milestone with
+  one.** Fetch the milestone via
+  `gh api repos/itk-dev/ai-reolen/milestones/<n>`, look for an `LT: <url>`
+  line in the milestone description, and add the URL to the PR description
+  under a short `#### Links to issues` heading. If the milestone has no `LT:` line,
+  or the PR has no linked issue / no milestone, skip the section — don't
+  fabricate one.
 
 ## Commits
 
@@ -272,7 +315,7 @@ rolling a description.
 SSH keys aren't available to the Claude session. Push one-off via HTTPS:
 
 ```sh
-git push https://github.com/itk-dev/ai-lib.git HEAD:<branch>
+git push https://github.com/itk-dev/ai-reolen.git HEAD:<branch>
 ```
 
 Do not change the `origin` remote URL — SSH is wanted for normal use outside

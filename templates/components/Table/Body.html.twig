@@ -1,0 +1,4 @@
+{# Zebra stripes via a child selector so the row markup itself stays plain. #}
+<tbody class="[&>tr:nth-child(even)]:bg-surface-2">
+    {% block content %}{% endblock %}
+</tbody>

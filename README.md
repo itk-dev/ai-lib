@@ -1,6 +1,6 @@
-# AI Bibliotek (ai-lib)
+# AI Bibliotek (ai-reolen)
 
-A shared catalog of AI assistants for the Danish public sector. `ai-lib`
+A shared catalog of AI assistants for the Danish public sector. `ai-reolen`
 lets contributors export, share, search, and import assistants — using the
 OpenWebUI JSON format as the interchange — and provides moderation and
 metadata around what ends up in the catalog.
@@ -18,8 +18,8 @@ metadata around what ends up in the catalog.
 - Taskrunner [Task](https://taskfile.dev/) (`Taskfile.yml`)
 
 > **Status:** early development. The application is being scaffolded — see the
-> [Base setup milestone](https://github.com/itk-dev/ai-lib/milestone/1) and
-> [open issues](https://github.com/itk-dev/ai-lib/issues).
+> [Base setup milestone](https://github.com/itk-dev/ai-reolen/milestone/1) and
+> [open issues](https://github.com/itk-dev/ai-reolen/issues).
 
 The platform is built up across milestones:
 
@@ -115,7 +115,7 @@ tools, e.g. `docker compose --profile dev run --rm prettier <args>` or
 
 > The commands below describe the intended ITK Dev standard setup. The actual
 > Docker + Symfony scaffolding is added in
-> [#1 Set up Docker + Symfony](https://github.com/itk-dev/ai-lib/issues/1);
+> [#1 Set up Docker + Symfony](https://github.com/itk-dev/ai-reolen/issues/1);
 > until that is merged, some commands will not yet be available.
 
 ### Requirements
@@ -129,8 +129,8 @@ tools, e.g. `docker compose --profile dev run --rm prettier <args>` or
 
 ```sh
 # Clone the repository
-git clone https://github.com/itk-dev/ai-lib.git
-cd ai-lib
+git clone https://github.com/itk-dev/ai-reolen.git
+cd ai-reolen
 
 # List all available tasks
 task
@@ -205,6 +205,6 @@ build.
 
 ## License
 
-`ai-lib` is licensed under the [Mozilla Public License 2.0](LICENSE).
+`ai-reolen` is licensed under the [Mozilla Public License 2.0](LICENSE).
 See [ADR 004 — Project license: MPL-2.0](docs/adr/004-project-license-mpl-2.md)
 for the reasoning behind the choice.

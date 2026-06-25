@@ -1,6 +1,7 @@
 <?php
 
 use App\DataFixtures\AssistantFixtures;
+use App\DataFixtures\OrganizationFixtures;
 use App\DataFixtures\UserFixtures;
 use App\Kernel;
 use Doctrine\ORM\EntityManagerInterface;
@@ -35,5 +36,6 @@ $schemaTool->createSchema($em->getMetadataFactory()->getAllMetadata());
 
 $container->get(UserFixtures::class)->load($em);
 $container->get(AssistantFixtures::class)->load($em);
+$container->get(OrganizationFixtures::class)->load($em);
 
 $kernel->shutdown();

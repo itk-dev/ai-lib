@@ -1,4 +1,4 @@
-# Contributing to ai-lib
+# Contributing to ai-reolen
 
 Thanks for contributing. This document describes how we branch, commit,
 review, and ship changes in this repository. It is aligned with the

@@ -1,29 +1,29 @@
 # 003: Admin / CRUD tooling — Symfony Form + hand-written controllers
 
-| Field              | Value                                              |
-| ------------------ | -------------------------------------------------- |
-| **Created By**     | Martin Yde Granath                                 |
-| **Date**           | 2026-06-11                                         |
-| **Decision Maker** | ITK Dev team                                       |
-| **Stakeholders**   | ITK Dev developers, future maintainers of ai-lib   |
-| **Status**         | Draft                                              |
+| Field              | Value                                  |
+| ------------------ |----------------------------------------|
+| **Created By**     | Martin Yde Granath                     |
+| **Date**           | 2026-06-11                             |
+| **Decision Maker** | ITK Dev team                           |
+| **Stakeholders**   | ITK Dev developers, future maintainers |
+| **Status**         | Draft                                  |
 
 ## Context
 
-ai-lib needs backend management screens for at least:
+ai-reolen needs backend management screens for at least:
 
-- User management ([#12](https://github.com/itk-dev/ai-lib/issues/12),
-  [#13](https://github.com/itk-dev/ai-lib/issues/13)), where a domain
+- User management ([#12](https://github.com/itk-dev/ai-reolen/issues/12),
+  [#13](https://github.com/itk-dev/ai-reolen/issues/13)), where a domain
   manager controls users within their own domain — i.e. row-level
   scoping that is not a simple CRUD over the User entity.
 - Assistant management
-  ([#14](https://github.com/itk-dev/ai-lib/issues/14),
-  [#20](https://github.com/itk-dev/ai-lib/issues/20)). The assistant
+  ([#14](https://github.com/itk-dev/ai-reolen/issues/14),
+  [#20](https://github.com/itk-dev/ai-reolen/issues/20)). The assistant
   is the product's core entity; managing one needs a proper, end-user
   facing frontend rather than a generic admin grid.
 - Smaller administrative surfaces: tag/category management
-  ([#16](https://github.com/itk-dev/ai-lib/issues/16)) and submission
-  moderation ([#25](https://github.com/itk-dev/ai-lib/issues/25)).
+  ([#16](https://github.com/itk-dev/ai-reolen/issues/16)) and submission
+  moderation ([#25](https://github.com/itk-dev/ai-reolen/issues/25)).
 
 Before any of these are built we need to choose how admin screens are
 produced so the same approach is used throughout the codebase.
@@ -78,7 +78,7 @@ clearer.
 4. **API Platform Admin (React-Admin).**
    - Pros: natural choice if the project goes API-first with a
      separate React frontend.
-   - Cons: presupposes an API-first architecture ai-lib has not
+   - Cons: presupposes an API-first architecture ai-reolen has not
      committed to; introduces a second runtime and build toolchain
      just for the admin UI.
 
@@ -138,5 +138,5 @@ Rationale:
 _Form component conventions and the in-admin authorisation model are
 out of scope here and remain open. They will be settled in follow-on
 decisions once the data model
-([#14](https://github.com/itk-dev/ai-lib/issues/14)) and roles
-([#12](https://github.com/itk-dev/ai-lib/issues/12)) firm up._
+([#14](https://github.com/itk-dev/ai-reolen/issues/14)) and roles
+([#12](https://github.com/itk-dev/ai-reolen/issues/12)) firm up._
