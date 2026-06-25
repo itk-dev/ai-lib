@@ -28,9 +28,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * - `%brand_name%`  — current brand identity
  * - `%approval_url%` — absolute URL to the pending-users admin queue
  *
- * When the moderator recipient is unset, the notifier logs a
- * warning and skips the send rather than crash the registration
- * flow.
+ * When the recipient is unset, logs a warning and returns
+ * without sending.
  */
 class AdminRegistrationNotifier
 {
