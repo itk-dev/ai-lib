@@ -6,14 +6,14 @@
 | **Date**           | 2026-06-08                                             |
 | **Decision Maker** | ITK Dev team (decision by @lilosti)                    |
 | **Stakeholders**   | ITK Dev developers, future external contributors,      |
-|                    | Danish public-sector projects reusing ai-lib           |
+|                    | Danish public-sector projects reusing ai-reolen        |
 | **Status**         | Accepted                                               |
 
 ## Context
 
 `composer.json` currently declares `"license": "proprietary"` — the
 Symfony skeleton default rather than a deliberate choice — and the
-repository has no `LICENSE` file at its root. ai-lib is intended as a
+repository has no `LICENSE` file at its root. ai-reolen is intended as a
 shared catalog for the Danish public sector and may invite external
 contributions or be referenced by sister projects, so the licensing
 terms need to be explicit before public release or external
@@ -27,8 +27,8 @@ and why.
 
 - **Functional:**
   - Allow downstream public-sector projects to reuse and integrate
-    ai-lib without negotiation overhead.
-  - Permit ai-lib code to be embedded in larger works (proprietary or
+    ai-reolen without negotiation overhead.
+  - Permit ai-reolen code to be embedded in larger works (proprietary or
     differently-licensed) without forcing the entire larger work to
     inherit the license.
 - **Non-functional:**
@@ -65,7 +65,7 @@ and why.
 3. **Strong copyleft (GPL-3.0, AGPL-3.0).**
    - Pros: guarantees downstream derivatives stay open source.
    - Cons: viral / whole-work copyleft is a significant barrier for
-     other public-sector projects that want to embed ai-lib into
+     other public-sector projects that want to embed ai-reolen into
      larger systems with mixed licensing; AGPL's network-use clause is
      overkill for a shared library.
 4. **EUPL-1.2 (European Union Public Licence).**
@@ -77,7 +77,7 @@ and why.
      about than MPL's per-file model.
 5. **Stay proprietary.**
    - Pros: explicit, requires no further action.
-   - Cons: defeats the purpose of ai-lib as a shared public-sector
+   - Cons: defeats the purpose of ai-reolen as a shared public-sector
      catalog; blocks the external-contribution and cross-project-reuse
      scenarios the project was set up to enable.
 
@@ -90,14 +90,14 @@ Rationale:
 
 - **Weak/file-level copyleft suits a public-sector shared catalog.**
   Modifications to MPL-licensed files must remain under the MPL, which
-  ensures fixes and improvements to ai-lib itself flow back to the
+  ensures fixes and improvements to ai-reolen itself flow back to the
   commons. At the same time, the license does not "infect" larger
-  works, so other public-sector projects can embed ai-lib into systems
+  works, so other public-sector projects can embed ai-reolen into systems
   with mixed licensing without having to relicense their entire
   codebase.
 - **Allows downstream reuse with minimal friction.** Combining MPL code
   with proprietary or differently-licensed code in a Larger Work is
-  explicitly permitted, which matches how ai-lib is expected to be
+  explicitly permitted, which matches how ai-reolen is expected to be
   consumed by sister projects.
 - **SPDX-recognised and tool-friendly.** `MPL-2.0` is in the canonical
   SPDX list, so Composer, Packagist, GitHub's license detection, and
@@ -118,9 +118,9 @@ Rationale:
 
 ### Positive
 
-- Modifications to ai-lib files are guaranteed to remain MPL, keeping
+- Modifications to ai-reolen files are guaranteed to remain MPL, keeping
   improvements available to the wider public-sector community.
-- Downstream projects can embed ai-lib in larger works under terms of
+- Downstream projects can embed ai-reolen in larger works under terms of
   their choice, including proprietary terms.
 - Recognised by automated tooling (SPDX, GitHub, Composer, dependency
   scanners), so license metadata is trustworthy throughout the
@@ -133,7 +133,7 @@ Rationale:
 ### Negative / Trade-offs
 
 - The per-file copyleft does impose a (modest) obligation on downstream
-  consumers who modify ai-lib's own files — those modified files must
+  consumers who modify ai-reolens own files — those modified files must
   remain MPL and carry the appropriate notice.
 - MPL-2.0 is less universally familiar than MIT or Apache-2.0, which
   may add a small amount of education overhead for first-time external

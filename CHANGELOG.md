@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   email-domain field via a textarea with a `CallbackTransformer`,
   and Danish UI copy under `admin.organization.*`. Auth gating
   intentionally deferred to a follow-up issue
-  ([#76](https://github.com/itk-dev/ai-lib/issues/76)).
+  ([#76](https://github.com/itk-dev/ai-reolen/issues/76)).
 - Default-deny `access_control` rule on the `main` firewall: every
   route now requires `IS_AUTHENTICATED_FULLY` except the
   `PUBLIC_ACCESS` allow-list (`/login`, `/logout`, `/register`,
@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   get the standard Symfony redirect to `/login`, with the
   originally requested URL preserved so they land back on the
   page after signing in
-  ([#97](https://github.com/itk-dev/ai-lib/issues/97)).
+  ([#97](https://github.com/itk-dev/ai-reolen/issues/97)).
 - Authenticated-user dropdown menu in the top nav. The user's
   display name is the trigger; the menu groups into a **Bruger**
   section (Edit profile, Log out) and a role-gated
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   later admin PRs haven't landed yet. ARIA "Menu Button" pattern
   via a new Stimulus controller — Escape and outside-click close
   the menu
-  ([#108](https://github.com/itk-dev/ai-lib/issues/108)).
+  ([#108](https://github.com/itk-dev/ai-reolen/issues/108)).
 - Shared admin-list Table Twig component family
   (`templates/components/Table.html.twig` +
   `templates/components/Table/Head|Body|Row|HeadCell|Cell.html.twig`)
@@ -59,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wrapper, with zebra-striped body rows and an `align` prop on
   the cell components for right-flushed action columns. First
   consumer migrations land alongside their respective PRs
-  ([#112](https://github.com/itk-dev/ai-lib/issues/112)).
+  ([#112](https://github.com/itk-dev/ai-reolen/issues/112)).
 - Anonymous self-signup at `/register`. The route is
   open to unauthenticated visitors; submissions go through
   `App\Security\Registration` which validates the email format,
@@ -73,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   manager approves them. CSRF-protected via Symfony's
   `csrf_token('register')` helper. Localised in the existing
   `messages` domain
-  ([#62](https://github.com/itk-dev/ai-lib/issues/62)).
+  ([#62](https://github.com/itk-dev/ai-reolen/issues/62)).
 - Admin user-management surface at `/admin/users` per ADR 006. Lists
   users scoped by role — `ROLE_ADMIN` sees every user, a
   `ROLE_DOMAIN_MANAGER` sees only users whose email domain matches
@@ -87,8 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   role + email domain via the `EmailDomain` helper. CSRF-protected;
   `back` parameter on the action forms only honours
   `/admin/users…` URLs
-  ([#64](https://github.com/itk-dev/ai-lib/issues/64),
-  [#85](https://github.com/itk-dev/ai-lib/issues/85)).
+  ([#64](https://github.com/itk-dev/ai-reolen/issues/64),
+  [#85](https://github.com/itk-dev/ai-reolen/issues/85)).
 - `ROLE_DOMAIN_MANAGER` + `ROLE_ADMIN` role identifiers
   (`App\Security\Roles`), `role_hierarchy` wiring in `security.yaml`
   so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and a
@@ -98,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   admin). Lays the authorisation foundation for the admin approval
   queue (#64) and the scoped user-management list view (#85) per
   ADR 006
-  ([#84](https://github.com/itk-dev/ai-lib/issues/84)).
+  ([#84](https://github.com/itk-dev/ai-reolen/issues/84)).
 - `User.name` (display name) and `User.status` (lifecycle enum:
   `pending | approved | blocked`) per ADR 006, plus the
   `App\Enum\UserStatus` PHP enum. `UserManager::createUser()` now
@@ -109,15 +109,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   display names. Schema is added via a single migration that
   backfills any existing rows with `name = ''` and
   `status = 'approved'`
-  ([#45](https://github.com/itk-dev/ai-lib/issues/45),
-  [#83](https://github.com/itk-dev/ai-lib/issues/83)).
+  ([#45](https://github.com/itk-dev/ai-reolen/issues/45),
+  [#83](https://github.com/itk-dev/ai-reolen/issues/83)).
 - Added tailwind build to site-install task.
 - Shared `Heading` Twig component (`templates/components/Heading.html.twig`)
   that renders `<h1>`–`<h6>` with size tokens centralised in one place.
   Refactors `assistant/show.html.twig`, `security/login.html.twig`,
   and the `PageHeader`, `Hero`, `EmptyState`, `Filter/Rail`
   components to use it
-  ([#92](https://github.com/itk-dev/ai-lib/issues/92)).
+  ([#92](https://github.com/itk-dev/ai-reolen/issues/92)).
 - `App\Security\AccountStatusChecker` implementing
   `UserCheckerInterface` — gates the login flow so any `User` whose
   `status` is not `Approved` is rejected before the password is
@@ -126,32 +126,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `account.blocked`) rendered in the `security` translation domain.
   Wired on the `main` firewall via `security.yaml`'s `user_checker:`
   key
-  ([#63](https://github.com/itk-dev/ai-lib/issues/63),
-  [#103](https://github.com/itk-dev/ai-lib/issues/103)).
+  ([#63](https://github.com/itk-dev/ai-reolen/issues/63),
+  [#103](https://github.com/itk-dev/ai-reolen/issues/103)).
 - Shared `DescriptionList` Twig component family
   (`templates/components/DescriptionList/List.html.twig` +
   `templates/components/DescriptionList/Item.html.twig`) for
   label/value pairs. The assistant detail's runtime attribute grid
   adopts it
-  ([#94](https://github.com/itk-dev/ai-lib/issues/94)).
+  ([#94](https://github.com/itk-dev/ai-reolen/issues/94)).
 - ADR `005-organization-entity` recording the decision to introduce
   `Organization` as a first-class entity with name, multiple emails,
   and a default framework — no language-model field, with the
   `User → Organization` reference and admin CRUD tracked as separate
   issues
-  ([#65](https://github.com/itk-dev/ai-lib/issues/65)).
+  ([#65](https://github.com/itk-dev/ai-reolen/issues/65)).
 - `Organization` Doctrine entity (name, list of email domains,
   default framework), repository, migration, and
   `OrganizationFixtures` seeding three baseline kommuner (Aarhus,
   Aalborg, Odense). First step of ADR 005 — `User → Organization`,
   CRUD, and assistant autocomplete land in follow-up issues
-  ([#75](https://github.com/itk-dev/ai-lib/issues/75)).
+  ([#75](https://github.com/itk-dev/ai-reolen/issues/75)).
 - `User.name` (display name) and `User.status` (`UserStatus` enum:
   `awaiting_email_confirmation | pending | approved | blocked`)
   fields
-  ([#45](https://github.com/itk-dev/ai-lib/issues/45),
-  [#83](https://github.com/itk-dev/ai-lib/issues/83),
-  [#103](https://github.com/itk-dev/ai-lib/issues/103)).
+  ([#45](https://github.com/itk-dev/ai-reolen/issues/45),
+  [#83](https://github.com/itk-dev/ai-reolen/issues/83),
+  [#103](https://github.com/itk-dev/ai-reolen/issues/103)).
 - `ROLE_DOMAIN_MANAGER` + `ROLE_ADMIN` role identifiers
   (`App\Security\Roles`), `role_hierarchy` wiring in `security.yaml`
   so `ROLE_ADMIN` implies `ROLE_DOMAIN_MANAGER`, and a
@@ -159,58 +159,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `APPROVE_USER` / `BLOCK_USER` attributes when the acting user is a
   domain manager in the subject's email domain (or a site-wide
   admin).
-  ([#84](https://github.com/itk-dev/ai-lib/issues/84)).
+  ([#84](https://github.com/itk-dev/ai-reolen/issues/84)).
 - Test-env `framework.exceptions` override so
   `NotFoundHttpException` logs at `info` instead of `error`, keeping
   PHPUnit output clean when a test deliberately asserts a 404
-  ([#95](https://github.com/itk-dev/ai-lib/issues/95)).
+  ([#95](https://github.com/itk-dev/ai-reolen/issues/95)).
 - Shared `Alert` Twig component (`templates/components/Alert.html.twig`)
   for flash messages and inline errors. `type` (`success` | `error` |
   `warning` | `info`) drives the ARIA role; the login error block
   adopts it
-  ([#93](https://github.com/itk-dev/ai-lib/issues/93)).
+  ([#93](https://github.com/itk-dev/ai-reolen/issues/93)).
 - Catalogue listing page with filters
-  ([#15](https://github.com/itk-dev/ai-lib/issues/15)).
+  ([#15](https://github.com/itk-dev/ai-reolen/issues/15)).
 - Initial Symfony 8 application scaffold on the ITK Dev Docker
   `symfony-8` template (phpfpm 8.4, nginx, MariaDB, Mailpit, Traefik),
   including dev dependencies for coding standards (`php-cs-fixer`,
   `twig-cs-fixer`) and composer normalization
-  ([#1](https://github.com/itk-dev/ai-lib/issues/1)).
+  ([#1](https://github.com/itk-dev/ai-reolen/issues/1)).
 - Architecture Decision Records under `docs/adr/` with index and the
   first ADR `001-tech-stack-docker-symfony`
-  ([#11](https://github.com/itk-dev/ai-lib/issues/11)).
+  ([#11](https://github.com/itk-dev/ai-reolen/issues/11)).
 - `CLAUDE.md` with project-level operating instructions for AI agents
   — stack, structure, execution policy, branching, commits, CHANGELOG,
   ADR conventions, translations, brand env vars, Tailwind rebuild
   notes, and the domain glossary
-  ([#5](https://github.com/itk-dev/ai-lib/issues/5)).
+  ([#5](https://github.com/itk-dev/ai-reolen/issues/5)).
 - Human-facing `README.md` rewritten around the AI Bibliotek catalog
   — project description, status banner, feature list, tech stack,
   Task-based local development workflow, contributing pointers, and
   prototype references
-  ([#28](https://github.com/itk-dev/ai-lib/issues/28)).
+  ([#28](https://github.com/itk-dev/ai-reolen/issues/28)).
 - `CONTRIBUTING.md` documenting branching, Conventional Commits,
   coding standards, changelog expectations, and the pull-request
   workflow
-  ([#9](https://github.com/itk-dev/ai-lib/issues/9)).
+  ([#9](https://github.com/itk-dev/ai-reolen/issues/9)).
 - Project license declared as **MPL-2.0** — full `LICENSE` text at
   the repo root, `composer.json` `license` field updated from
   `proprietary` to `MPL-2.0`, and ADR `004-project-license-mpl-2`
   recording the rationale
-  ([#32](https://github.com/itk-dev/ai-lib/issues/32)).
+  ([#32](https://github.com/itk-dev/ai-reolen/issues/32)).
 - `Taskfile.yml` exposing common developer commands via `task --list`
   (compose helpers, composer, console, coding-standards family) with
   README updates documenting `task` as a host requirement
-  ([#29](https://github.com/itk-dev/ai-lib/issues/29)).
+  ([#29](https://github.com/itk-dev/ai-reolen/issues/29)).
 - Frontend tooling: Tailwind CSS via `symfonycasts/tailwind-bundle`,
   Symfony AssetMapper, and Stimulus via `symfony/stimulus-bundle`,
   with base Twig layout (`templates/base.html.twig`), asset
   entrypoints (`assets/app.js`, `assets/styles/app.css`), Tailwind v4
   design tokens (`@theme`), and ADR `002-frontend-tooling`
-  ([#38](https://github.com/itk-dev/ai-lib/issues/38)).
+  ([#38](https://github.com/itk-dev/ai-reolen/issues/38)).
 - PHPUnit test harness with a 100 % coverage gate enforced in CI via
   `rregeer/phpunit-coverage-check`
-  ([#31](https://github.com/itk-dev/ai-lib/issues/31)).
+  ([#31](https://github.com/itk-dev/ai-reolen/issues/31)).
 - README refocused as human-facing project documentation: project purpose,
   tech stack, and local development bootstrap. Developer command reference
   moved to `CLAUDE.md` (and later `CONTRIBUTING.md`, tracked in #9).
@@ -221,7 +221,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend tooling: Tailwind CSS (via `symfonycasts/tailwind-bundle`),
   Symfony AssetMapper, and Stimulus (via `symfony/stimulus-bundle`).
   Decision recorded in [ADR 002](docs/adr/002-frontend-tooling.md).
-  ([#14](https://github.com/itk-dev/ai-lib/issues/14), [#16](https://github.com/itk-dev/ai-lib/issues/16)).
+  ([#14](https://github.com/itk-dev/ai-reolen/issues/14), [#16](https://github.com/itk-dev/ai-reolen/issues/16)).
 - Base Twig layout (`templates/base.html.twig`) and frontend asset
   entrypoints (`assets/app.js`, `assets/styles/app.css`).
 - Placeholder frontpage at `/` (`App\Controller\FrontpageController`)
@@ -230,7 +230,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   site chrome (header with brand + nav, footer), the Stimulus
   `nav_toggle_controller` driving the mobile menu, and a
   `block-on-label` GitHub Action providing a per-PR merge gate
-  ([#40](https://github.com/itk-dev/ai-lib/issues/40)).
+  ([#40](https://github.com/itk-dev/ai-reolen/issues/40)).
 - User authentication: `User` Doctrine entity (email, hashed password,
   roles), `UserRepository` (with `PasswordUpgraderInterface`), the
   `UserManager` service that hides persistence + hashing, form-login
@@ -238,7 +238,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`alice@example.test`, `bob@example.test` — password `password`),
   console commands `app:user:create` and `app:user:change-password`,
   and end-to-end functional + unit tests
-  ([#2](https://github.com/itk-dev/ai-lib/issues/2)).
+  ([#2](https://github.com/itk-dev/ai-reolen/issues/2)).
 - PHPUnit suite split into `unit` (no database) and `integration` (full
   kernel) testsuites under `tests/Unit/` and `tests/Integration/`, with
   transactional database isolation per integration test via
@@ -280,4 +280,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   template `.github/PULL_REQUEST_TEMPLATE.md`, each with a human-facing
   "Resume" / checklist section followed by an "AI specificities" detail
   block so other agents can continue work from a structured brief
-  ([#69](https://github.com/itk-dev/ai-lib/issues/69)).
+  ([#69](https://github.com/itk-dev/ai-reolen/issues/69)).

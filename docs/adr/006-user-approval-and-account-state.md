@@ -1,16 +1,16 @@
 # 006: User registration, approval, and account-state model
 
-| Field              | Value                                              |
-| ------------------ | -------------------------------------------------- |
-| **Created By**     | Martin Yde Granath                                 |
-| **Date**           | 2026-06-12                                         |
-| **Decision Maker** | ITK Dev team                                       |
-| **Stakeholders**   | ITK Dev developers, future maintainers of ai-lib   |
-| **Status**         | Draft                                              |
+| Field              | Value              |
+| ------------------ |--------------------|
+| **Created By**     | Martin Yde Granath |
+| **Date**           | 2026-06-12         |
+| **Decision Maker** | ITK Dev team       |
+| **Stakeholders**   | ITK Dev developers |
+| **Status**         | Draft              |
 
 ## Context
 
-ai-lib serves Danish public-sector organisations. The intended
+ai-reolen serves Danish public-sector organisations. The intended
 onboarding flow is:
 
 1. A representative from an approved organisation self-registers at
@@ -37,7 +37,7 @@ The two candidate approaches the team weighed informally were:
 
 This ADR is scoped to that choice and the surrounding registration /
 approval architecture. Tracked in
-[#60](https://github.com/itk-dev/ai-lib/issues/60).
+[#60](https://github.com/itk-dev/ai-reolen/issues/60).
 
 ### Drivers
 
@@ -179,7 +179,7 @@ removing that complexity later would be the painful direction.
 ### Implication for #45
 
 Both `active` and `domainManager` from
-[#45](https://github.com/itk-dev/ai-lib/issues/45) are **superseded**:
+[#45](https://github.com/itk-dev/ai-reolen/issues/45) are **superseded**:
 
 - `active` → replaced by the `status` enum.
 - `domainManager` → replaced by the `ROLE_DOMAIN_MANAGER` role on the
@@ -187,7 +187,7 @@ Both `active` and `domainManager` from
 
 When #45's implementation lands, the entity ships with **only `name`**
 on top of the auth fields from
-[#2](https://github.com/itk-dev/ai-lib/issues/2). #45 should be
+[#2](https://github.com/itk-dev/ai-reolen/issues/2). #45 should be
 updated to reflect this so the migration doesn't end up needing
 immediate amendment.
 
