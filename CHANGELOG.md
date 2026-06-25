@@ -19,10 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   component family. `/admin/settings` is split into
   `/admin/settings/site` (brand name / tagline / initials) and
   `/admin/settings/email` (admin notification recipient); the
-  bare `/admin/settings` route redirects to the site page.
-  Brand identity now resolves through
-  `SettingsManager::getBrandName()` / tagline / initials with
-  `BRAND_*` env vars as the fallback default; an
+  bare `/admin/settings` route redirects to the site page, and
+  a new `<twig:Tabs>` component (plus the
+  `admin/settings/_tabs.html.twig` partial) renders the
+  switcher between the two surfaces with the active tab
+  marked `aria-current="page"`. Brand identity now resolves
+  through `SettingsManager::getBrandName()` / tagline /
+  initials with `BRAND_*` env vars as the fallback default; an
   `App\Twig\BrandExtension` exposes the resolved values as the
   `brand_name` / `brand_tagline` / `brand_initials` Twig
   globals. Every `/admin/**` page renders against a light

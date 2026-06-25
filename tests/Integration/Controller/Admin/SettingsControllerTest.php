@@ -87,6 +87,36 @@ final class SettingsControllerTest extends WebTestCase
         self::assertSame('CN', $crawler->filter('input[name="brand_initials"]')->attr('value'));
     }
 
+    // Verifies the settings tabs render on the site page with the site tab marked active.
+    public function testSitePageRendersTabsWithSiteActive(): void
+    {
+        $this->loginAsAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/settings/site');
+
+        self::assertResponseIsSuccessful();
+        $tabs = $crawler->filter('nav[aria-label="Indstillinger – navigation"] a');
+        self::assertCount(2, $tabs);
+        $current = $tabs->filter('[aria-current="page"]');
+        self::assertCount(1, $current);
+        self::assertSame('/admin/settings/site', $current->attr('href'));
+    }
+
+    // Verifies the settings tabs render on the email page with the email tab marked active.
+    public function testEmailPageRendersTabsWithEmailActive(): void
+    {
+        $this->loginAsAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/settings/email');
+
+        self::assertResponseIsSuccessful();
+        $tabs = $crawler->filter('nav[aria-label="Indstillinger – navigation"] a');
+        self::assertCount(2, $tabs);
+        $current = $tabs->filter('[aria-current="page"]');
+        self::assertCount(1, $current);
+        self::assertSame('/admin/settings/email', $current->attr('href'));
+    }
+
     // Tests that submitting valid site settings persists every brand field and redirects back to the form.
     public function testValidSiteSubmitPersistsBrandFields(): void
     {
