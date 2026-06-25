@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Repository\SettingRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ITKDev\EntityBundle\Audit\Attribute\Auditable;
 
 /**
  * Key/value persistence for runtime-editable app settings.
@@ -24,13 +25,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: SettingRepository::class)]
 #[ORM\Table(name: 'setting')]
 #[ORM\UniqueConstraint(name: 'UNIQ_SETTING_NAME', fields: ['name'])]
-class Setting
+#[Auditable]
+class Setting extends AbstractEntity
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
     #[ORM\Column(length: 64)]
     private string $name;
 
@@ -39,13 +36,9 @@ class Setting
 
     public function __construct(string $name, ?string $value = null)
     {
+        parent::__construct();
         $this->name = $name;
         $this->value = $value;
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
     }
 
     public function getName(): string
