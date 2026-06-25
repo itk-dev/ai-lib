@@ -32,6 +32,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pink (`bg-admin-bg`) body background so operators see at a
   glance that they're in the back office
   ([#124](https://github.com/itk-dev/ai-reolen/issues/124)).
+- `app:user:update` console command that updates an existing
+  user's display name, roles, and / or lifecycle status. Each
+  field is optional — omitting it leaves the value untouched.
+  `--role` may be repeated to set multiple roles and replaces
+  the current role list wholesale; unknown role identifiers
+  and unknown status strings are rejected with a clear message.
+  Sits behind a new `UserManager::updateUser()` service method
+  ([#122](https://github.com/itk-dev/ai-reolen/issues/122)).
+- `task site-install` learned an opt-in `RESET=1` parameter
+  (`RESET=1 task site-install`) that drops and recreates the
+  application database before running migrations, so a fresh
+  install on top of an existing schema doesn't fail with "table
+  already exists". The default invocation stays non-destructive.
 - Foundation for outbound transactional mail: `symfony/mailer`
   installed and wired to the existing `mail` container (Mailpit) via
   `MAILER_DSN=smtp://mail:1025` in `.env`, with a deploy-overridable
