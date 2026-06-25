@@ -21,6 +21,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   create form picks up the project's default-deny gating: any
   authenticated user can submit, no admin role required
   ([#14](https://github.com/itk-dev/ai-lib/issues/14)).
+- `app:user:update` console command that updates an existing
+  user's display name, roles, and / or lifecycle status. Each
+  field is optional — omitting it leaves the value untouched.
+  `--role` may be repeated to set multiple roles and replaces
+  the current role list wholesale; unknown role identifiers
+  and unknown status strings are rejected with a clear message.
+  Sits behind a new `UserManager::updateUser()` service method
+  ([#122](https://github.com/itk-dev/ai-reolen/issues/122)).
+- `task site-install` learned an opt-in `RESET=1` parameter
+  (`RESET=1 task site-install`) that drops and recreates the
+  application database before running migrations, so a fresh
+  install on top of an existing schema doesn't fail with "table
+  already exists". The default invocation stays non-destructive.
+- Foundation for outbound transactional mail: `symfony/mailer`
+  installed and wired to the existing `mail` container (Mailpit) via
+  `MAILER_DSN=smtp://mail:1025` in `.env`, with a deploy-overridable
+  `MAILER_FROM` sender. `.env.test` pins `null://null` so the test
+  suite never hits a real transport. Generic `setting` table (`name`
+  unique, `value` nullable text) backs an `App\Settings\SettingsManager`
+  service exposing a typed `getAdminRecipient()` / `setAdminRecipient()`
+  pair. A new admin-only page at `/admin/settings` (`ROLE_ADMIN`, CSRF
+  on POST, 422 on invalid email) lets administrators set the recipient
+  for registration-related notifications; the user-menu surfaces it
+  under **Administration → Indstillinger** when the acting user is a
+  site admin. Mail templates and the actual signup/admin-notification
+  /one-time-login flows land in follow-up work
+  ([#119](https://github.com/itk-dev/ai-lib/issues/119)).
+- Data fixtures now assign a creating user (round-robin
+  `alice@example.test` / `bob@example.test`) to each seeded assistant and
+  organization, so the created-by/modified-by blame relation is exercised by
+  local-development data.
+- Integrated [`itk-dev/entity-bundle`](https://github.com/itk-dev/entity-bundle)
+  as the shared entity foundation. New `App\Entity\AbstractEntity` extends the
+  bundle's `AbstractITKDevEntity`, giving every domain entity a ULID primary
+  key plus timestamps, created-by/modified-by blame, archivability, and
+  anonymization status. `User`, `Assistant`, and `Organization` now extend it
+  (integer ids replaced by ULIDs), are marked `#[Auditable]`, and `User`'s PII
+  is annotated with `#[Anonymize]`. All bundle features are enabled except soft
+  delete (`config/packages/itk_dev_entity.yaml`); `damienharper/auditor-bundle`
+  is wired for the audit log. Admin route `{id}` requirements (`User`
+  approve/block, `Organization` edit/delete) accept `Requirement::ULID`
+  instead of `\d+`. Records the decision in
+  [ADR 007](docs/adr/007-entity-foundation-entity-bundle.md)
+  ([#104](https://github.com/itk-dev/ai-lib/issues/104)).
 - Admin CRUD for `Organization` at `/admin/organization` (list,
   create, edit, delete) per ADR 003. Built with `symfony/form`
   (newly added dependency) + raw Twig templates, multi-value

@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 
 #[Route(path: '/admin/organization', name: 'app_admin_organization_')]
 final class OrganizationController extends AbstractController
@@ -54,7 +55,7 @@ final class OrganizationController extends AbstractController
         ], new Response('', $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
-    #[Route(path: '/{id}/edit', name: 'edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route(path: '/{id}/edit', name: 'edit', requirements: ['id' => Requirement::ULID], methods: ['GET', 'POST'])]
     public function edit(Organization $organization, Request $request): Response
     {
         $form = $this->createForm(OrganizationType::class, $organization);
@@ -76,7 +77,7 @@ final class OrganizationController extends AbstractController
         ], new Response('', $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
-    #[Route(path: '/{id}/delete', name: 'delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route(path: '/{id}/delete', name: 'delete', requirements: ['id' => Requirement::ULID], methods: ['POST'])]
     public function delete(Organization $organization, Request $request): Response
     {
         if (!$this->isCsrfTokenValid('admin-organization-delete', (string) $request->request->get('_token'))) {

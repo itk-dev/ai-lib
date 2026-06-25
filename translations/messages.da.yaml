@@ -30,6 +30,7 @@ nav:
         logout: "Log ud"
         admin_organization: "Administrér organisationer"
         admin_users: "Administrér brugere"
+        admin_settings: "Indstillinger"
 
 search:
     legend: "Find en assistent"
@@ -100,6 +101,21 @@ admin:
         flash:
             approved: "Brugeren er nu godkendt og kan logge ind."
             blocked: "Brugeren er spærret og kan ikke logge ind."
+    settings:
+        title: "Indstillinger – %brand%"
+        eyebrow: "Administration"
+        heading: "Indstillinger"
+        lead: "Konfiguration som administratorer kan justere efter installation. Disse felter overstyrer ikke værdier sat i miljøvariabler."
+        submit: "Gem ændringer"
+        fields:
+            admin_recipient:
+                label: "Modtager af administrator-mails"
+                help: "E-mailadresse der modtager besked, når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
+        error:
+            invalid_token: "Sessionen er udløbet. Indsend formularen igen."
+            invalid_email: "Indtast en gyldig e-mailadresse."
+        flash:
+            saved: "Indstillingerne er gemt."
 
 catalog:
     title: "Katalog – %brand%"

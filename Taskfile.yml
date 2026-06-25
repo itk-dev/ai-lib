@@ -36,13 +36,25 @@ tasks:
   # ---- Lifecycle --------------------------------------------------------
 
   site-install:
-    desc: 'Pull images, start the stack, install Composer dependencies, and apply database migrations.'
+    desc: 'Pull images, start the stack, install Composer dependencies, and apply migrations. Pass `RESET=1` to drop and recreate the database first (wipes the local dev DB).'
     cmds:
       - task compose -- pull
       - task compose -- up --detach --remove-orphans --wait
       - task composer-install
+      - task: db-reset
+        vars:
+          RESET: '{{.RESET}}'
       - task console -- doctrine:migrations:migrate --no-interaction
       - task compose -- exec phpfpm bin/console tailwind:build
+    silent: true
+
+  db-reset:
+    desc: 'Drop and recreate the application database. Internal helper used by `site-install RESET=1`; no-op unless RESET is set.'
+    status:
+      - test -z "{{.RESET}}"
+    cmds:
+      - task console -- doctrine:database:drop --force --if-exists --no-interaction
+      - task console -- doctrine:database:create --no-interaction
     silent: true
 
   # ---- Composer ---------------------------------------------------------

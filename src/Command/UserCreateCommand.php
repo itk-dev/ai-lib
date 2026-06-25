@@ -66,7 +66,7 @@ final class UserCreateCommand extends Command
             return Command::FAILURE;
         }
 
-        $io->success(\sprintf('Created user "%s" (id=%d).', $user->getUserIdentifier(), (int) $user->getId()));
+        $io->success(\sprintf('Created user "%s" (id=%s).', $user->getUserIdentifier(), $user->getId()));
 
         return Command::SUCCESS;
     }
