@@ -26,13 +26,12 @@ final class SettingsControllerTest extends WebTestCase
         $this->client = self::createClient();
     }
 
-    // Tests that an anonymous request is redirected to the login page.
-    public function testAnonymousIsRedirectedToLogin(): void
+    // Tests that an anonymous request to the admin settings page returns 401.
+    public function testAnonymousAccessReturnsUnauthorized(): void
     {
         $this->client->request('GET', '/admin/settings');
 
-        self::assertResponseRedirects();
-        self::assertStringContainsString('/login', (string) $this->client->getResponse()->headers->get('Location'));
+        self::assertResponseStatusCodeSame(401);
     }
 
     // Tests that a plain authenticated user is 403'd — the route is ROLE_ADMIN.
