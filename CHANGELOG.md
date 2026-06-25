@@ -18,9 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   validation pipeline (JSON syntax + a temporary slow-validation
   scaffold for UI testing); the uploaded file itself is never
   persisted, only the parsed JSON reaches the database. The
-  create form and its AJAX validate endpoint are added to the
-  `PUBLIC_ACCESS` allow-list so unauthenticated visitors can
-  submit assistants
+  create form picks up the project's default-deny gating: any
+  authenticated user can submit, no admin role required
   ([#14](https://github.com/itk-dev/ai-lib/issues/14)).
 - Admin CRUD for `Organization` at `/admin/organization` (list,
   create, edit, delete) per ADR 003. Built with `symfony/form`

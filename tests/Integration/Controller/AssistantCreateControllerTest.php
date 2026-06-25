@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Controller;
 
 use App\Repository\AssistantRepository;
+use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -24,6 +25,12 @@ final class AssistantCreateControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        // The create form is gated behind authentication (any
+        // logged-in user; no role required), so log in a baseline
+        // fixture user before each test.
+        $alice = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'alice@example.test']);
+        \assert(null !== $alice, 'UserFixtures must seed alice@example.test.');
+        $this->client->loginUser($alice);
     }
 
     // Tests that GET /assistant/new renders the form with every expected input.
