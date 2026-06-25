@@ -20,8 +20,53 @@ final class SettingsController extends AbstractController
     ) {
     }
 
-    #[Route(path: '/admin/settings', name: 'app_admin_settings', methods: ['GET', 'POST'])]
-    public function edit(Request $request): Response
+    #[Route(path: '/admin/settings', name: 'app_admin_settings', methods: ['GET'])]
+    public function index(): Response
+    {
+        return $this->redirectToRoute('app_admin_settings_site');
+    }
+
+    #[Route(path: '/admin/settings/site', name: 'app_admin_settings_site', methods: ['GET', 'POST'])]
+    public function site(Request $request): Response
+    {
+        $submitted = [
+            'brand_name' => $this->settingsManager->getBrandName(),
+            'brand_tagline' => $this->settingsManager->getBrandTagline(),
+            'brand_initials' => $this->settingsManager->getBrandInitials(),
+        ];
+        $error = null;
+        $status = Response::HTTP_OK;
+
+        if ('POST' === $request->getMethod()) {
+            $submitted = [
+                'brand_name' => trim((string) $request->request->get('brand_name', '')),
+                'brand_tagline' => trim((string) $request->request->get('brand_tagline', '')),
+                'brand_initials' => trim((string) $request->request->get('brand_initials', '')),
+            ];
+
+            if (!$this->isCsrfTokenValid('admin-settings-site', (string) $request->request->get('_token'))) {
+                return $this->render('admin/settings/site.html.twig', [
+                    'submitted' => $submitted,
+                    'error' => 'admin.settings.error.invalid_token',
+                ], new Response('', Response::HTTP_FORBIDDEN));
+            }
+
+            $this->settingsManager->setBrandName('' === $submitted['brand_name'] ? null : $submitted['brand_name']);
+            $this->settingsManager->setBrandTagline('' === $submitted['brand_tagline'] ? null : $submitted['brand_tagline']);
+            $this->settingsManager->setBrandInitials('' === $submitted['brand_initials'] ? null : $submitted['brand_initials']);
+            $this->addFlash('success', 'admin.settings.flash.saved');
+
+            return $this->redirectToRoute('app_admin_settings_site');
+        }
+
+        return $this->render('admin/settings/site.html.twig', [
+            'submitted' => $submitted,
+            'error' => $error,
+        ], new Response('', $status));
+    }
+
+    #[Route(path: '/admin/settings/email', name: 'app_admin_settings_email', methods: ['GET', 'POST'])]
+    public function email(Request $request): Response
     {
         $submitted = [
             'admin_recipient' => $this->settingsManager->getAdminRecipient() ?? '',
@@ -32,8 +77,8 @@ final class SettingsController extends AbstractController
         if ('POST' === $request->getMethod()) {
             $submitted['admin_recipient'] = trim((string) $request->request->get('admin_recipient', ''));
 
-            if (!$this->isCsrfTokenValid('admin-settings', (string) $request->request->get('_token'))) {
-                return $this->render('admin/settings/edit.html.twig', [
+            if (!$this->isCsrfTokenValid('admin-settings-email', (string) $request->request->get('_token'))) {
+                return $this->render('admin/settings/email.html.twig', [
                     'submitted' => $submitted,
                     'error' => 'admin.settings.error.invalid_token',
                 ], new Response('', Response::HTTP_FORBIDDEN));
@@ -48,11 +93,11 @@ final class SettingsController extends AbstractController
                 $this->settingsManager->setAdminRecipient($recipient);
                 $this->addFlash('success', 'admin.settings.flash.saved');
 
-                return $this->redirectToRoute('app_admin_settings');
+                return $this->redirectToRoute('app_admin_settings_email');
             }
         }
 
-        return $this->render('admin/settings/edit.html.twig', [
+        return $this->render('admin/settings/email.html.twig', [
             'submitted' => $submitted,
             'error' => $error,
         ], new Response('', $status));

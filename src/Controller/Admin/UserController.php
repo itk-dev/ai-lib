@@ -6,9 +6,11 @@ namespace App\Controller\Admin;
 
 use App\Entity\User;
 use App\Enum\UserStatus;
+use App\Form\UserCreateType;
 use App\Repository\UserRepository;
 use App\Security\Roles;
 use App\Security\UserApproval;
+use App\Security\UserManager;
 use App\Security\Voter\ManageUserVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,6 +25,7 @@ final class UserController extends AbstractController
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly UserApproval $userApproval,
+        private readonly UserManager $userManager,
     ) {
     }
 
@@ -42,6 +45,45 @@ final class UserController extends AbstractController
     public function pending(): Response
     {
         return $this->redirectToRoute('app_admin_users', ['status' => UserStatus::Pending->value]);
+    }
+
+    #[Route(path: '/admin/users/new', name: 'app_admin_user_new', methods: ['GET', 'POST'])]
+    #[IsGranted(Roles::ADMIN)]
+    public function new(Request $request): Response
+    {
+        $form = $this->createForm(UserCreateType::class);
+        $form->handleRequest($request);
+
+        $domainError = null;
+        if ($form->isSubmitted() && $form->isValid()) {
+            /** @var array{email: string, name: string, password: string, roles: list<string>, status: UserStatus} $data */
+            $data = $form->getData();
+
+            try {
+                $this->userManager->createUser(
+                    $data['email'],
+                    $data['name'],
+                    $data['password'],
+                    $data['roles'],
+                    $data['status'],
+                );
+
+                $this->addFlash('success', 'admin.users.flash.created');
+
+                return $this->redirectToRoute('app_admin_users');
+            } catch (\DomainException $e) {
+                $domainError = $e->getMessage();
+            }
+        }
+
+        // 422 on invalid submit so Turbo / browsers re-render the form with
+        // errors instead of caching the POST as a successful page.
+        $invalid = $form->isSubmitted() && (!$form->isValid() || null !== $domainError);
+
+        return $this->render('admin/user/new.html.twig', [
+            'form' => $form,
+            'domain_error' => $domainError,
+        ], new Response('', $invalid ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
     #[Route(path: '/admin/users/{id}/approve', name: 'app_admin_user_approve', methods: ['POST'], requirements: ['id' => Requirement::ULID])]

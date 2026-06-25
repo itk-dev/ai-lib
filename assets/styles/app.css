@@ -11,6 +11,9 @@
     --color-bg: #ffffff;
     --color-surface: #ffffff;
     --color-surface-2: #fbf9f5;
+    /* Very light pink tint applied to every /admin/** page body so */
+    /* operators see at a glance that they're in the back office. */
+    --color-admin-bg: #fdf2f8;
     --color-border: #e3ddd1;
     --color-border-strong: #c8bea9;
     --color-line: #ddd5c4;
