@@ -32,7 +32,7 @@ final class AccessControlTest extends WebTestCase
     {
         yield 'frontpage' => ['/'];
         yield 'catalogue search' => ['/search'];
-        yield 'assistant detail' => ['/assistant/1'];
+        yield 'assistant detail' => ['/assistant/01ARZ3NDEKTSV4RRFFQ69G5FAV'];
         yield 'admin user list' => ['/admin/users'];
     }
 

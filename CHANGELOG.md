@@ -21,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (integer ids replaced by ULIDs), are marked `#[Auditable]`, and `User`'s PII
   is annotated with `#[Anonymize]`. All bundle features are enabled except soft
   delete (`config/packages/itk_dev_entity.yaml`); `damienharper/auditor-bundle`
-  is wired for the audit log. Records the decision in
+  is wired for the audit log. Admin route `{id}` requirements (`User`
+  approve/block, `Organization` edit/delete) accept `Requirement::ULID`
+  instead of `\d+`. Records the decision in
   [ADR 007](docs/adr/007-entity-foundation-entity-bundle.md)
   ([#104](https://github.com/itk-dev/ai-lib/issues/104)).
 - Admin CRUD for `Organization` at `/admin/organization` (list,
