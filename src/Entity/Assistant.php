@@ -7,16 +7,13 @@ namespace App\Entity;
 use App\Repository\AssistantRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ITKDev\EntityBundle\Audit\Attribute\Auditable;
 
 #[ORM\Entity(repositoryClass: AssistantRepository::class)]
 #[ORM\Table(name: 'assistant')]
-class Assistant
+#[Auditable]
+class Assistant extends AbstractEntity
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
     #[ORM\Column(length: 255)]
     private string $title;
 
@@ -48,16 +45,12 @@ class Assistant
         string $framework,
         array $tags = [],
     ) {
+        parent::__construct();
         $this->title = $title;
         $this->description = $description;
         $this->languageModel = $languageModel;
         $this->framework = $framework;
         $this->tags = array_values($tags);
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
     }
 
     public function getTitle(): string

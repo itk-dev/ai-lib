@@ -19,6 +19,18 @@ use Doctrine\Persistence\ObjectManager;
 final class UserFixtures extends Fixture
 {
     /**
+     * E-mail of the first baseline user, shared with the fixtures that look
+     * her up to assign as a creating user.
+     */
+    public const string ALICE_EMAIL = 'alice@example.test';
+
+    /**
+     * E-mail of the second baseline user, shared with the fixtures that look
+     * him up to assign as a creating user.
+     */
+    public const string BOB_EMAIL = 'bob@example.test';
+
+    /**
      * @param UserManager $userManager service that creates the persisted users
      */
     public function __construct(private readonly UserManager $userManager)
@@ -32,7 +44,7 @@ final class UserFixtures extends Fixture
      */
     public function load(ObjectManager $manager): void
     {
-        $this->userManager->createUser('alice@example.test', 'Alice', 'password', status: UserStatus::Approved);
-        $this->userManager->createUser('bob@example.test', 'Bob', 'password', status: UserStatus::Approved);
+        $this->userManager->createUser(self::ALICE_EMAIL, 'Alice', 'password', status: UserStatus::Approved);
+        $this->userManager->createUser(self::BOB_EMAIL, 'Bob', 'password', status: UserStatus::Approved);
     }
 }

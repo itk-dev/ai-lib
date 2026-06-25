@@ -419,7 +419,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         enabled?: bool|Param, // Default: false
  *     },
  *     lock?: bool|string|array{ // Lock configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Default: true
  *         resources?: string|array<string, string|list<scalar|Param|null>>,
  *     },
  *     semaphore?: bool|string|array{ // Semaphore configuration
@@ -646,7 +646,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         }>,
  *     },
  *     uid?: bool|array{ // Uid configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Default: true
  *         default_uuid_version?: 7|6|4|1|Param, // Default: 7
  *         name_based_uuid_version?: 5|3|Param, // Default: 5
  *         name_based_uuid_namespace?: scalar|Param|null,
@@ -744,7 +744,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         enabled?: bool|Param, // Default: false
  *     },
  *     intl?: bool|array{
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Default: true
  *     },
  *     cssinliner?: bool|array{
  *         enabled?: bool|Param, // Default: false
@@ -1333,6 +1333,41 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     enable_static_query_cache?: bool|Param, // Default: true
  *     connection_keys?: list<mixed>,
  * }
+ * @psalm-type ItkDevEntityConfig = array{
+ *     user_class?: scalar|Param|null, // FQCN of the consumer application User entity (must implement UserInterface). Required when audit or blameable is enabled, otherwise optional. // Default: null
+ *     entity_paths?: list<scalar|Param|null>,
+ *     audit?: array{
+ *         enabled?: bool|Param, // When true, registers discovered entities with damienharper/auditor-bundle and exposes the privacy:anonymize-stale audit-scrubbing behavior. // Default: false
+ *         retention?: scalar|Param|null, // Default ISO-8601 duration past which audit rows are scrubbed. // Default: "P1Y"
+ *         retention_overrides?: list<scalar|Param|null>,
+ *         entities?: list<scalar|Param|null>,
+ *         ignored_columns?: mixed, // Per-class properties to skip when auditing (FQCN => [property, ...]). Additive to #[AuditIgnore]; use for third-party entities you can not annotate. // Default: []
+ *     },
+ *     soft_delete?: array{
+ *         enabled?: bool|Param, // When true, registers the soft_delete Doctrine filter and listener. Entities still opt in by implementing SoftDeletableInterface and using SoftDeletableTrait. // Default: false
+ *     },
+ *     archivable?: array{
+ *         enabled?: bool|Param, // When true, registers the archivable Doctrine filter (registered enabled; archived rows are hidden by default — disable per-request via $em->getFilters()->disable('archivable') to reveal them). Entities still opt in by implementing ArchivableInterface and using ArchivableTrait. // Default: false
+ *     },
+ *     timestampable?: array{
+ *         enabled?: bool|Param, // When true, registers the onFlush listener that sets createdAt/updatedAt. Entities still opt in by implementing TimestampableInterface and using TimestampableTrait. // Default: false
+ *     },
+ *     blameable?: array{
+ *         enabled?: bool|Param, // When true, registers the onFlush listener that sets createdBy/modifiedBy from the security token. Entities still opt in by implementing BlameableInterface and using BlameableTrait. // Default: false
+ *     },
+ *     anonymization?: array{
+ *         enabled?: bool|Param, // When true, discovers #[Anonymize] property attributes, registers privacy services, and exposes the privacy:anonymize and privacy:anonymize-stale commands. Entities still opt in by implementing AnonymizationStatusInterface, using AnonymizationStatusTrait, and annotating PII properties with #[Anonymize]. // Default: false
+ *         rules?: mixed, // Per-class anonymization rules (FQCN => { property: { strategy: null|redact|hash|pseudonymize, replacement?: string } }). Additive to #[Anonymize]; config wins when both name the same property. Use for third-party entities you can not annotate. // Default: []
+ *     },
+ * }
+ * @psalm-type DhAuditorConfig = array{
+ *     enabled?: bool|Param, // Default: true
+ *     timezone?: scalar|Param|null, // Default: "UTC"
+ *     user_provider?: scalar|Param|null, // Default: "dh_auditor.user_provider"
+ *     security_provider?: scalar|Param|null, // Default: "dh_auditor.security_provider"
+ *     role_checker?: scalar|Param|null, // Default: "dh_auditor.role_checker"
+ *     providers?: array<string, mixed>,
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1346,6 +1381,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     doctrine?: DoctrineConfig,
  *     doctrine_migrations?: DoctrineMigrationsConfig,
  *     security?: SecurityConfig,
+ *     itk_dev_entity?: ItkDevEntityConfig,
+ *     dh_auditor?: DhAuditorConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1360,6 +1397,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         doctrine_migrations?: DoctrineMigrationsConfig,
  *         security?: SecurityConfig,
  *         maker?: MakerConfig,
+ *         itk_dev_entity?: ItkDevEntityConfig,
+ *         dh_auditor?: DhAuditorConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1374,6 +1413,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         doctrine?: DoctrineConfig,
  *         doctrine_migrations?: DoctrineMigrationsConfig,
  *         security?: SecurityConfig,
+ *         itk_dev_entity?: ItkDevEntityConfig,
+ *         dh_auditor?: DhAuditorConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1389,6 +1430,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         doctrine_migrations?: DoctrineMigrationsConfig,
  *         security?: SecurityConfig,
  *         dama_doctrine_test?: DamaDoctrineTestConfig,
+ *         itk_dev_entity?: ItkDevEntityConfig,
+ *         dh_auditor?: DhAuditorConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,

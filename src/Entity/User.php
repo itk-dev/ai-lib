@@ -6,20 +6,21 @@ use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ITKDev\EntityBundle\Audit\Attribute\Auditable;
+use ITKDev\EntityBundle\Audit\Attribute\AuditIgnore;
+use ITKDev\EntityBundle\Privacy\Attribute\Anonymize;
+use ITKDev\EntityBundle\Privacy\Strategy;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+#[Auditable]
+class User extends AbstractEntity implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
     #[ORM\Column(length: 180)]
+    #[Anonymize(strategy: Strategy::Hash)]
     private ?string $email = null;
 
     /**
@@ -32,18 +33,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var string The hashed password
      */
     #[ORM\Column]
+    #[AuditIgnore]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
+    #[Anonymize(strategy: Strategy::Redact)]
     private string $name = '';
 
     #[ORM\Column(type: Types::STRING, length: 32, enumType: UserStatus::class)]
     private UserStatus $status = UserStatus::Pending;
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
 
     public function getEmail(): ?string
     {
