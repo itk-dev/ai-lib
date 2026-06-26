@@ -96,12 +96,13 @@ final class TableRenderTest extends KernelTestCase
         self::assertMatchesRegularExpression('#<td[^>]*class="[^"]*text-left[^"]*"#', $html);
     }
 
-    // Verifies Body renders the zebra-striping selector that targets every second tbody row.
+    // Verifies Body renders the zebra-striping selectors that target alternating tbody rows.
     public function testBodyAppliesZebraStripingSelector(): void
     {
         $html = $this->renderInline('<twig:Table:Body><twig:Table:Row><twig:Table:Cell>x</twig:Table:Cell></twig:Table:Row></twig:Table:Body>');
 
-        self::assertMatchesRegularExpression('#<tbody[^>]*class="[^"]*\[&>tr:nth-child\(even\)\]:bg-surface-2[^"]*"#', $html);
+        self::assertMatchesRegularExpression('#<tbody[^>]*class="[^"]*\[&>tr:nth-child\(odd\)\]:bg-bg[^"]*"#', $html);
+        self::assertMatchesRegularExpression('#<tbody[^>]*class="[^"]*\[&>tr:nth-child\(even\)\]:bg-row-alt[^"]*"#', $html);
     }
 
     // Ensures Table accepts a `class` prop that appends to the wrapper's defaults.

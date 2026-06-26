@@ -11,6 +11,10 @@
     --color-bg: #ffffff;
     --color-surface: #ffffff;
     --color-surface-2: #fbf9f5;
+    /* Alternating row background for the shared Table component. */
+    /* Distinct from surface-2 so hover states elsewhere keep their */
+    /* current tone while zebra striping reads clearly on white.   */
+    --color-row-alt: #f1f3f5;
     --color-border: #e3ddd1;
     --color-border-strong: #c8bea9;
     --color-line: #ddd5c4;
