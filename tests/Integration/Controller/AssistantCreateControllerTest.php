@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller;
 
+use App\Entity\Tag;
 use App\Repository\AssistantRepository;
 use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -121,7 +122,10 @@ final class AssistantCreateControllerTest extends WebTestCase
         $repository = self::getContainer()->get(AssistantRepository::class);
         $created = $repository->findOneBy(['title' => 'Test assistant']);
         self::assertNotNull($created);
-        self::assertSame(['alpha', 'beta'], $created->getTags());
+        self::assertSame(
+            ['alpha', 'beta'],
+            array_map(static fn (Tag $t) => $t->getName(), $created->getTags()->toArray()),
+        );
         self::assertSame(['name' => 'demo', 'temperature' => 0.5], $created->getOpenwebuiConfig());
     }
 

@@ -6,6 +6,7 @@ namespace App\Tests\Integration\Assistant;
 
 use App\Assistant\AssistantCreator;
 use App\Assistant\InvalidAssistantInputException;
+use App\Entity\Tag;
 use App\Repository\AssistantRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -44,7 +45,10 @@ final class AssistantCreatorTest extends KernelTestCase
 
         self::assertNotNull($assistant->getId());
         self::assertSame('Service Test Assistant', $assistant->getTitle());
-        self::assertSame(['alpha', 'beta'], $assistant->getTags());
+        self::assertSame(
+            ['alpha', 'beta'],
+            array_map(static fn (Tag $t) => $t->getName(), $assistant->getTags()->toArray()),
+        );
         self::assertSame(['name' => 'demo', 'temperature' => 0.5], $assistant->getOpenwebuiConfig());
 
         $reloaded = $this->repository->find($assistant->getId());
