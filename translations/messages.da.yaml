@@ -209,6 +209,7 @@ register:
         empty_password: "Adgangskoden må ikke være tom."
         email_in_use: "Der findes allerede en konto med den e-mail."
         invalid_token: "Sessionen er udløbet. Indsend formularen igen."
+        rate_limited: "Du har sendt for mange anmodninger. Prøv igen senere."
     pending:
         title: "Konto oprettet – %brand%"
         eyebrow: "Tak"
