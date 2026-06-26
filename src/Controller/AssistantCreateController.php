@@ -45,7 +45,7 @@ final class AssistantCreateController extends AbstractController
                     $submitted['openwebui_config'],
                 );
 
-                return $this->redirectToRoute('app_assistant_show', ['id' => (int) $assistant->getId()]);
+                return $this->redirectToRoute('app_assistant_show', ['id' => (string) $assistant->getId()]);
             } catch (InvalidAssistantInputException $e) {
                 $errors = $e->getErrors();
                 $status = Response::HTTP_UNPROCESSABLE_ENTITY;

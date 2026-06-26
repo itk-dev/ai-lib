@@ -115,7 +115,8 @@ final class AssistantCreateControllerTest extends WebTestCase
 
         self::assertResponseRedirects();
         $location = (string) $this->client->getResponse()->headers->get('Location');
-        self::assertMatchesRegularExpression('#^/assistant/\d+$#', $location);
+        // Entity ids are ULIDs after the entity-bundle adoption (26-char Crockford base32).
+        self::assertMatchesRegularExpression('#^/assistant/[0-9A-HJKMNP-TV-Z]{26}$#', $location);
 
         $repository = self::getContainer()->get(AssistantRepository::class);
         $created = $repository->findOneBy(['title' => 'Test assistant']);
