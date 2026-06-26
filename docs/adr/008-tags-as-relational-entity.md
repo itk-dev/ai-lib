@@ -1,12 +1,12 @@
 # 008: Assistant tags as a relational Tag entity
 
-| Field              | Value                                             |
-| ------------------ | ------------------------------------------------- |
-| **Created By**     | Troels Ugilt Jensen                               |
-| **Date**           | 2026-06-26                                        |
-| **Decision Maker** | ITK Dev team                                      |
+| Field              | Value                                            |
+| ------------------ | ------------------------------------------------ |
+| **Created By**     | Troels Ugilt Jensen                              |
+| **Date**           | 2026-06-26                                       |
+| **Decision Maker** | ITK Dev team                                     |
 | **Stakeholders**   | ITK Dev developers, future maintainers of ai-lib |
-| **Status**         | Draft                                             |
+| **Status**         | Draft                                            |
 
 ## Context
 
