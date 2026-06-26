@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Assistant.openwebui_config` JSON column for storing the
+  uploaded OpenWebUI export verbatim, plus a create form at
+  `/assistant/new` with a file-upload field that AJAX-validates
+  the JSON before submit and writes the result into an editable
+  textarea (users can also paste/type JSON directly). A shared
+  `App\Validator\OpenWebUiConfigValidator` service hosts the
+  validation pipeline (JSON syntax + a temporary slow-validation
+  scaffold for UI testing); the uploaded file itself is never
+  persisted, only the parsed JSON reaches the database. The
+  create form picks up the project's default-deny gating: any
+  authenticated user can submit, no admin role required
+  ([#14](https://github.com/itk-dev/ai-lib/issues/14)).
 - Higher-contrast zebra striping on the shared `<twig:Table>`
   component. Even rows now use a new dedicated
   `--color-row-alt` (`#f1f3f5`) design token instead of the
