@@ -140,7 +140,7 @@ final class UserRepositoryTest extends KernelTestCase
     {
         $manager = self::getContainer()->get(UserManager::class);
         // Admin must start Approved so it doesn't itself match the Pending filter
-        // we're testing — otherwise the result includes two pending users.
+        // we're testing.
         $admin = $manager->createUser('siteadmin@example.test', 'Site Admin', 'pw', [Roles::ADMIN], status: UserStatus::Approved);
         $manager->createUser('pending@example.test', 'Pending', 'pw', status: UserStatus::Pending);
 
@@ -149,6 +149,10 @@ final class UserRepositoryTest extends KernelTestCase
             $this->repository->findVisibleTo($admin, UserStatus::Pending),
         );
 
-        self::assertSame(['pending@example.test'], $emails);
+        // The fixture seeds other pending users; assertion only pins the
+        // test-created row and verifies non-pending users are filtered out.
+        self::assertContains('pending@example.test', $emails);
+        self::assertNotContains('siteadmin@example.test', $emails);
+        self::assertNotContains('alice@example.test', $emails);
     }
 }

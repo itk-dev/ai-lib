@@ -8,6 +8,7 @@ use App\DataFixtures\UserFixtures;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
+use App\Security\Roles;
 use App\Security\UserManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -22,8 +23,10 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  */
 final class UserFixturesTest extends TestCase
 {
-    // Tests that load() persists exactly alice@example.test and bob@example.test, hashing the shared fixture password.
-    public function testLoadPersistsAliceAndBobWithFixturePassword(): void
+    private const int EXPECTED_USER_COUNT = 7;
+
+    // Tests that load() persists every Roles::* and every UserStatus case, hashing the shared fixture password.
+    public function testLoadPersistsEveryRoleAndStatusCombination(): void
     {
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $userRepository = $this->createMock(UserRepository::class);
@@ -33,25 +36,41 @@ final class UserFixturesTest extends TestCase
         $passwordHasher->method('hashPassword')->willReturn('hashed');
 
         $persisted = [];
-        $entityManager->expects(self::exactly(2))
+        $entityManager->expects(self::exactly(self::EXPECTED_USER_COUNT))
             ->method('persist')
             ->willReturnCallback(function (object $entity) use (&$persisted): void {
                 \assert($entity instanceof User);
                 $persisted[] = $entity;
             });
-        $entityManager->expects(self::exactly(2))->method('flush');
+        $entityManager->expects(self::exactly(self::EXPECTED_USER_COUNT))->method('flush');
 
         $userManager = new UserManager($entityManager, $userRepository, $passwordHasher);
         $fixture = new UserFixtures($userManager);
 
         $fixture->load($this->createMock(ObjectManager::class));
 
-        $emails = array_map(static fn (User $u): ?string => $u->getEmail(), $persisted);
-        $names = array_map(static fn (User $u): string => $u->getName(), $persisted);
-        $statuses = array_map(static fn (User $u): UserStatus => $u->getStatus(), $persisted);
+        $byEmail = [];
+        foreach ($persisted as $user) {
+            $byEmail[(string) $user->getEmail()] = $user;
+        }
 
-        self::assertSame(['alice@example.test', 'bob@example.test'], $emails);
-        self::assertSame(['Alice', 'Bob'], $names);
-        self::assertSame([UserStatus::Approved, UserStatus::Approved], $statuses);
+        // The original cross-fixture lookup points are still here.
+        self::assertArrayHasKey(UserFixtures::ALICE_EMAIL, $byEmail);
+        self::assertArrayHasKey(UserFixtures::BOB_EMAIL, $byEmail);
+
+        // Every role is represented.
+        self::assertContains(Roles::ADMIN, $byEmail[UserFixtures::ADMIN_EMAIL]->getRoles());
+        self::assertContains(Roles::DOMAIN_MANAGER, $byEmail[UserFixtures::DOMAIN_MANAGER_EMAIL]->getRoles());
+
+        // Every status case has at least one seeded user.
+        $statuses = array_map(static fn (User $u): UserStatus => $u->getStatus(), $persisted);
+        self::assertContains(UserStatus::Approved, $statuses);
+        self::assertContains(UserStatus::Pending, $statuses);
+        self::assertContains(UserStatus::AwaitingEmailConfirmation, $statuses);
+        self::assertContains(UserStatus::Blocked, $statuses);
+
+        self::assertSame(UserStatus::Pending, $byEmail[UserFixtures::PENDING_EMAIL]->getStatus());
+        self::assertSame(UserStatus::AwaitingEmailConfirmation, $byEmail[UserFixtures::AWAITING_EMAIL]->getStatus());
+        self::assertSame(UserStatus::Blocked, $byEmail[UserFixtures::BLOCKED_EMAIL]->getStatus());
     }
 }

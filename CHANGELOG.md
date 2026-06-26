@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `UserFixtures` now seeds five extra accounts on top of
+  `alice@example.test` / `bob@example.test` so every
+  `App\Security\Roles` value and every `App\Enum\UserStatus`
+  case is represented out of the box: `admin@aarhus.dk`
+  (`ROLE_ADMIN`, `Approved`), `manager@aarhus.dk`
+  (`ROLE_DOMAIN_MANAGER`, `Approved`),
+  `pending@aalborg.dk` (`Pending`), `awaiting@aalborg.dk`
+  (`AwaitingEmailConfirmation`), and `blocked@odense.dk`
+  (`Blocked`). All share the plain `password` for
+  paste-friendly local login. Each address is exposed as a
+  public constant on `UserFixtures` so downstream lookups
+  don't repeat the string
+  ([#126](https://github.com/itk-dev/ai-reolen/issues/126)).
 - Admin-page roundup: `/admin/users` gains a primary
   **"Opret bruger"** button (gated on `ROLE_ADMIN`) and a full
   HTML create form at `/admin/users/new` backed by a non-mapped
