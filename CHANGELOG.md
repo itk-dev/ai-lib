@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Admin-page roundup: `/admin/users` gains a primary
+  **"Opret bruger"** button (gated on `ROLE_ADMIN`) and a full
+  HTML create form at `/admin/users/new` backed by a non-mapped
+  `UserCreateType` that delegates to
+  `UserManager::createUser()` for hashing + persistence. Both
+  `/admin/users` and `/admin/organization` lists are migrated
+  from ad-hoc `<ul>` cards to the shared `<twig:Table>`
+  component family. `/admin/settings` is split into
+  `/admin/settings/site` (brand name / tagline / initials) and
+  `/admin/settings/email` (admin notification recipient); the
+  bare `/admin/settings` route redirects to the site page, and
+  a new `<twig:Tabs>` component (plus the
+  `admin/settings/_tabs.html.twig` partial) renders the
+  switcher between the two surfaces with the active tab
+  marked `aria-current="page"`. Brand identity now resolves
+  through `SettingsManager::getBrandName()` / tagline /
+  initials with `BRAND_*` env vars as the fallback default; an
+  `App\Twig\BrandExtension` exposes the resolved values as the
+  `brand_name` / `brand_tagline` / `brand_initials` Twig
+  globals. Every `/admin/**` page renders against a light
+  pink (`bg-admin-bg`) body background so operators see at a
+  glance that they're in the back office
+  ([#124](https://github.com/itk-dev/ai-reolen/issues/124)).
 - The `/assistant/new` upload widget now pretty-prints the
   JSON it drops into the editable textarea (two-space indent,
   preserved newlines) so the operator can read and edit the

@@ -11,6 +11,9 @@
     --color-bg: #ffffff;
     --color-surface: #ffffff;
     --color-surface-2: #fbf9f5;
+    /* Very light pink tint applied to every /admin/** page body so */
+    /* operators see at a glance that they're in the back office. */
+    --color-admin-bg: #fdf2f8;
     /* Alternating row background for the shared Table component. */
     /* Distinct from surface-2 so hover states elsewhere keep their */
     /* current tone while zebra striping reads clearly on white.   */

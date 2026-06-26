@@ -1,13 +1,15 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin/base.html.twig' %}
 
-{% block title %}{{ 'admin.settings.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+{% block title %}{{ 'admin.settings.email.title'|trans({'%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
     <section class="max-w-md">
         <twig:Eyebrow as="p" class="mb-4">{{ 'admin.settings.eyebrow'|trans }}</twig:Eyebrow>
-        <twig:Heading level="1" size="lg" class="mb-6">{{ 'admin.settings.heading'|trans }}</twig:Heading>
+        <twig:Heading level="1" size="lg" class="mb-6">{{ 'admin.settings.email.heading'|trans }}</twig:Heading>
 
-        <p class="mb-6 text-sm text-text">{{ 'admin.settings.lead'|trans }}</p>
+        {{ include('admin/settings/_tabs.html.twig') }}
+
+        <p class="mb-6 text-sm text-text">{{ 'admin.settings.email.lead'|trans }}</p>
 
         {% for flash in app.flashes('success') %}
             <twig:Alert type="success" class="mb-4">
@@ -21,8 +23,8 @@
             </div>
         {% endif %}
 
-        <form action="{{ path('app_admin_settings') }}" method="post" class="grid gap-4">
-            <twig:Form:Label for="inputAdminRecipient" text="{{ 'admin.settings.fields.admin_recipient.label'|trans }}">
+        <form action="{{ path('app_admin_settings_email') }}" method="post" class="grid gap-4">
+            <twig:Form:Label for="inputAdminRecipient" text="{{ 'admin.settings.email.fields.admin_recipient.label'|trans }}">
                 <twig:Form:TextInput
                     id="inputAdminRecipient"
                     name="admin_recipient"
@@ -30,10 +32,10 @@
                     value="{{ submitted.admin_recipient }}"
                     autocomplete="email"
                 />
-                <p class="mt-1 text-sm text-text">{{ 'admin.settings.fields.admin_recipient.help'|trans }}</p>
+                <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.admin_recipient.help'|trans }}</p>
             </twig:Form:Label>
 
-            <input type="hidden" name="_token" value="{{ csrf_token('admin-settings') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('admin-settings-email') }}">
 
             <div class="flex items-center gap-4">
                 <twig:Form:Button type="submit">

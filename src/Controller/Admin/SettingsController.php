@@ -20,41 +20,83 @@ final class SettingsController extends AbstractController
     ) {
     }
 
-    #[Route(path: '/admin/settings', name: 'app_admin_settings', methods: ['GET', 'POST'])]
-    public function edit(Request $request): Response
+    #[Route(path: '/admin/settings', name: 'app_admin_settings', methods: ['GET'])]
+    public function index(): Response
+    {
+        return $this->redirectToRoute('app_admin_settings_site');
+    }
+
+    #[Route(path: '/admin/settings/site', name: 'app_admin_settings_site', methods: ['GET', 'POST'])]
+    public function site(Request $request): Response
     {
         $submitted = [
-            'admin_recipient' => $this->settingsManager->getAdminRecipient() ?? '',
+            'brand_name' => $this->settingsManager->getBrandName(),
+            'brand_tagline' => $this->settingsManager->getBrandTagline(),
+            'brand_initials' => $this->settingsManager->getBrandInitials(),
         ];
-        $error = null;
-        $status = Response::HTTP_OK;
 
         if ('POST' === $request->getMethod()) {
-            $submitted['admin_recipient'] = trim((string) $request->request->get('admin_recipient', ''));
+            $submitted = [
+                'brand_name' => (string) $request->request->get('brand_name', ''),
+                'brand_tagline' => (string) $request->request->get('brand_tagline', ''),
+                'brand_initials' => (string) $request->request->get('brand_initials', ''),
+            ];
 
-            if (!$this->isCsrfTokenValid('admin-settings', (string) $request->request->get('_token'))) {
-                return $this->render('admin/settings/edit.html.twig', [
+            if (!$this->isCsrfTokenValid('admin-settings-site', (string) $request->request->get('_token'))) {
+                return $this->render('admin/settings/site.html.twig', [
                     'submitted' => $submitted,
                     'error' => 'admin.settings.error.invalid_token',
                 ], new Response('', Response::HTTP_FORBIDDEN));
             }
 
-            $recipient = '' === $submitted['admin_recipient'] ? null : $submitted['admin_recipient'];
+            $this->settingsManager->applyBrandIdentity(
+                $submitted['brand_name'],
+                $submitted['brand_tagline'],
+                $submitted['brand_initials'],
+            );
+            $this->addFlash('success', 'admin.settings.flash.saved');
 
-            if (null !== $recipient && !filter_var($recipient, \FILTER_VALIDATE_EMAIL)) {
-                $error = 'admin.settings.error.invalid_email';
-                $status = Response::HTTP_UNPROCESSABLE_ENTITY;
-            } else {
-                $this->settingsManager->setAdminRecipient($recipient);
-                $this->addFlash('success', 'admin.settings.flash.saved');
-
-                return $this->redirectToRoute('app_admin_settings');
-            }
+            return $this->redirectToRoute('app_admin_settings_site');
         }
 
-        return $this->render('admin/settings/edit.html.twig', [
+        return $this->render('admin/settings/site.html.twig', [
             'submitted' => $submitted,
-            'error' => $error,
-        ], new Response('', $status));
+            'error' => null,
+        ]);
+    }
+
+    #[Route(path: '/admin/settings/email', name: 'app_admin_settings_email', methods: ['GET', 'POST'])]
+    public function email(Request $request): Response
+    {
+        $submitted = [
+            'admin_recipient' => $this->settingsManager->getAdminRecipient() ?? '',
+        ];
+
+        if ('POST' === $request->getMethod()) {
+            $submitted['admin_recipient'] = (string) $request->request->get('admin_recipient', '');
+
+            if (!$this->isCsrfTokenValid('admin-settings-email', (string) $request->request->get('_token'))) {
+                return $this->render('admin/settings/email.html.twig', [
+                    'submitted' => $submitted,
+                    'error' => 'admin.settings.error.invalid_token',
+                ], new Response('', Response::HTTP_FORBIDDEN));
+            }
+
+            if (!$this->settingsManager->applyAdminRecipient($submitted['admin_recipient'])) {
+                return $this->render('admin/settings/email.html.twig', [
+                    'submitted' => $submitted,
+                    'error' => 'admin.settings.error.invalid_email',
+                ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
+            }
+
+            $this->addFlash('success', 'admin.settings.flash.saved');
+
+            return $this->redirectToRoute('app_admin_settings_email');
+        }
+
+        return $this->render('admin/settings/email.html.twig', [
+            'submitted' => $submitted,
+            'error' => null,
+        ]);
     }
 }
