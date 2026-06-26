@@ -57,6 +57,11 @@ admin:
         heading: "Organisationer"
         empty: "Ingen organisationer er oprettet endnu."
         default_framework_label: "Standard-framework"
+        columns:
+            name: "Navn"
+            email_domains: "E-maildomæner"
+            default_framework: "Standard-framework"
+            actions: "Handlinger"
         new:
             title: "Opret organisation – %brand%"
             heading: "Opret organisation"
@@ -86,36 +91,77 @@ admin:
         heading: "Brugere"
         empty: "Ingen brugere matcher det valgte filter."
         filter_label: "Filtrer brugere efter status"
+        new:
+            title: "Opret bruger – %brand%"
+            heading: "Opret bruger"
         filter:
             all: "Alle"
             pending: "Afventer godkendelse"
             approved: "Godkendte"
             blocked: "Spærrede"
         status:
+            awaiting_email_confirmation: "Afventer e-mail-bekræftelse"
             pending: "Afventer"
             approved: "Godkendt"
             blocked: "Spærret"
+        columns:
+            name: "Navn"
+            email: "E-mail"
+            status: "Status"
+            actions: "Handlinger"
+        form:
+            email_label: "E-mail"
+            name_label: "Navn"
+            password_label: "Adgangskode"
+            roles_label: "Roller"
+            status_label: "Status"
+            roles:
+                admin: "Site-administrator (ROLE_ADMIN)"
+                domain_manager: "Domæne-ansvarlig (ROLE_DOMAIN_MANAGER)"
         action:
+            new: "Opret bruger"
+            create: "Opret"
+            cancel: "Annuller"
             approve: "Godkend"
             block: "Spær"
         flash:
+            created: "Brugeren er oprettet."
             approved: "Brugeren er nu godkendt og kan logge ind."
             blocked: "Brugeren er spærret og kan ikke logge ind."
     settings:
-        title: "Indstillinger – %brand%"
         eyebrow: "Administration"
-        heading: "Indstillinger"
-        lead: "Konfiguration som administratorer kan justere efter installation. Disse felter overstyrer ikke værdier sat i miljøvariabler."
         submit: "Gem ændringer"
-        fields:
-            admin_recipient:
-                label: "Modtager af administrator-mails"
-                help: "E-mailadresse der modtager besked, når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
+        tabs_label: "Indstillinger – navigation"
+        tabs:
+            site: "Site"
+            email: "E-mail"
         error:
             invalid_token: "Sessionen er udløbet. Indsend formularen igen."
             invalid_email: "Indtast en gyldig e-mailadresse."
         flash:
             saved: "Indstillingerne er gemt."
+        site:
+            title: "Site-indstillinger – %brand%"
+            heading: "Site"
+            lead: "Visuel identitet på offentlige sider. Lad et felt stå tomt for at falde tilbage til miljøvariabel-standarden."
+            fields:
+                brand_name:
+                    label: "Brandnavn"
+                    help: "Vises i nav-baren, sidetitler og footeren."
+                brand_tagline:
+                    label: "Tagline"
+                    help: "Kort sætning under brandnavnet i footeren."
+                brand_initials:
+                    label: "Initialer"
+                    help: "To bogstaver brugt som logo-glyf på små skærme."
+        email:
+            title: "E-mailindstillinger – %brand%"
+            heading: "E-mail"
+            lead: "Modtagere og afsendere af systemmails."
+            fields:
+                admin_recipient:
+                    label: "Modtager af administrator-mails"
+                    help: "E-mailadresse der modtager besked, når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
 
 catalog:
     title: "Katalog – %brand%"
@@ -179,6 +225,26 @@ assistant:
         framework_label: "Framework"
         language_model_label: "Sprogmodel"
         tags_heading: "Tags"
+    new:
+        title: "Opret assistent – %brand%"
+        eyebrow: "Del assistent"
+        heading: "Opret assistent"
+        title_label: "Titel"
+        description_label: "Beskrivelse"
+        language_model_label: "Sprogmodel"
+        framework_label: "Framework"
+        tags_label: "Tags (komma-separeret)"
+        config_label: "OpenWebUI-konfiguration (JSON)"
+        config_textarea_label: "Konfigurations-JSON"
+        config_help: "Vælg en JSON-fil, eller indsæt JSON direkte i feltet."
+        config_validating: "Validerer konfiguration…"
+        config_valid: "Konfigurationen er gyldig."
+        config_invalid: "Konfigurationen er ugyldig:"
+        submit: "Opret"
+        cancel: "Annuller"
+        error:
+            invalid_token: "Sessionen er udløbet. Indsend formularen igen."
+            missing_config: "Vælg en JSON-fil før indsendelse."
 
 frontpage:
     title: "%brand% – forhåndsvisning"
