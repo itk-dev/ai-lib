@@ -19,7 +19,10 @@
             </twig:Stats:List>
         </twig:Hero>
 
-        <twig:SearchBox placeholder="search.placeholder" />
+        <twig:SearchBox
+            placeholder="search.placeholder"
+            action="{{ path('app_assistant_catalog') }}"
+        />
 
         <twig:CardRail:Container
             eyebrow="frontpage.rail.eyebrow"

@@ -16,7 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   each other and free-text search, and every active filter is
   reflected in the URL and as a removable chip. Ticking a facet
   checkbox submits the filter form immediately (Stimulus, with the
-  Apply button as the no-JS fallback). Tags are now a
+  Apply button as the no-JS fallback). The frontpage search box now
+  submits to the catalogue, so a query from the homepage lands on
+  `/search` with results. Tags are now a
   relational `Tag` entity joined to `Assistant` many-to-many
   (replacing the previous JSON column), recorded in
   [ADR 008](docs/adr/008-tags-as-relational-entity.md)
