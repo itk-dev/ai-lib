@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The `/assistant/new` upload widget now pretty-prints the
+  JSON it drops into the editable textarea (two-space indent,
+  preserved newlines) so the operator can read and edit the
+  config before submit. The server-side path is unchanged —
+  Doctrine's `JSON` column type decodes the form value to an
+  array and re-encodes it without whitespace, so whatever
+  indentation the user typed (file upload, paste, hand-edit)
+  collapses to minified JSON on disk
+  ([#101](https://github.com/itk-dev/ai-reolen/issues/14)).
 - `Assistant.openwebui_config` JSON column for storing the
   uploaded OpenWebUI export verbatim, plus a create form at
   `/assistant/new` with a file-upload field that AJAX-validates

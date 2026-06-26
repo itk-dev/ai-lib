@@ -52,6 +52,40 @@ final class AssistantCreatorTest extends KernelTestCase
         self::assertSame(['name' => 'demo', 'temperature' => 0.5], $reloaded->getOpenwebuiConfig());
     }
 
+    // Verifies pretty-printed JSON with whitespace and newlines is normalised to a minified array on persist.
+    public function testCreateNormalisesPrettyPrintedConfigToMinifiedStorage(): void
+    {
+        $prettyJson = <<<'JSON'
+            {
+                "name": "demo",
+                "temperature": 0.5,
+                "tags": [
+                    "alpha",
+                    "beta"
+                ]
+            }
+            JSON;
+
+        $assistant = $this->creator->create(
+            'Pretty assistant',
+            'd',
+            'gpt-4o',
+            'openwebui',
+            [],
+            $prettyJson,
+        );
+
+        // The column is Doctrine `JSON` — value goes through json_decode →
+        // array → json_encode (minified) on the way to the DB. Reload from
+        // the repository to confirm the round-trip is value-stable.
+        $reloaded = $this->repository->find($assistant->getId());
+        self::assertNotNull($reloaded);
+        self::assertSame(
+            ['name' => 'demo', 'temperature' => 0.5, 'tags' => ['alpha', 'beta']],
+            $reloaded->getOpenwebuiConfig(),
+        );
+    }
+
     // Ensures malformed JSON triggers the InvalidAssistantInputException carrying the validator errors.
     public function testCreateRejectsMalformedJsonWithErrors(): void
     {

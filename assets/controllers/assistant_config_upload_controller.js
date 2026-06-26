@@ -19,8 +19,10 @@ import { Controller } from "@hotwired/stimulus";
  *      not a timer.
  *   3. If any check fails: show its errors, clear the textarea,
  *      stop iterating.
- *   4. If every check passes: populate the textarea with the JSON
- *      content and mark the status as valid.
+ *   4. If every check passes: pretty-print the JSON into the
+ *      textarea (two-space indent, newlines preserved) so the
+ *      operator can read and edit it before submit. The
+ *      server-side flow re-minifies on save.
  *
  * The file itself is never submitted to the server — only the
  * textarea's text content ends up on the server. On invalid
@@ -47,8 +49,10 @@ export default class extends Controller {
 
         const total = this.checksValue.length;
         if (total === 0) {
-            // No checks registered — nothing to validate; accept as-is.
-            this.configTarget.value = content;
+            // No checks registered — nothing to validate; pretty-print
+            // best-effort and fall back to the raw content if the file
+            // isn't parseable as JSON.
+            this.configTarget.value = this.prettyPrint(content);
             return;
         }
 
@@ -89,11 +93,27 @@ export default class extends Controller {
 
         // All checks passed.
         this.endProgress();
-        this.configTarget.value = content;
+        this.configTarget.value = this.prettyPrint(content);
         this.statusTarget.textContent =
             this.statusTarget.dataset.validText || "Configuration is valid.";
         this.statusTarget.classList.remove("text-red-600");
         this.statusTarget.classList.add("text-primary");
+    }
+
+    /**
+     * Reformat JSON with two-space indentation and newlines so the
+     * operator can read and edit it. Falls back to the raw input
+     * when the content isn't parseable as JSON — the textarea is
+     * still editable, the server-side validator catches malformed
+     * input on submit, and we don't accidentally erase what the
+     * user typed.
+     */
+    prettyPrint(raw) {
+        try {
+            return JSON.stringify(JSON.parse(raw), null, 2);
+        } catch {
+            return raw;
+        }
     }
 
     beginProgress(total) {

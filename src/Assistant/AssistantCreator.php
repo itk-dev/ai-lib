@@ -31,6 +31,13 @@ final class AssistantCreator
     /**
      * Validate the uploaded JSON and persist a new Assistant.
      *
+     * The raw config text — pretty-printed by the upload widget,
+     * pasted by hand, or whatever shape the operator typed — is
+     * decoded to a PHP array before persistence. Storage is the
+     * `openwebui_config` Doctrine `JSON` column, which re-encodes
+     * the array without whitespace, so whatever indentation the
+     * caller passed in collapses to minified JSON on disk.
+     *
      * @param string       $title                title of the assistant
      * @param string       $description          long-form description
      * @param string       $languageModel        model identifier snapshot (e.g. `gpt-4o`)
