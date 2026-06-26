@@ -26,6 +26,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   matches a fresh signup so a probe can't learn whether the
   address is taken
   ([#107](https://github.com/itk-dev/ai-reolen/issues/107)).
+- `UserFixtures` now seeds five extra accounts on top of
+  `alice@example.test` / `bob@example.test` so every
+  `App\Security\Roles` value and every `App\Enum\UserStatus`
+  case is represented out of the box: `admin@aarhus.dk`
+  (`ROLE_ADMIN`, `Approved`), `manager@aarhus.dk`
+  (`ROLE_DOMAIN_MANAGER`, `Approved`),
+  `pending@aalborg.dk` (`Pending`), `awaiting@aalborg.dk`
+  (`AwaitingEmailConfirmation`), and `blocked@odense.dk`
+  (`Blocked`). All share the plain `password` for
+  paste-friendly local login. Each address is exposed as a
+  public constant on `UserFixtures` so downstream lookups
+  don't repeat the string
+  ([#126](https://github.com/itk-dev/ai-reolen/issues/126)).
+- Admin-page roundup: `/admin/users` gains a primary
+  **"Opret bruger"** button (gated on `ROLE_ADMIN`) and a full
+  HTML create form at `/admin/users/new` backed by a non-mapped
+  `UserCreateType` that delegates to
+  `UserManager::createUser()` for hashing + persistence. Both
+  `/admin/users` and `/admin/organization` lists are migrated
+  from ad-hoc `<ul>` cards to the shared `<twig:Table>`
+  component family. `/admin/settings` is split into
+  `/admin/settings/site` (brand name / tagline / initials) and
+  `/admin/settings/email` (admin notification recipient); the
+  bare `/admin/settings` route redirects to the site page, and
+  a new `<twig:Tabs>` component (plus the
+  `admin/settings/_tabs.html.twig` partial) renders the
+  switcher between the two surfaces with the active tab
+  marked `aria-current="page"`. Brand identity now resolves
+  through `SettingsManager::getBrandName()` / tagline /
+  initials with `BRAND_*` env vars as the fallback default; an
+  `App\Twig\BrandExtension` exposes the resolved values as the
+  `brand_name` / `brand_tagline` / `brand_initials` Twig
+  globals. Every `/admin/**` page renders against a light
+  pink (`bg-admin-bg`) body background so operators see at a
+  glance that they're in the back office
+  ([#124](https://github.com/itk-dev/ai-reolen/issues/124)).
+- The `/assistant/new` upload widget now pretty-prints the
+  JSON it drops into the editable textarea (two-space indent,
+  preserved newlines) so the operator can read and edit the
+  config before submit. The server-side path is unchanged —
+  Doctrine's `JSON` column type decodes the form value to an
+  array and re-encodes it without whitespace, so whatever
+  indentation the user typed (file upload, paste, hand-edit)
+  collapses to minified JSON on disk
+  ([#101](https://github.com/itk-dev/ai-reolen/issues/14)).
+- `Assistant.openwebui_config` JSON column for storing the
+  uploaded OpenWebUI export verbatim, plus a create form at
+  `/assistant/new` with a file-upload field that AJAX-validates
+  the JSON before submit and writes the result into an editable
+  textarea (users can also paste/type JSON directly). A shared
+  `App\Validator\OpenWebUiConfigValidator` service hosts the
+  validation pipeline (JSON syntax + a temporary slow-validation
+  scaffold for UI testing); the uploaded file itself is never
+  persisted, only the parsed JSON reaches the database. The
+  create form picks up the project's default-deny gating: any
+  authenticated user can submit, no admin role required
+  ([#14](https://github.com/itk-dev/ai-lib/issues/14)).
 - Higher-contrast zebra striping on the shared `<twig:Table>`
   component. Even rows now use a new dedicated
   `--color-row-alt` (`#f1f3f5`) design token instead of the

@@ -1,9 +1,8 @@
 twig:
     file_name_pattern: '*.twig'
-    globals:
-        brand_name: '%env(BRAND_NAME)%'
-        brand_tagline: '%env(BRAND_TAGLINE)%'
-        brand_initials: '%env(BRAND_INITIALS)%'
+    # `brand_name`, `brand_tagline`, and `brand_initials` are exposed
+    # by `App\Twig\BrandExtension` so admin overrides stored on the
+    # `Setting` entity win over the `BRAND_*` env-var defaults.
 
 when@test:
     twig:

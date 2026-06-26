@@ -18,7 +18,7 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body class="flex min-h-screen flex-col bg-bg text-text antialiased">
+    <body class="flex min-h-screen flex-col {% block body_bg %}bg-bg{% endblock %} text-text antialiased">
         <twig:Layout:SkipLink />
 
         <twig:Layout:SiteHeader>
