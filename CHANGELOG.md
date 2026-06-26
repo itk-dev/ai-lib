@@ -32,6 +32,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pink (`bg-admin-bg`) body background so operators see at a
   glance that they're in the back office
   ([#124](https://github.com/itk-dev/ai-reolen/issues/124)).
+- `Assistant.openwebui_config` JSON column for storing the
+  uploaded OpenWebUI export verbatim, plus a create form at
+  `/assistant/new` with a file-upload field that AJAX-validates
+  the JSON before submit and writes the result into an editable
+  textarea (users can also paste/type JSON directly). A shared
+  `App\Validator\OpenWebUiConfigValidator` service hosts the
+  validation pipeline (JSON syntax + a temporary slow-validation
+  scaffold for UI testing); the uploaded file itself is never
+  persisted, only the parsed JSON reaches the database. The
+  create form picks up the project's default-deny gating: any
+  authenticated user can submit, no admin role required
+  ([#14](https://github.com/itk-dev/ai-lib/issues/14)).
+- Higher-contrast zebra striping on the shared `<twig:Table>`
+  component. Even rows now use a new dedicated
+  `--color-row-alt` (`#f1f3f5`) design token instead of the
+  near-white `--color-surface-2`, so admin lists read as
+  alternating light-gray / white rather than a wall of white.
+  Odd rows are made explicit `bg-bg` so the stripes survive
+  tinted backgrounds. `--color-surface-2` is left alone — it
+  remains the project's hover-state tone
+  ([#130](https://github.com/itk-dev/ai-reolen/issues/130)).
 - `app:user:update` console command that updates an existing
   user's display name, roles, and / or lifecycle status. Each
   field is optional — omitting it leaves the value untouched.
