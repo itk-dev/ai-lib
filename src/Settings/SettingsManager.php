@@ -8,6 +8,7 @@ use App\Entity\Setting;
 use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Typed read/write surface for admin-editable runtime settings.
@@ -58,40 +59,10 @@ class SettingsManager
     public const string REGISTRATION_CONFIRMATION_SUBJECT = 'registration_confirmation_subject';
     public const string REGISTRATION_CONFIRMATION_BODY = 'registration_confirmation_body';
 
-    /**
-     * Built-in default subject + Markdown body for each
-     * transactional email. The admin form initialises every field
-     * with these values and a fresh install renders them verbatim
-     * until an operator overrides them. Available `%token%`
-     * placeholders per email are documented in
-     * {@see \App\Notification\AdminRegistrationNotifier} and
-     * {@see \App\Notification\RegistrationConfirmationNotifier}.
-     */
-    public const string DEFAULT_ADMIN_NOTIFICATION_SUBJECT = 'Ny bruger venter godkendelse — %brand_name%';
-    public const string DEFAULT_ADMIN_NOTIFICATION_BODY = <<<'MD'
-        En ny bruger har netop oprettet sig:
-
-        - **Navn:** %name%
-        - **E-mail:** %email%
-
-        Brugeren afventer godkendelse. Gennemse køen på
-        [%approval_url%](%approval_url%).
-        MD;
-
-    public const string DEFAULT_REGISTRATION_CONFIRMATION_SUBJECT = 'Velkommen til %brand_name%';
-    public const string DEFAULT_REGISTRATION_CONFIRMATION_BODY = <<<'MD'
-        Hej %name%,
-
-        Tak for din oprettelse på %brand_name%. Vi har modtaget din
-        forespørgsel og en administrator vil godkende kontoen,
-        før du kan logge ind.
-
-        Du modtager besked, så snart kontoen er klar.
-        MD;
-
     public function __construct(
         private readonly SettingRepository $repository,
         private readonly EntityManagerInterface $em,
+        private readonly TranslatorInterface $translator,
         #[Autowire('%env(BRAND_NAME)%')]
         private readonly string $defaultBrandName,
         #[Autowire('%env(BRAND_TAGLINE)%')]
@@ -223,13 +194,18 @@ class SettingsManager
      * Read the configured subject template for the admin notification email.
      *
      * Returns the admin-saved override when set, otherwise the
-     * built-in {@see DEFAULT_ADMIN_NOTIFICATION_SUBJECT} default.
+     * translated `settings.admin.notification_subject` default
+     * sourced from the `messages` translation domain. The `%token%`
+     * placeholders pass through `trans()` literally because the
+     * call site supplies no parameter map; the downstream
+     * {@see \App\Mail\EmailTemplateRenderer} does the substitution.
      *
      * @return string current subject template (may contain `%token%` placeholders)
      */
     public function getAdminNotificationSubject(): string
     {
-        return $this->getString(self::ADMIN_NOTIFICATION_SUBJECT) ?? self::DEFAULT_ADMIN_NOTIFICATION_SUBJECT;
+        return $this->getString(self::ADMIN_NOTIFICATION_SUBJECT)
+            ?? $this->translator->trans('settings.admin.notification_subject');
     }
 
     /**
@@ -246,13 +222,16 @@ class SettingsManager
      * Read the configured Markdown body template for the admin notification email.
      *
      * Returns the admin-saved override when set, otherwise the
-     * built-in {@see DEFAULT_ADMIN_NOTIFICATION_BODY} default.
+     * translated `settings.admin.notification_body` default. The
+     * `%token%` placeholders pass through `trans()` literally
+     * because no parameter map is supplied.
      *
      * @return string current Markdown body template (may contain `%token%` placeholders)
      */
     public function getAdminNotificationBody(): string
     {
-        return $this->getString(self::ADMIN_NOTIFICATION_BODY) ?? self::DEFAULT_ADMIN_NOTIFICATION_BODY;
+        return $this->getString(self::ADMIN_NOTIFICATION_BODY)
+            ?? $this->translator->trans('settings.admin.notification_body');
     }
 
     /**
@@ -268,11 +247,15 @@ class SettingsManager
     /**
      * Read the configured subject template for the signup-confirmation email.
      *
+     * Falls back to the `settings.registration.confirmation_subject`
+     * translation when the row is unset.
+     *
      * @return string current subject template
      */
     public function getRegistrationConfirmationSubject(): string
     {
-        return $this->getString(self::REGISTRATION_CONFIRMATION_SUBJECT) ?? self::DEFAULT_REGISTRATION_CONFIRMATION_SUBJECT;
+        return $this->getString(self::REGISTRATION_CONFIRMATION_SUBJECT)
+            ?? $this->translator->trans('settings.registration.confirmation_subject');
     }
 
     /**
@@ -288,11 +271,15 @@ class SettingsManager
     /**
      * Read the configured Markdown body template for the signup-confirmation email.
      *
+     * Falls back to the `settings.registration.confirmation_body`
+     * translation when the row is unset.
+     *
      * @return string current Markdown body template
      */
     public function getRegistrationConfirmationBody(): string
     {
-        return $this->getString(self::REGISTRATION_CONFIRMATION_BODY) ?? self::DEFAULT_REGISTRATION_CONFIRMATION_BODY;
+        return $this->getString(self::REGISTRATION_CONFIRMATION_BODY)
+            ?? $this->translator->trans('settings.registration.confirmation_body');
     }
 
     /**

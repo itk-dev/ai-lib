@@ -226,6 +226,33 @@ register:
         body: "Din konto venter på godkendelse fra en administrator. Du modtager besked, når kontoen er klar, og kan så logge ind."
         login_link: "← Tilbage til log ind"
 
+# Default templates for the admin-editable transactional email
+# settings. `SettingsManager` falls back to these keys when no
+# row exists in the `setting` table. The `%token%` placeholders
+# are intentionally NOT translator parameters — `EmailTemplateRenderer`
+# substitutes them at send time with the recipient-specific values.
+settings:
+    admin:
+        notification_subject: "Ny bruger venter godkendelse — %brand_name%"
+        notification_body: |
+            En ny bruger har netop oprettet sig:
+
+            - **Navn:** %name%
+            - **E-mail:** %email%
+
+            Brugeren afventer godkendelse. Gennemse køen på
+            [%approval_url%](%approval_url%).
+    registration:
+        confirmation_subject: "Velkommen til %brand_name%"
+        confirmation_body: |
+            Hej %name%,
+
+            Tak for din oprettelse på %brand_name%. Vi har modtaget din
+            forespørgsel og en administrator vil godkende kontoen,
+            før du kan logge ind.
+
+            Du modtager besked, så snart kontoen er klar.
+
 assistant:
     detail:
         title: "%title% – %brand%"
