@@ -12,10 +12,14 @@ use Doctrine\Migrations\AbstractMigration;
  * Add the `openwebui_config` JSON column to `assistant`.
  *
  * Stores the OpenWebUI export JSON verbatim for assistants created
- * via the new upload form. Nullable so existing rows pre-dating the
- * upload flow stay valid.
+ * via the upload form. Nullable so rows pre-dating the upload flow
+ * stay valid.
+ *
+ * Dated 2026-06-25 12:00 so it sequences after the entity-bundle
+ * squash (`Version20260624142709`) that creates the `assistant`
+ * table in the first place.
  */
-final class Version20260622080000 extends AbstractMigration
+final class Version20260625120000 extends AbstractMigration
 {
     public function getDescription(): string
     {
