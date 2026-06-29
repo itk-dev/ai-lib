@@ -38,10 +38,17 @@ class AssistantRepository extends ServiceEntityRepository
      * Each facet selection on the criteria is an OR-within / AND-across
      * set: a non-empty `languageModels` keeps rows whose `languageModel`
      * is in that list, AND a non-empty `frameworks` further narrows on
-     * `framework`. An empty facet means "no filter on this facet".
+     * `framework`, AND a non-empty `tags` keeps rows carrying at least
+     * one of the named tags. An empty facet means "no filter on this
+     * facet". A non-empty `q` further narrows to rows whose title or
+     * description contains the query (case-insensitive substring).
      * Results are sorted by `id ASC` for a stable, fixture-friendly
-     * ordering. The criteria's `q` field is reserved for the upcoming
-     * free-text search and is intentionally not yet consulted.
+     * ordering.
+     *
+     * The tag filter is expressed as an `id IN (subquery)` over the
+     * `assistant_tag` join rather than a fetch join, so multiple selected
+     * tags OR together without inflating the row count and breaking the
+     * paginator's LIMIT/OFFSET maths.
      *
      * @param CatalogCriteria $criteria the user's filter selections
      * @param int             $page     1-based page number; clamped to `>= 1` by the caller
@@ -55,6 +62,14 @@ class AssistantRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('a')->orderBy('a.id', 'ASC');
 
+        if (null !== $criteria->q) {
+            // Parenthesise the OR so it binds as a unit when ANDed with the
+            // facet clauses below — otherwise SQL precedence would read it as
+            // `title LIKE … OR (description LIKE … AND facet …)`.
+            $qb->andWhere('(LOWER(a.title) LIKE :q OR LOWER(a.description) LIKE :q)')
+                ->setParameter('q', '%'.mb_strtolower($criteria->q).'%');
+        }
+
         if ([] !== $criteria->languageModels) {
             $qb->andWhere('a.languageModel IN (:languageModels)')
                 ->setParameter('languageModels', $criteria->languageModels);
@@ -63,6 +78,17 @@ class AssistantRepository extends ServiceEntityRepository
         if ([] !== $criteria->frameworks) {
             $qb->andWhere('a.framework IN (:frameworks)')
                 ->setParameter('frameworks', $criteria->frameworks);
+        }
+
+        if ([] !== $criteria->tags) {
+            $qb->andWhere($qb->expr()->in(
+                'a.id',
+                $this->createQueryBuilder('a2')
+                    ->select('a2.id')
+                    ->join('a2.tags', 't')
+                    ->andWhere('t.name IN (:tags)')
+                    ->getDQL(),
+            ))->setParameter('tags', $criteria->tags);
         }
 
         $qb->setFirstResult(($page - 1) * $perPage)
@@ -102,6 +128,41 @@ class AssistantRepository extends ServiceEntityRepository
     public function frameworkFacetCounts(): array
     {
         return $this->facetCounts('framework');
+    }
+
+    /**
+     * Count assistants grouped by attached tag name.
+     *
+     * Powers the catalogue's "Tags" facet. Unlike the scalar facets this
+     * joins the `assistant_tag` relation and groups on the tag name, so
+     * an assistant contributes to each of its tags' buckets. Counts are
+     * computed across the full catalogue (not narrowed by the active
+     * filter set) for the same reason documented on
+     * {@see self::languageModelFacetCounts()}. Tags carried by no
+     * assistant never appear, since the inner join drops them.
+     *
+     * @return array<string, int> ordered by count DESC then name ASC; key is the tag name
+     *
+     * @throws \Doctrine\DBAL\Exception when the underlying connection or query execution fails
+     */
+    public function tagFacetCounts(): array
+    {
+        /** @var list<array{value: string, count: int|string}> $rows */
+        $rows = $this->createQueryBuilder('a')
+            ->select('t.name AS value, COUNT(DISTINCT a.id) AS count')
+            ->join('a.tags', 't')
+            ->groupBy('t.name')
+            ->orderBy('count', 'DESC')
+            ->addOrderBy('value', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(string) $row['value']] = (int) $row['count'];
+        }
+
+        return $counts;
     }
 
     /**

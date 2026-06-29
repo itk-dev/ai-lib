@@ -7,6 +7,8 @@ namespace App\Tests\Integration\Controller;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Settings\SettingsManager;
+use App\Security\Registration;
+use App\Tests\Support\ClosedLimiterFactory;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -150,20 +152,20 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertStringContainsString('ikke ens', $crawler->filter('body')->text());
     }
 
-    // Ensures registering with an existing email is rejected with 422.
-    public function testRejectsDuplicateEmail(): void
+    // Verifies idempotency: re-registering with an existing email returns the same "thanks, awaiting approval" redirect — no information leak about whether the address is taken.
+    public function testDuplicateEmailIsIdempotent(): void
     {
+        // alice@example.test is in the baseline fixtures; submitting her
+        // address must look identical to a fresh signup from the outside.
         $crawler = $this->client->request('GET', '/register');
         $form = $crawler->filter('form')->form();
-        // alice@example.test is in the baseline fixtures.
         $form['email'] = 'alice@example.test';
         $form['name'] = 'Alice';
         $form['password'] = 'secret';
         $form['password_confirm'] = 'secret';
-        $crawler = $this->client->submit($form);
+        $this->client->submit($form);
 
-        self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('allerede en konto', $crawler->filter('body')->text());
+        self::assertResponseRedirects('/register/pending');
     }
 
     // Ensures an invalid CSRF token yields 403 and no user is persisted.
@@ -201,6 +203,36 @@ final class RegistrationControllerTest extends WebTestCase
         $this->client->request('GET', '/register/pending');
 
         self::assertResponseRedirects('/');
+    }
+
+    // Verifies the controller maps RateLimitedRegistrationException to a 429 response with the localised hint, by swapping in a Registration backed by an always-rejecting limiter.
+    public function testControllerReturns429WhenRegistrationRejectsForRateLimit(): void
+    {
+        // Swap the Registration service for one with a closed limiter
+        // before any code touches it, then disable kernel reboot so the
+        // swap survives the request lifecycle.
+        $container = self::getContainer();
+        $container->set(Registration::class, new Registration(
+            $container->get(\App\Security\UserManager::class),
+            $container->get(\App\Security\AllowedEmailDomains::class),
+            $container->get(\App\Notification\AdminRegistrationNotifier::class),
+            $container->get(\App\Notification\RegistrationConfirmationNotifier::class),
+            new \Psr\Log\NullLogger(),
+            ClosedLimiterFactory::create(),
+            ClosedLimiterFactory::create(),
+        ));
+        $this->client->disableReboot();
+
+        $crawler = $this->client->request('GET', '/register');
+        $form = $crawler->filter('form')->form();
+        $form['email'] = 'wave@example.test';
+        $form['name'] = 'Wave';
+        $form['password'] = 'secret';
+        $form['password_confirm'] = 'secret';
+        $crawler = $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(429);
+        self::assertStringContainsString('for mange anmodninger', $crawler->filter('body')->text());
     }
 
     private function loginAsAlice(): void

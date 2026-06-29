@@ -59,6 +59,26 @@ final class FrontpageControllerTest extends WebTestCase
         self::assertStringContainsString($expected[0]->getLanguageModel(), $railText);
     }
 
+    // Tests that submitting the frontpage search box lands on the catalogue with the query applied.
+    public function testSearchBoxSubmitsToCatalogueWithQuery(): void
+    {
+        $crawler = $this->client->request('GET', '/');
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->filter('form[role="search"]')->form();
+        $form['q'] = 'journaliseringsassistent';
+        $resultCrawler = $this->client->submit($form);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('/search?q=', $this->client->getRequest()->getUri());
+        self::assertCount(
+            1,
+            $resultCrawler->filter('a[href^="/assistant/"]'),
+            'the query reaches the catalogue and narrows to the matching assistant',
+        );
+        self::assertSelectorTextContains('[aria-label="Aktive filtre"]', '"journaliseringsassistent"');
+    }
+
     // Verifies the stats block reflects the fixture totals (21 assistants, 5 distinct language models).
     public function testStatsReflectFixtureCatalogueCounts(): void
     {

@@ -20,28 +20,28 @@ final class CatalogCriteria
      * {@see self::fromRequest()}, {@see self::activeFilters()}, and
      * {@see self::toQueryArray()}.
      *
-     * `q` is reserved for the free-text search input. It's accepted in
-     * the constructor and carried through `toQueryArray()` /
-     * `activeFilters()` already, even though the controller does not
-     * populate it yet — the seam is in place for the search follow-up.
+     * `q` is the free-text search input, matched against the assistant
+     * title and description by the repository.
      *
      * @param string|null  $q              optional free-text search query, trimmed and null when empty
      * @param list<string> $languageModels exact `languageModel` values to keep; empty list means no narrowing on this facet
      * @param list<string> $frameworks     exact `framework` values to keep; empty list means no narrowing on this facet
+     * @param list<string> $tags           exact tag names to keep; empty list means no narrowing on this facet
      */
     public function __construct(
         public readonly ?string $q = null,
         public readonly array $languageModels = [],
         public readonly array $frameworks = [],
+        public readonly array $tags = [],
     ) {
     }
 
     /**
      * Named constructor — parse a `CatalogCriteria` out of an HTTP request.
      *
-     * Reads `?q=`, `?language_model[]=` and `?framework[]=` from the
-     * query string. Empty values are normalised away so callers can
-     * trust the constructed object: a missing query becomes `null`,
+     * Reads `?q=`, `?language_model[]=`, `?framework[]=` and `?tag[]=`
+     * from the query string. Empty values are normalised away so callers
+     * can trust the constructed object: a missing query becomes `null`,
      * missing facet selections become `[]`.
      *
      * @param Request         $request the incoming HTTP request whose query string carries the user's selections
@@ -57,6 +57,7 @@ final class CatalogCriteria
             q: '' === $q ? null : $q,
             languageModels: $lists->fromRequest($request, 'language_model'),
             frameworks: $lists->fromRequest($request, 'framework'),
+            tags: $lists->fromRequest($request, 'tag'),
         );
     }
 
@@ -72,16 +73,18 @@ final class CatalogCriteria
     {
         return null === $this->q
             && [] === $this->languageModels
-            && [] === $this->frameworks;
+            && [] === $this->frameworks
+            && [] === $this->tags;
     }
 
     /**
      * Yield one {@see ActiveFilter} per applied filter value.
      *
      * The search query (if any) comes first, followed by each
-     * Sprogmodel value, then each Rammeværk value — in the order they
-     * appear on the criteria. Each entry's `removeQuery` is precomputed
-     * so the template can hand it straight to `path()`.
+     * Sprogmodel value, then each Rammeværk value, then each Tag value —
+     * in the order they appear on the criteria. Each entry's
+     * `removeQuery` is precomputed so the template can hand it straight
+     * to `path()`.
      *
      * @return list<ActiveFilter> ordered as described; empty when {@see self::isEmpty()} is true
      */
@@ -116,6 +119,15 @@ final class CatalogCriteria
             );
         }
 
+        foreach ($this->tags as $value) {
+            $filters[] = new ActiveFilter(
+                type: 'tag',
+                value: $value,
+                label: $value,
+                removeQuery: $this->without('tag', $value),
+            );
+        }
+
         return $filters;
     }
 
@@ -141,6 +153,9 @@ final class CatalogCriteria
         if ([] !== $this->frameworks) {
             $query['framework'] = $this->frameworks;
         }
+        if ([] !== $this->tags) {
+            $query['tag'] = $this->tags;
+        }
 
         return $query;
     }
@@ -153,7 +168,7 @@ final class CatalogCriteria
      * facet the matching value is filtered out; if the resulting list
      * is empty the key is dropped entirely.
      *
-     * @param string $type  filter kind being narrowed (`q`, `language_model`, `framework`)
+     * @param string $type  filter kind being narrowed (`q`, `language_model`, `framework`, `tag`)
      * @param string $value the specific value to remove from that filter
      *
      * @return array<string, mixed> query map suitable for `path()`

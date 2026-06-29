@@ -8,6 +8,17 @@
             action="{{ path('app_assistant_catalog') }}"
             reset="{{ not criteria.isEmpty }}"
         >
+            <twig:Filter:Group label="catalog.filters.search">
+                <label for="catalog-search" class="sr-only">{{ 'catalog.filters.search'|trans }}</label>
+                <twig:Form:TextInput
+                    id="catalog-search"
+                    name="q"
+                    type="search"
+                    value="{{ criteria.q }}"
+                    autocomplete="off"
+                />
+            </twig:Filter:Group>
+
             <twig:Filter:Group label="catalog.filters.language_model">
                 {% for value, count in facets.language_model %}
                     <twig:Filter:FacetItem
@@ -28,6 +39,18 @@
                         label="{{ value }}"
                         count="{{ count }}"
                         checked="{{ value in criteria.frameworks }}"
+                    />
+                {% endfor %}
+            </twig:Filter:Group>
+
+            <twig:Filter:Group label="catalog.filters.tags">
+                {% for value, count in facets.tag %}
+                    <twig:Filter:FacetItem
+                        name="tag[]"
+                        value="{{ value }}"
+                        label="{{ value }}"
+                        count="{{ count }}"
+                        checked="{{ value in criteria.tags }}"
                     />
                 {% endfor %}
             </twig:Filter:Group>

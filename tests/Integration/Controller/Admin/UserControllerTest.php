@@ -126,7 +126,9 @@ final class UserControllerTest extends WebTestCase
         $this->loginAsApproved('admin@example.test');
 
         $crawler = $this->client->request('GET', '/admin/users?status=pending');
-        $form = $crawler->filter('form[action$="/approve"]')->form();
+        // Scope to the target's own approve form — the fixture seeds
+        // other pending users, so picking by index would race.
+        $form = $crawler->filter('form[action$="/'.$target->getId().'/approve"]')->form();
         $this->client->submit($form);
 
         self::assertResponseRedirects('/admin/users?status=pending');

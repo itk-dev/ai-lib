@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Assistant;
+use App\Entity\Tag;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -23,8 +24,26 @@ use Doctrine\Persistence\ObjectManager;
  */
 final class AssistantFixtures extends Fixture implements DependentFixtureInterface
 {
+    /**
+     * Per-load de-duplication cache of tag name → managed {@see Tag}.
+     *
+     * Tags are shared across assistants, so the same name must resolve to
+     * one entity instance; {@see self::tags()} populates this on first use
+     * and reuses it thereafter. The relation cascades persist, so the
+     * cached tags are written when their owning assistant is flushed —
+     * no explicit `persist()` (which would also break the unit test's
+     * Assistant-only mock).
+     *
+     * @var array<string, Tag>
+     */
+    private array $tagCache = [];
+
     public function load(ObjectManager $manager): void
     {
+        // Reset the tag cache so a reused fixture instance still produces
+        // fresh, unmanaged tags rather than entities from a prior load.
+        $this->tagCache = [];
+
         // The two fixture users own the catalogue round-robin; resolved once
         // and reused so every assistant shares the same managed instances.
         $creators = FixtureCreators::resolve($manager);
@@ -67,35 +86,35 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 description: 'Hjælper sagsbehandlere i borgerservice med at finde den rigtige paragraf i lov om social service og lov om aktiv socialpolitik. Tager udgangspunkt i en kort beskrivelse af borgerens situation og foreslår relevante lovhjemler, sagskategorier og næste skridt. Indeholder kommunens egne vejledninger og praksisnotater som baggrundsviden. Delt af Aarhus Kommune.',
                 languageModel: 'gpt-4o',
                 framework: 'openwebui',
-                tags: ['borgerservice', 'social', 'jura'],
+                tags: $this->tags(['borgerservice', 'social', 'jura']),
             ),
             new Assistant(
                 title: 'Mødereferent',
                 description: 'Tager udgangspunkt i et indtalt eller transskriberet mødeoptag og leverer et struktureret referat med beslutninger, ansvarsfordeling og deadlines. Identificerer automatisk handlepunkter og foreslår opfølgningstidspunkter. Bruges på direktionsmøder, projektmøder og udvalgsmøder. Delt af Københavns Kommune.',
                 languageModel: 'claude-3.5-sonnet',
                 framework: 'openwebui',
-                tags: ['mødeledelse', 'dokumentation', 'produktivitet'],
+                tags: $this->tags(['mødeledelse', 'dokumentation', 'produktivitet']),
             ),
             new Assistant(
                 title: 'Journaliseringsassistent',
                 description: 'Foreslår journalplan-numre og overskrifter ud fra dokumentets indhold, så fagmedarbejdere kan godkende i ét klik. Tager højde for kommunens egen klassifikationsstruktur og henter forslag fra historiske, lignende sager. Reducerer den tid medarbejdere bruger på korrekt arkivering markant. Delt af Odense Kommune.',
                 languageModel: 'llama-3.1-70b',
                 framework: 'openwebui',
-                tags: ['dokumentation', 'journalisering', 'arkiv'],
+                tags: $this->tags(['dokumentation', 'journalisering', 'arkiv']),
             ),
             new Assistant(
                 title: 'Skole- og dagtilbudssvar',
                 description: 'Drafter svar til forældrehenvendelser på skole- og dagtilbudsområdet. Bygger svaret på kommunens egen vejledningssamling, gældende lovgivning på området og det specifikke dagtilbuds praksis. Vedhæfter kildehenvisninger så medarbejderen kan tjekke baggrunden inden afsendelse. Delt af Vejle Kommune.',
                 languageModel: 'gpt-4o-mini',
                 framework: 'openwebui',
-                tags: ['skole', 'dagtilbud', 'kommunikation'],
+                tags: $this->tags(['skole', 'dagtilbud', 'kommunikation']),
             ),
             new Assistant(
                 title: 'Tilsynsrapport-assistent',
                 description: 'Læser plejehjemstilsynsrapporter og fremhæver afvigelser, opfølgningspunkter og udvikling over tid. Sammenligner det enkelte plejehjems resultater med kommune- og landsgennemsnit og foreslår fokusområder til det næste tilsyn. Bygger på Styrelsen for Patientsikkerheds tilsynsdata. Delt af Aalborg Kommune.',
                 languageModel: 'mistral-large',
                 framework: 'openwebui',
-                tags: ['sundhed', 'tilsyn', 'plejehjem'],
+                tags: $this->tags(['sundhed', 'tilsyn', 'plejehjem']),
             ),
             new Assistant(
                 title: 'Uden kategorier',
@@ -195,10 +214,32 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 description: $topic['description'].' Delt af '.$kommune.'.',
                 languageModel: $languageModel,
                 framework: 'openwebui',
-                tags: $topic['tags'],
+                tags: $this->tags($topic['tags']),
             );
             FixtureCreators::assign($creators, $assistant, $index + $i);
             $manager->persist($assistant);
         }
+    }
+
+    /**
+     * Resolve a list of tag names to shared {@see Tag} entities.
+     *
+     * De-duplicates through {@see self::$tagCache} so a name used by more
+     * than one assistant maps to a single entity, satisfying the tag
+     * table's unique-name constraint. The tags are not persisted here;
+     * the assistant's cascade persists them on flush.
+     *
+     * @param list<string> $names tag names to resolve, in order
+     *
+     * @return list<Tag> the matching tag entities, one per input name
+     */
+    private function tags(array $names): array
+    {
+        $tags = [];
+        foreach ($names as $name) {
+            $tags[] = $this->tagCache[$name] ??= new Tag($name);
+        }
+
+        return $tags;
     }
 }

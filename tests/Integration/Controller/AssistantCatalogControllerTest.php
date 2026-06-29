@@ -114,4 +114,66 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertArrayNotHasKey('language_model', $params, 'chip removes the language_model filter');
         self::assertSame(['openwebui'], $params['framework'] ?? null, 'chip preserves the framework filter');
     }
+
+    // Tests that ?q=… narrows the cards to title/description matches and renders the quoted search chip.
+    public function testSearchQueryNarrowsResultsAndRendersChip(): void
+    {
+        $crawler = $this->client->request('GET', '/search?q=journaliseringsassistent');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(
+            1,
+            $crawler->filter('a[href^="/assistant/"]'),
+            'the query matches exactly one fixture title',
+        );
+        self::assertSelectorTextContains('[aria-label="Aktive filtre"]', '"journaliseringsassistent"');
+    }
+
+    // Tests that ?tag[]=… narrows the card list to the matching tag-facet count and renders the tag chip.
+    public function testTagFilterNarrowsResults(): void
+    {
+        $expected = self::getContainer()->get(AssistantRepository::class)->tagFacetCounts()['jura'] ?? 0;
+        self::assertGreaterThan(0, $expected, 'fixture baseline must include jura-tagged rows');
+
+        $crawler = $this->client->request('GET', '/search?tag%5B%5D=jura');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(
+            $expected,
+            $crawler->filter('a[href^="/assistant/"]')->count(),
+            'card count must match the jura fixture tag-facet count',
+        );
+        self::assertSelectorTextContains('[aria-label="Aktive filtre"]', 'jura');
+    }
+
+    // Ensures a search query and a tag filter combine (AND-across) to the intersection of both.
+    public function testSearchQueryAndTagCombine(): void
+    {
+        // 'jura' tags three rows; only Borgerservice-vejviser also mentions
+        // "borgerservice", so the intersection is a single card.
+        $crawler = $this->client->request('GET', '/search?q=borgerservice&tag%5B%5D=jura');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('a[href^="/assistant/"]'));
+        self::assertSelectorTextContains('a[href^="/assistant/"]', 'Borgerservice-vejviser');
+    }
+
+    // Ensures a tag chip's href drops only its tag while preserving the search query.
+    public function testTagChipRemoveLinkPreservesQuery(): void
+    {
+        $crawler = $this->client->request('GET', '/search?q=borgerservice&tag%5B%5D=jura');
+
+        self::assertResponseIsSuccessful();
+
+        $chip = $crawler->filter('[aria-label="Aktive filtre"] a')->reduce(static function ($node) {
+            return str_contains((string) $node->attr('aria-label'), 'jura');
+        });
+        self::assertCount(1, $chip, 'a removal chip for the jura tag must be rendered');
+
+        $params = [];
+        parse_str(parse_url((string) $chip->attr('href'), \PHP_URL_QUERY) ?? '', $params);
+
+        self::assertArrayNotHasKey('tag', $params, 'chip removes the tag filter');
+        self::assertSame('borgerservice', $params['q'] ?? null, 'chip preserves the search query');
+    }
 }

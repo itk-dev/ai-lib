@@ -190,8 +190,10 @@ catalog:
         heading: "Filtre"
         active: "Aktive filtre"
         chip_remove: "Fjern filter: %filter%"
+        search: "Søg"
         language_model: "Sprogmodel"
         framework: "Rammeværk"
+        tags: "Tags"
         apply: "Anvend filtre"
         reset: "Nulstil filtre"
     pagination:
@@ -219,6 +221,7 @@ register:
         empty_password: "Adgangskoden må ikke være tom."
         email_in_use: "Der findes allerede en konto med den e-mail."
         invalid_token: "Sessionen er udløbet. Indsend formularen igen."
+        rate_limited: "Du har sendt for mange anmodninger. Prøv igen senere."
     pending:
         title: "Konto oprettet – %brand%"
         eyebrow: "Tak"
@@ -253,6 +256,17 @@ settings:
 
             Du modtager besked, så snart kontoen er klar.
 
+profile:
+    edit:
+        title: "Redigér profil – %brand%"
+        eyebrow: "Min profil"
+        heading: "Redigér profil"
+        lead: "Opdatér oplysningerne om din egen konto. E-mail, rolle og status ændres af en administrator."
+        name_label: "Navn"
+        submit: "Gem ændringer"
+        flash:
+            saved: "Profilen er opdateret."
+
 assistant:
     detail:
         title: "%title% – %brand%"
@@ -262,6 +276,26 @@ assistant:
         framework_label: "Framework"
         language_model_label: "Sprogmodel"
         tags_heading: "Tags"
+    new:
+        title: "Opret assistent – %brand%"
+        eyebrow: "Del assistent"
+        heading: "Opret assistent"
+        title_label: "Titel"
+        description_label: "Beskrivelse"
+        language_model_label: "Sprogmodel"
+        framework_label: "Framework"
+        tags_label: "Tags (komma-separeret)"
+        config_label: "OpenWebUI-konfiguration (JSON)"
+        config_textarea_label: "Konfigurations-JSON"
+        config_help: "Vælg en JSON-fil, eller indsæt JSON direkte i feltet."
+        config_validating: "Validerer konfiguration…"
+        config_valid: "Konfigurationen er gyldig."
+        config_invalid: "Konfigurationen er ugyldig:"
+        submit: "Opret"
+        cancel: "Annuller"
+        error:
+            invalid_token: "Sessionen er udløbet. Indsend formularen igen."
+            missing_config: "Vælg en JSON-fil før indsendelse."
 
 frontpage:
     title: "%brand% – forhåndsvisning"

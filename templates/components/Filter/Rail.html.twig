@@ -13,7 +13,9 @@
         <twig:Heading level="2">{{ heading|trans }}</twig:Heading>
     </header>
 
-    <form method="get" action="{{ action }}" class="flex flex-col gap-6">
+    <form method="get" action="{{ action }}" class="flex flex-col gap-6"
+          data-controller="filter-autosubmit"
+          data-action="change->filter-autosubmit#submit">
         {% block content %}{% endblock %}
 
         <div class="flex flex-wrap items-center gap-3">

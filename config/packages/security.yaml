@@ -34,6 +34,13 @@ security:
             logout:
                 path: app_logout
                 target: app_frontpage
+            # Symfony Security's built-in throttling: caps repeated login
+            # attempts at five per quarter-hour per <IP, username> pair.
+            # Sixth attempt within the window short-circuits to a 429-class
+            # AuthenticationException rendered through the login template.
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
 
     # Note: Only the *first* matching rule is applied. The catch-all
     # `^/` rule flips the default to "every route requires

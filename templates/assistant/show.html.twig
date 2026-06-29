@@ -34,7 +34,7 @@
                 <ul class="flex flex-wrap gap-2" aria-label="{{ 'assistant.detail.tags_heading'|trans }}">
                     {% for tag in assistant.tags %}
                         <li class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text">
-                            {{ tag }}
+                            {{ tag.name }}
                         </li>
                     {% endfor %}
                 </ul>
