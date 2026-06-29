@@ -122,6 +122,7 @@ admin:
             email: "E-mail"
             status: "Status"
             role: "Rolle"
+            role_change: "Skift rolle"
             actions: "Handlinger"
         form:
             email_label: "E-mail"

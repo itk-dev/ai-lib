@@ -3,10 +3,14 @@ import { Controller } from "@hotwired/stimulus";
 /*
  * Inline role-mutation dropdown on /admin/users.
  *
- * Mounted per-row on the wrapper around the <select> + role label +
- * aria-live feedback span. When the user picks an option, fires a
- * POST against the role endpoint, swaps the visible role label on
- * success, and shows an inline message either way.
+ * Mounted per-row on the wrapper around the <select> + aria-live
+ * feedback span (in the "Skift rolle" column). The role label
+ * itself lives in the sibling "Rolle" cell, identified by a
+ * `data-role-picker-row-label` attribute on the same <tr>. The
+ * controller walks up to the row and back down to find that span
+ * so it can swap its text on success — Stimulus targets can't
+ * cross cell boundaries within a <tr>, but a single DOM lookup
+ * scoped to `closest('tr')` works fine.
  *
  * Values:
  *   url            — endpoint URL for this row (`/admin/users/{id}/role`).
@@ -19,11 +23,10 @@ import { Controller } from "@hotwired/stimulus";
  *
  * Targets:
  *   select   — the <select> the user manipulates.
- *   label    — the inline role label shown above the select.
  *   feedback — aria-live="polite" span used for success / error copy.
  */
 export default class extends Controller {
-    static targets = ["select", "label", "feedback"];
+    static targets = ["select", "feedback"];
     static values = {
         url: String,
         csrfToken: String,
@@ -62,7 +65,10 @@ export default class extends Controller {
                 return;
             }
 
-            this.labelTarget.textContent = payload.label || "";
+            const labelEl = this.rowLabelElement();
+            if (labelEl) {
+                labelEl.textContent = payload.label || "";
+            }
             this.feedbackTarget.textContent = this.successMessageValue;
             this.selectTarget.value = "";
         } catch (error) {
@@ -79,5 +85,17 @@ export default class extends Controller {
         // Restore the dropdown to its placeholder so the failed value
         // doesn't look like the new state.
         this.selectTarget.value = "";
+    }
+
+    // Look up the label cell in the sibling "Rolle" column of the
+    // same row. Returns null if the row markup ever drifts and the
+    // attribute hook is missing — the controller stays defensive
+    // rather than throwing.
+    rowLabelElement() {
+        const row = this.element.closest("tr");
+        if (!row) {
+            return null;
+        }
+        return row.querySelector("[data-role-picker-row-label]");
     }
 }
