@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The `/admin/settings/email` form now validates the
+  `admin_recipient` and `sender_address` fields together before
+  persisting either, so a submission that pairs a valid recipient
+  with an invalid sender (or vice versa) is rejected as a whole
+  and neither row is written. `SettingsManager` grows pure
+  `validateAdminRecipient()` and `validateSenderAddress()` helpers
+  alongside the existing `apply*()` shortcuts so multi-field
+  callers can do validate-all-then-persist
+  ([#132](https://github.com/itk-dev/ai-reolen/issues/132)).
 - Transactional email sender (`From:`) is now admin-editable
   at `/admin/settings/email` next to the existing
   "Modtager" field. `SettingsManager::getSenderAddress()`

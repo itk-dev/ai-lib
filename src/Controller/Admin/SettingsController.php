@@ -94,19 +94,26 @@ final class SettingsController extends AbstractController
                 ], new Response('', Response::HTTP_FORBIDDEN));
             }
 
-            if (!$this->settingsManager->applyAdminRecipient($submitted['admin_recipient'])) {
+            $adminRecipient = $this->settingsManager->validateAdminRecipient($submitted['admin_recipient']);
+            if (false === $adminRecipient) {
                 return $this->render('admin/settings/email.html.twig', [
                     'submitted' => $submitted,
                     'error' => 'admin.settings.error.invalid_email',
                 ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
             }
 
-            if (!$this->settingsManager->applySenderAddress($submitted['sender_address'])) {
+            $senderAddress = $this->settingsManager->validateSenderAddress($submitted['sender_address']);
+            if (false === $senderAddress) {
                 return $this->render('admin/settings/email.html.twig', [
                     'submitted' => $submitted,
                     'error' => 'admin.settings.error.invalid_sender',
                 ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
             }
+
+            // All fields validate — persist them together so a later
+            // invalid field cannot leave an earlier one partially saved.
+            $this->settingsManager->setAdminRecipient($adminRecipient);
+            $this->settingsManager->setSenderAddress($senderAddress);
 
             $this->settingsManager->applyEmailContent(
                 $submitted['admin_notification_subject'],

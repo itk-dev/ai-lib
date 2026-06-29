@@ -16,14 +16,9 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * Covers the "sender address is unset" guard added with the
- * promote-MAILER_FROM-to-setting work.
- *
- * Both registration notifiers resolve `From:` via
- * {@see SettingsManager::getSenderAddress()} at send time. When
- * that returns `null` (no setting row, empty MAILER_FROM env)
- * the notifier logs a warning and returns without dispatching
- * anything — the registration request stays alive.
+ * Both registration notifiers must skip the send (not throw) when
+ * {@see SettingsManager::getSenderAddress()} returns `null`, so the
+ * registration request stays alive on an unconfigured `From:`.
  */
 final class NotifierSkipsWhenSenderUnsetTest extends TestCase
 {

@@ -118,14 +118,12 @@ class SettingsManager
      * Read the configured transactional-mail sender (`From:`) address.
      *
      * Returns the admin-saved override when set, otherwise falls
-     * back to the deploy-time `MAILER_FROM` env var. Returns `null`
-     * when both are unset (empty env var); callers — currently the
-     * registration notifiers — log a warning and skip the send in
-     * that case rather than crashing the request.
+     * back to the deploy-time `MAILER_FROM` env var, or `null` when
+     * both are unset. Callers decide how to handle a `null` sender.
      *
      * The string may include a display-name component, e.g.
      * `"AI Reolen <noreply@…>"`; `Address::create()` parses both
-     * shapes on the call site.
+     * shapes on the send side.
      *
      * @return string|null current sender address, or null when neither setting nor env are configured
      */
@@ -382,43 +380,47 @@ class SettingsManager
     }
 
     /**
-     * Try to apply an admin notification recipient submission.
+     * Validate (and normalise) a submitted admin notification recipient.
      *
-     * Accepts the raw form value, trims it, and clears the
-     * setting when the result is empty. A non-empty value is
-     * validated against `FILTER_VALIDATE_EMAIL`; an invalid
-     * address is rejected and nothing is persisted.
+     * Trims the input. Returns the trimmed address when it parses
+     * as a valid e-mail (or `null` when the input was empty, meaning
+     * "clear the row"), or `false` when the input is non-empty but
+     * not a syntactically valid e-mail. Pure — does not touch the
+     * repository.
+     *
+     * Pair with {@see validateSenderAddress()} to validate an entire
+     * email-settings submission before persisting any field.
      *
      * @param string|null $address raw submitted recipient address
      *
-     * @return bool true on accept (cleared or persisted), false on a syntactically invalid non-empty address
+     * @return string|false|null trimmed address (or null to clear) on accept, false on invalid
      */
-    public function applyAdminRecipient(?string $address): bool
+    public function validateAdminRecipient(?string $address): string|false|null
     {
         $normalised = self::emptyToNull($address);
         if (null !== $normalised && !filter_var($normalised, \FILTER_VALIDATE_EMAIL)) {
             return false;
         }
 
-        $this->setAdminRecipient($normalised);
-
-        return true;
+        return $normalised;
     }
 
     /**
-     * Try to apply a transactional-mail sender submission.
+     * Validate (and normalise) a submitted transactional-mail sender.
      *
-     * Accepts either a bare e-mail (`noreply@…`) or a
-     * display-name form (`"AI Reolen <noreply@…>"`); the latter
-     * is what Symfony Mailer's {@see \Symfony\Component\Mime\Address::create()}
-     * parses on the call site. Trims, clears on empty, and
-     * rejects unparseable input with `false`.
+     * Accepts either a bare e-mail (`noreply@…`) or a display-name
+     * form (`"AI Reolen <noreply@…>"`) — the same shape Symfony's
+     * {@see \Symfony\Component\Mime\Address::create()} parses on the
+     * send side. Returns the trimmed string on accept, `null` when
+     * the input was empty (clear the row), or `false` when the input
+     * is non-empty and unparseable. Pure — does not touch the
+     * repository.
      *
      * @param string|null $address raw submitted sender address
      *
-     * @return bool true on accept (cleared or persisted), false on a syntactically invalid non-empty address
+     * @return string|false|null trimmed address (or null to clear) on accept, false on invalid
      */
-    public function applySenderAddress(?string $address): bool
+    public function validateSenderAddress(?string $address): string|false|null
     {
         $normalised = self::emptyToNull($address);
         if (null !== $normalised) {
@@ -429,7 +431,55 @@ class SettingsManager
             }
         }
 
-        $this->setSenderAddress($normalised);
+        return $normalised;
+    }
+
+    /**
+     * Validate and persist an admin notification recipient submission in one call.
+     *
+     * Delegates validation to {@see validateAdminRecipient()} and
+     * persists via {@see setAdminRecipient()} on accept. Prefer the
+     * split form ({@see validateAdminRecipient()} +
+     * {@see setAdminRecipient()}) when multiple fields share a
+     * single form so the whole submission can be validated before
+     * any row is written.
+     *
+     * @param string|null $address raw submitted recipient address
+     *
+     * @return bool true on accept (cleared or persisted), false on a syntactically invalid non-empty address
+     */
+    public function applyAdminRecipient(?string $address): bool
+    {
+        $result = $this->validateAdminRecipient($address);
+        if (false === $result) {
+            return false;
+        }
+
+        $this->setAdminRecipient($result);
+
+        return true;
+    }
+
+    /**
+     * Validate and persist a transactional-mail sender submission in one call.
+     *
+     * Delegates validation to {@see validateSenderAddress()} and
+     * persists via {@see setSenderAddress()} on accept. Prefer the
+     * split form when multiple fields share a single form so the
+     * whole submission can be validated before any row is written.
+     *
+     * @param string|null $address raw submitted sender address
+     *
+     * @return bool true on accept (cleared or persisted), false on a syntactically invalid non-empty address
+     */
+    public function applySenderAddress(?string $address): bool
+    {
+        $result = $this->validateSenderAddress($address);
+        if (false === $result) {
+            return false;
+        }
+
+        $this->setSenderAddress($result);
 
         return true;
     }
