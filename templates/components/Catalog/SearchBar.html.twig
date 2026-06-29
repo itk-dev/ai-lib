@@ -29,13 +29,14 @@
         <input type="hidden" name="sort" value="{{ query.sort }}">
     {% endif %}
 
-    <label for="catalog-search" class="sr-only">{{ 'catalog.filters.search'|trans }}</label>
-    <input id="catalog-search"
-           name="q"
-           type="search"
-           value="{{ criteria.q }}"
-           autocomplete="off"
-           placeholder="{{ 'catalog.search.placeholder'|trans }}"
-           class="w-full flex-1 appearance-none rounded-lg border border-line bg-surface px-4 py-2.5 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+    <twig:Form:Label for="catalog-search" text="{{ 'catalog.filters.search'|trans }}" srOnly />
+    <twig:Form:TextInput
+        id="catalog-search"
+        name="q"
+        type="search"
+        value="{{ criteria.q }}"
+        autocomplete="off"
+        placeholder="{{ 'catalog.search.placeholder'|trans }}"
+        class="w-full flex-1" />
     <twig:Form:Button shape="rounded">{{ 'catalog.search.submit'|trans }}</twig:Form:Button>
 </form>

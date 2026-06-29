@@ -39,15 +39,14 @@
             <input type="hidden" name="tag[]" value="{{ value }}">
         {% endfor %}
 
-        <label for="catalog-sort" class="sr-only">{{ 'catalog.sort.label'|trans }}</label>
-        <select id="catalog-sort" name="sort"
-                class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+        <twig:Form:Label for="catalog-sort" text="{{ 'catalog.sort.label'|trans }}" srOnly />
+        <twig:Form:Select id="catalog-sort" name="sort">
             {% for option in options %}
                 <option value="{{ option.value }}" {{ option.value == criteria.sort.value ? 'selected' }}>
                     {{ option.labelKey|trans }}
                 </option>
             {% endfor %}
-        </select>
+        </twig:Form:Select>
 
         <noscript>
             <twig:Form:Button shape="pill" size="sm">{{ 'catalog.sort.apply'|trans }}</twig:Form:Button>
