@@ -33,6 +33,7 @@ final class SettingsController extends AbstractController
             'brand_name' => $this->settingsManager->getBrandName(),
             'brand_tagline' => $this->settingsManager->getBrandTagline(),
             'brand_initials' => $this->settingsManager->getBrandInitials(),
+            'hero_text' => $this->settingsManager->getHeroText(),
         ];
 
         if ('POST' === $request->getMethod()) {
@@ -40,6 +41,7 @@ final class SettingsController extends AbstractController
                 'brand_name' => (string) $request->request->get('brand_name', ''),
                 'brand_tagline' => (string) $request->request->get('brand_tagline', ''),
                 'brand_initials' => (string) $request->request->get('brand_initials', ''),
+                'hero_text' => (string) $request->request->get('hero_text', ''),
             ];
 
             if (!$this->isCsrfTokenValid('admin-settings-site', (string) $request->request->get('_token'))) {
@@ -53,6 +55,7 @@ final class SettingsController extends AbstractController
                 $submitted['brand_name'],
                 $submitted['brand_tagline'],
                 $submitted['brand_initials'],
+                $submitted['hero_text'],
             );
             $this->addFlash('success', 'admin.settings.flash.saved');
 

@@ -48,6 +48,16 @@ class SettingsManager
     public const string BRAND_INITIALS = 'brand_initials';
 
     /**
+     * Canonical key for the marketing-style "hero" copy rendered on
+     * the public frontpage under the brand heading.
+     *
+     * Falls back to the `frontpage.hero.lead` translation when the
+     * setting row is unset, so a fresh install renders the default
+     * Danish copy until an operator overrides it.
+     */
+    public const string HERO_TEXT = 'hero_text';
+
+    /**
      * Canonical keys for the admin-notification email content.
      */
     public const string ADMIN_NOTIFICATION_SUBJECT = 'admin_notification_subject';
@@ -191,6 +201,36 @@ class SettingsManager
     }
 
     /**
+     * Read the configured hero copy rendered on the public frontpage.
+     *
+     * Returns the admin-saved override when set, otherwise the
+     * translated `frontpage.hero.lead` default so a fresh install
+     * keeps rendering the same Danish copy until an operator
+     * overrides it through `/admin/settings/site`.
+     *
+     * @return string current hero copy
+     */
+    public function getHeroText(): string
+    {
+        return $this->getString(self::HERO_TEXT)
+            ?? $this->translator->trans('frontpage.hero.lead');
+    }
+
+    /**
+     * Persist the frontpage hero copy.
+     *
+     * Inserts a new `setting` row when the key is unset, otherwise
+     * updates the existing one. Pass `null` to revert to the
+     * translation-based default.
+     *
+     * @param string|null $text hero copy to store, or null to clear
+     */
+    public function setHeroText(?string $text): void
+    {
+        $this->setString(self::HERO_TEXT, $text);
+    }
+
+    /**
      * Read the configured subject template for the admin notification email.
      *
      * Returns the admin-saved override when set, otherwise the
@@ -317,22 +357,25 @@ class SettingsManager
     }
 
     /**
-     * Apply a raw brand-identity submission in one call.
+     * Apply a raw site-identity submission in one call.
      *
      * Each argument is trimmed and empty strings are treated as
      * `null`, so a form that submits empty fields reverts the
-     * override and lets the `BRAND_*` env-var defaults win again.
+     * override and lets the relevant default (env var for the
+     * brand fields, translation key for `hero_text`) win again.
      * Every key is persisted on the same flush.
      *
-     * @param string|null $name     submitted brand name, or null to leave alone the trimming branch
+     * @param string|null $name     submitted brand name
      * @param string|null $tagline  submitted brand tagline
      * @param string|null $initials submitted brand initials
+     * @param string|null $heroText submitted frontpage hero copy
      */
-    public function applyBrandIdentity(?string $name, ?string $tagline, ?string $initials): void
+    public function applyBrandIdentity(?string $name, ?string $tagline, ?string $initials, ?string $heroText): void
     {
         $this->setBrandName(self::emptyToNull($name));
         $this->setBrandTagline(self::emptyToNull($tagline));
         $this->setBrandInitials(self::emptyToNull($initials));
+        $this->setHeroText(self::emptyToNull($heroText));
     }
 
     /**
