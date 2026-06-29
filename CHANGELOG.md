@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Branded HTTP 403 page. `App\Security\AccessDeniedHandler`
+  is wired on the `main` firewall as
+  `access_denied_handler` and renders
+  `templates/security/access_denied.html.twig` ("Adgang
+  nægtet" + link back to the frontpage) instead of the
+  default blank Symfony 403. Anonymous requests on
+  protected routes still go through `UnauthorizedEntryPoint`
+  and return 401 — the two cases stay distinct
+  ([Symfony docs](https://symfony.com/doc/current/security/access_denied_handler.html)).
 - Transactional registration emails. After a successful
   `/register` submission, two emails are dispatched: an admin
   notification to the moderator inbox (the existing

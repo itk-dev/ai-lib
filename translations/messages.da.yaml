@@ -49,6 +49,12 @@ security:
         email_label: "E-mail"
         password_label: "Adgangskode"
         submit: "Log ind"
+    access_denied:
+        title: "Adgang nægtet – %brand%"
+        eyebrow: "Adgang nægtet"
+        heading: "Du har ikke adgang til denne side"
+        lead: "Din konto har ikke rettigheder til at se den side, du forsøgte at åbne. Kontakt en administrator, hvis du mener, det er en fejl."
+        back_link: "← Til forsiden"
 
 admin:
     organization:

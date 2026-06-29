@@ -26,6 +26,11 @@ security:
             provider: app_user_provider
             user_checker: App\Security\AccountStatusChecker
             entry_point: App\Security\UnauthorizedEntryPoint
+            # Custom 403 handler renders a branded "Adgang nægtet" page
+            # for authenticated users that hit a route they don't have
+            # the role for. Anonymous requests still go through the
+            # entry point above (401), so the two cases stay distinct.
+            access_denied_handler: App\Security\AccessDeniedHandler
             form_login:
                 login_path: app_login
                 check_path: app_login
