@@ -14,8 +14,8 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
  * Authorises a `User` action on a target {@see User}, scoped by email
- * domain and (for role-mutation attributes) by an explicit "manager
- * cannot edit admin" guard.
+ * domain and gated by an explicit "manager cannot touch admin"
+ * guard.
  *
  * Two families of attributes are supported:
  *
@@ -26,19 +26,21 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
  * Common rules (every attribute):
  *
  * 1. The acting user must hold {@see Roles::DOMAIN_MANAGER}.
- * 2. If they hold {@see Roles::ADMIN}, allow across all domains.
- * 3. Otherwise allow iff the actor and subject share the lowercased
+ * 2. A manager (actor without `ROLE_ADMIN`) may never act on a
+ *    subject that holds `ROLE_ADMIN`, regardless of email domain.
+ *    Blocking, approving, or demoting an admin all count as
+ *    "acting on" — letting a manager block an admin would lock
+ *    that admin out of the install even though their role list is
+ *    intact, which is the same privilege-escalation shape as
+ *    demoting them.
+ * 3. If the actor holds `ROLE_ADMIN`, allow across all domains.
+ * 4. Otherwise allow iff the actor and subject share the lowercased
  *    email domain returned by {@see EmailDomain::of()}.
  *
  * Role-mutation extras:
  *
  * - `PROMOTE_TO_ADMIN` is admin-only: a manager never gets to mint an
  *   admin, regardless of domain.
- * - `PROMOTE_TO_MANAGER` and `DEMOTE` deny when the subject already
- *   holds {@see Roles::ADMIN} and the actor is not an admin —
- *   privilege escalation by way of demoting an admin to a manager
- *   (which the demoting manager could then control) is the exact
- *   hole this rule closes.
  *
  * The voter never reads the subject's `status` — identity state
  * (signed-in or not) is handled by the `UserCheckerInterface`.
@@ -58,16 +60,6 @@ final class ManageUserVoter extends Voter
         self::MANAGE,
         self::APPROVE,
         self::BLOCK,
-        self::PROMOTE_TO_MANAGER,
-        self::PROMOTE_TO_ADMIN,
-        self::DEMOTE,
-    ];
-
-    /**
-     * Attributes that mutate role grants. These trigger the
-     * manager-cannot-touch-admin guard at the top of the vote.
-     */
-    private const array ROLE_MUTATION_ATTRIBUTES = [
         self::PROMOTE_TO_MANAGER,
         self::PROMOTE_TO_ADMIN,
         self::DEMOTE,
@@ -118,16 +110,20 @@ final class ManageUserVoter extends Voter
 
         $actorIsAdmin = $this->accessDecisionManager->decide($token, [Roles::ADMIN]);
 
-        // Role-mutation guard. A manager must never touch an admin —
-        // not even within the same email domain. A manager must also
-        // never mint a new admin.
-        if (\in_array($attribute, self::ROLE_MUTATION_ATTRIBUTES, true) && !$actorIsAdmin) {
-            if (self::PROMOTE_TO_ADMIN === $attribute) {
-                return false;
-            }
-            if (\in_array(Roles::ADMIN, $subject->getRoles(), true)) {
-                return false;
-            }
+        // A manager must never act on an admin — same-domain or
+        // cross-domain, approve / block / promote / demote, doesn't
+        // matter. Blocking an admin would lock them out of the
+        // install while keeping their role list intact, which is the
+        // same privilege-escalation shape as demoting them, so the
+        // guard applies uniformly across every supported attribute.
+        if (!$actorIsAdmin && \in_array(Roles::ADMIN, $subject->getRoles(), true)) {
+            return false;
+        }
+
+        // `PROMOTE_TO_ADMIN` is admin-only — a manager never gets to
+        // mint a new admin, even on a same-domain plain user.
+        if (self::PROMOTE_TO_ADMIN === $attribute && !$actorIsAdmin) {
+            return false;
         }
 
         if ($actorIsAdmin) {

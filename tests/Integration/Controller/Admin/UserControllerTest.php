@@ -306,6 +306,48 @@ final class UserControllerTest extends WebTestCase
         self::assertCount(0, $adminRow->filter('select'), 'Manager must not be offered a dropdown on an admin row.');
     }
 
+    // Ensures the approve / block buttons disappear for admin targets when the actor is a manager — defense in depth against an oversight in the voter.
+    public function testManagerSeesNoApproveOrBlockButtonsForAdminTargets(): void
+    {
+        $um = self::getContainer()->get(UserManager::class);
+        $um->createUser('mgr@example.test', 'Mgr', 'pw', [Roles::DOMAIN_MANAGER]);
+        $um->createUser('inhouse-admin@example.test', 'Inhouse Admin', 'pw', [Roles::ADMIN], status: UserStatus::Pending);
+        $this->loginAsApproved('mgr@example.test');
+
+        $crawler = $this->client->request('GET', '/admin/users');
+
+        self::assertResponseIsSuccessful();
+        $adminRow = $crawler->filter('tbody tr:contains("inhouse-admin@example.test")');
+        self::assertGreaterThan(0, $adminRow->count(), 'Admin row must render for an in-domain manager.');
+        self::assertCount(0, $adminRow->filter('form[action*="/approve"]'), 'Manager must not see the approve form on an admin row.');
+        self::assertCount(0, $adminRow->filter('form[action*="/block"]'), 'Manager must not see the block form on an admin row.');
+    }
+
+    // Verifies a hand-crafted POST to /admin/users/{adminId}/block as a manager actor returns 403 and does not flip the admin's status.
+    public function testManagerCannotBlockAdminViaDirectPost(): void
+    {
+        $um = self::getContainer()->get(UserManager::class);
+        $um->createUser('mgr@example.test', 'Mgr', 'pw', [Roles::DOMAIN_MANAGER]);
+        $admin = $um->createUser('inhouse-admin@example.test', 'Inhouse Admin', 'pw', [Roles::ADMIN], status: UserStatus::Approved);
+        $this->loginAsApproved('mgr@example.test');
+
+        // Grab a valid token from the list page — the voter denies before
+        // the CSRF check would matter, but using a real token rules out a
+        // false negative coming from token validation.
+        $crawler = $this->client->request('GET', '/admin/users');
+        $token = $crawler->filter('input[name="_token"]')->first()->attr('value');
+
+        $this->client->request('POST', '/admin/users/'.$admin->getId().'/block', [
+            '_token' => $token,
+        ]);
+
+        self::assertResponseStatusCodeSame(403);
+
+        $reloaded = self::getContainer()->get(UserRepository::class)->find($admin->getId());
+        self::assertNotNull($reloaded);
+        self::assertSame(UserStatus::Approved, $reloaded->getStatus(), 'Block on an admin must be denied before any status flip.');
+    }
+
     private function loginAsApproved(string $email): void
     {
         $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]);

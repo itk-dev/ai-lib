@@ -246,6 +246,58 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Ensures a manager cannot block an admin even within their own domain — blocking would lock the admin out despite keeping the role list intact.
+    public function testManagerCannotBlockAdminEvenInSameDomain(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+        $admin = $this->userWithRolesAndEmail([Roles::ADMIN], 'admin@aarhus.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $admin, [ManageUserVoter::BLOCK]),
+        );
+    }
+
+    // Ensures a manager cannot approve an admin even within their own domain — same uniform "manager cannot touch admin" rule.
+    public function testManagerCannotApproveAdminEvenInSameDomain(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+        $admin = $this->userWithRolesAndEmail([Roles::ADMIN], 'admin@aarhus.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $admin, [ManageUserVoter::APPROVE]),
+        );
+    }
+
+    // Ensures the umbrella MANAGE attribute is also blocked when the actor is a manager and the target is an admin.
+    public function testManagerCannotUseUmbrellaManageOnAdminEvenInSameDomain(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+        $admin = $this->userWithRolesAndEmail([Roles::ADMIN], 'admin@aarhus.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $admin, [ManageUserVoter::MANAGE]),
+        );
+    }
+
+    // Verifies an admin can still block another admin — the manager-cannot-touch-admin rule does not apply to admin actors.
+    public function testAdminCanBlockAnotherAdmin(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER, Roles::ADMIN]);
+        $token = $this->tokenFor($this->userWithEmail('admin@aarhus.dk'));
+        $target = $this->userWithRolesAndEmail([Roles::ADMIN], 'other@aalborg.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($token, $target, [ManageUserVoter::BLOCK]),
+        );
+    }
+
     private function userWithEmail(string $email): User
     {
         $user = new User();

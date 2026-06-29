@@ -120,7 +120,7 @@
                             </twig:Table:Cell>
                             <twig:Table:Cell align="right">
                                 <div class="inline-flex items-center gap-2 whitespace-nowrap">
-                                    {% if u.status.value != 'approved' %}
+                                    {% if u.status.value != 'approved' and is_granted('APPROVE_USER', u) %}
                                         <form action="{{ path('app_admin_user_approve', {id: u.id}) }}" method="post" class="inline">
                                             <input type="hidden" name="_token" value="{{ csrf_token('admin-user-action') }}">
                                             <input type="hidden" name="back" value="{{ back_url }}">
@@ -130,7 +130,7 @@
                                         </form>
                                     {% endif %}
 
-                                    {% if u.status.value != 'blocked' %}
+                                    {% if u.status.value != 'blocked' and is_granted('BLOCK_USER', u) %}
                                         <form action="{{ path('app_admin_user_block', {id: u.id}) }}" method="post" class="inline">
                                             <input type="hidden" name="_token" value="{{ csrf_token('admin-user-action') }}">
                                             <input type="hidden" name="back" value="{{ back_url }}">
