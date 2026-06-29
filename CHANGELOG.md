@@ -9,14 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Branded HTTP 403 page. `App\Security\AccessDeniedHandler`
-  is wired on the `main` firewall as
-  `access_denied_handler` and renders
+- Branded HTTP 401 and 403 pages for the firewall entry
+  points. `App\Security\UnauthorizedEntryPoint` now renders
+  `templates/security/unauthorized.html.twig` ("Log ind
+  påkrævet" + login / register CTA) instead of the empty
+  401 that made Firefox fall back to its built-in error UI.
+  `App\Security\AccessDeniedHandler` (wired on the `main`
+  firewall as `access_denied_handler`) renders
   `templates/security/access_denied.html.twig` ("Adgang
   nægtet" + link back to the frontpage) instead of the
-  default blank Symfony 403. Anonymous requests on
-  protected routes still go through `UnauthorizedEntryPoint`
-  and return 401 — the two cases stay distinct
+  default blank Symfony 403. Both templates extend the
+  public base layout so brand chrome stays present, and the
+  two cases (no authentication vs. wrong role) intentionally
+  render differently
   ([Symfony docs](https://symfony.com/doc/current/security/access_denied_handler.html)).
 - Transactional registration emails. After a successful
   `/register` submission, two emails are dispatched: an admin
