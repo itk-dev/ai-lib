@@ -70,6 +70,7 @@ final class SettingsController extends AbstractController
     {
         $submitted = [
             'admin_recipient' => $this->settingsManager->getAdminRecipient() ?? '',
+            'sender_address' => $this->settingsManager->getSenderAddress() ?? '',
             'admin_notification_subject' => $this->settingsManager->getAdminNotificationSubject(),
             'admin_notification_body' => $this->settingsManager->getAdminNotificationBody(),
             'registration_confirmation_subject' => $this->settingsManager->getRegistrationConfirmationSubject(),
@@ -79,6 +80,7 @@ final class SettingsController extends AbstractController
         if ('POST' === $request->getMethod()) {
             $submitted = [
                 'admin_recipient' => (string) $request->request->get('admin_recipient', ''),
+                'sender_address' => (string) $request->request->get('sender_address', ''),
                 'admin_notification_subject' => (string) $request->request->get('admin_notification_subject', ''),
                 'admin_notification_body' => (string) $request->request->get('admin_notification_body', ''),
                 'registration_confirmation_subject' => (string) $request->request->get('registration_confirmation_subject', ''),
@@ -96,6 +98,13 @@ final class SettingsController extends AbstractController
                 return $this->render('admin/settings/email.html.twig', [
                     'submitted' => $submitted,
                     'error' => 'admin.settings.error.invalid_email',
+                ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
+            }
+
+            if (!$this->settingsManager->applySenderAddress($submitted['sender_address'])) {
+                return $this->render('admin/settings/email.html.twig', [
+                    'submitted' => $submitted,
+                    'error' => 'admin.settings.error.invalid_sender',
                 ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
             }
 

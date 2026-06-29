@@ -8,6 +8,7 @@ use App\Entity\Setting;
 use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Mime\Address;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -31,6 +32,14 @@ class SettingsManager
      * Matched against {@see Setting::getName()}.
      */
     public const string ADMIN_RECIPIENT = 'admin_recipient';
+
+    /**
+     * Canonical key for the transactional-mail sender (`From:`) address.
+     *
+     * When unset, the manager falls back to the `MAILER_FROM` env var
+     * so a fresh install still has a working `From:`.
+     */
+    public const string SENDER_ADDRESS = 'sender_address';
 
     /**
      * Canonical key for the public-facing brand name (full title).
@@ -69,6 +78,8 @@ class SettingsManager
         private readonly string $defaultBrandTagline,
         #[Autowire('%env(BRAND_INITIALS)%')]
         private readonly string $defaultBrandInitials,
+        #[Autowire('%env(MAILER_FROM)%')]
+        private readonly string $defaultSenderAddress,
     ) {
     }
 
@@ -101,6 +112,41 @@ class SettingsManager
     public function setAdminRecipient(?string $email): void
     {
         $this->setString(self::ADMIN_RECIPIENT, $email);
+    }
+
+    /**
+     * Read the configured transactional-mail sender (`From:`) address.
+     *
+     * Returns the admin-saved override when set, otherwise falls
+     * back to the deploy-time `MAILER_FROM` env var. Returns `null`
+     * when both are unset (empty env var); callers — currently the
+     * registration notifiers — log a warning and skip the send in
+     * that case rather than crashing the request.
+     *
+     * The string may include a display-name component, e.g.
+     * `"AI Reolen <noreply@…>"`; `Address::create()` parses both
+     * shapes on the call site.
+     *
+     * @return string|null current sender address, or null when neither setting nor env are configured
+     */
+    public function getSenderAddress(): ?string
+    {
+        return $this->getString(self::SENDER_ADDRESS)
+            ?? ('' === $this->defaultSenderAddress ? null : $this->defaultSenderAddress);
+    }
+
+    /**
+     * Persist the transactional-mail sender address.
+     *
+     * Inserts a new `setting` row when the key is unset, otherwise
+     * updates the existing one. Pass `null` to revert to the
+     * `MAILER_FROM` env-var default.
+     *
+     * @param string|null $address sender address to store, or null to clear
+     */
+    public function setSenderAddress(?string $address): void
+    {
+        $this->setString(self::SENDER_ADDRESS, $address);
     }
 
     /**
@@ -355,6 +401,35 @@ class SettingsManager
         }
 
         $this->setAdminRecipient($normalised);
+
+        return true;
+    }
+
+    /**
+     * Try to apply a transactional-mail sender submission.
+     *
+     * Accepts either a bare e-mail (`noreply@…`) or a
+     * display-name form (`"AI Reolen <noreply@…>"`); the latter
+     * is what Symfony Mailer's {@see \Symfony\Component\Mime\Address::create()}
+     * parses on the call site. Trims, clears on empty, and
+     * rejects unparseable input with `false`.
+     *
+     * @param string|null $address raw submitted sender address
+     *
+     * @return bool true on accept (cleared or persisted), false on a syntactically invalid non-empty address
+     */
+    public function applySenderAddress(?string $address): bool
+    {
+        $normalised = self::emptyToNull($address);
+        if (null !== $normalised) {
+            try {
+                Address::create($normalised);
+            } catch (\Throwable) {
+                return false;
+            }
+        }
+
+        $this->setSenderAddress($normalised);
 
         return true;
     }

@@ -138,6 +138,7 @@ admin:
         error:
             invalid_token: "Sessionen er udløbet. Indsend formularen igen."
             invalid_email: "Indtast en gyldig e-mailadresse."
+            invalid_sender: 'Indtast en gyldig afsenderadresse, fx noreply@example.dk eller "AI Reolen <noreply@example.dk>".'
         flash:
             saved: "Indstillingerne er gemt."
         site:
@@ -167,6 +168,9 @@ admin:
                 admin_recipient:
                     label: "E-mailadresse"
                     help: "Modtager besked når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
+                sender_address:
+                    label: "Afsenderadresse"
+                    help: 'Afsender (From:) på systemmails. Accepterer `noreply@example.dk` eller `"AI Reolen <noreply@example.dk>"`. Lad feltet stå tomt for at falde tilbage til MAILER_FROM-miljøvariablen.'
                 subject:
                     label: "Emne"
                 body:

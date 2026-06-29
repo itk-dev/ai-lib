@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Transactional email sender (`From:`) is now admin-editable
+  at `/admin/settings/email` next to the existing
+  "Modtager" field. `SettingsManager::getSenderAddress()`
+  reads the new `sender_address` setting and falls back to
+  the `MAILER_FROM` env var when unset, mirroring the
+  `BRAND_NAME` pattern. Both
+  `App\Notification\AdminRegistrationNotifier` and
+  `App\Notification\RegistrationConfirmationNotifier`
+  resolve the sender at send time so admin edits take
+  effect immediately, and log + skip when both setting
+  and env are empty so a half-configured mailer doesn't
+  crash registrations. Accepts both bare e-mails
+  (`noreply@…`) and the display-name form (`"AI Reolen
+  <noreply@…>"`) — same shape Symfony's
+  `Address::create()` parses
+  ([#132](https://github.com/itk-dev/ai-reolen/issues/132)).
 - Transactional registration emails. After a successful
   `/register` submission, two emails are dispatched: an admin
   notification to the moderator inbox (the existing
