@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Catalogue result ordering. The `/search` page gains a "Sortering"
+  box in the filter column, above the filters, offering newest, oldest,
+  recently-updated, and name (A–Å / Å–A) orderings, defaulting to
+  newest-first. The chosen ordering travels in the `?sort=` URL
+  parameter, combines with the active search and facet filters (each
+  form mirrors the other's state as hidden inputs, so changing the sort
+  preserves the filters and toggling a facet preserves the sort), and
+  survives pagination. Changing the order auto-submits (Stimulus, with a
+  no-JS fallback) and returns to page 1
+  ([#19](https://github.com/itk-dev/ai-reolen/issues/19)).
 - Transactional registration emails. After a successful
   `/register` submission, two emails are dispatched: an admin
   notification to the moderator inbox (the existing

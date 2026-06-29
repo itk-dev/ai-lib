@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Catalog;
 
 use App\Catalog\CatalogCriteria;
+use App\Catalog\CatalogSort;
 use App\Http\QueryStringList;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -157,5 +158,35 @@ final class CatalogCriteriaTest extends TestCase
         // emits `?framework[]=openwebui`, not `?language_model[]=&framework[]=…`.
         self::assertSame(['framework' => ['openwebui']], $filters[0]->removeQuery);
         self::assertArrayNotHasKey('language_model', $filters[0]->removeQuery);
+    }
+
+    // Ensures a request with no `?sort=` defaults to newest-first and omits sort from the query map.
+    public function testFromRequestDefaultsSortToNewest(): void
+    {
+        $criteria = CatalogCriteria::fromRequest(Request::create('/search'), $this->lists);
+
+        self::assertSame(CatalogSort::Newest, $criteria->sort);
+        self::assertArrayNotHasKey('sort', $criteria->toQueryArray());
+    }
+
+    // Tests that `?sort=name` parses to the name-ascending case and round-trips through toQueryArray().
+    public function testFromRequestReadsSortAndEmitsItWhenNonDefault(): void
+    {
+        $criteria = CatalogCriteria::fromRequest(
+            Request::create('/search', 'GET', ['sort' => 'name']),
+            $this->lists,
+        );
+
+        self::assertSame(CatalogSort::NameAsc, $criteria->sort);
+        self::assertSame(['sort' => 'name'], $criteria->toQueryArray());
+        self::assertTrue($criteria->isEmpty(), 'sort alone is not a filter');
+    }
+
+    // Ensures sort rides alongside the filters in toQueryArray so pagination links preserve the ordering.
+    public function testToQueryArrayCarriesSortNextToFilters(): void
+    {
+        $criteria = new CatalogCriteria(q: 'borger', sort: CatalogSort::NameDesc);
+
+        self::assertSame(['q' => 'borger', 'sort' => 'name_desc'], $criteria->toQueryArray());
     }
 }

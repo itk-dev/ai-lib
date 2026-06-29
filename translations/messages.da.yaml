@@ -180,6 +180,19 @@ catalog:
     result_count:
         one: "1 resultat"
         many: "%count% resultater"
+    search:
+        placeholder: "Søg …"
+        submit: "Søg"
+    sort:
+        eyebrow: "Sortér"
+        heading: "Sortering"
+        label: "Sortér efter"
+        apply: "Sortér"
+        newest: "Nyeste"
+        oldest: "Ældste"
+        recently_updated: "Senest opdateret"
+        name_asc: "Navn (A–Å)"
+        name_desc: "Navn (Å–A)"
     empty:
         heading: "Ingen assistenter matcher"
         help: "Prøv at slække på filtrene eller fjerne en facet."
