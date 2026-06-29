@@ -54,7 +54,7 @@
                 <p class="mt-1 text-sm text-text">{{ 'admin.settings.site.fields.brand_initials.help'|trans }}</p>
             </twig:Form:Label>
 
-            <input type="hidden" name="_token" value="{{ csrf_token('admin-settings-site') }}">
+            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-settings-site') }}">
 
             <div class="flex items-center gap-4">
                 <twig:Form:Button type="submit">

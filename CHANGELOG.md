@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Unified CSRF protection on the stateless double-submit cookie
+  pattern. Every hand-rolled form intent —
+  `assistant-create`, `register`, `admin-organization-delete`,
+  `admin-user-action`, `admin-settings-site`, and
+  `admin-settings-email` — is now listed under
+  `framework.csrf_protection.stateless_token_ids`, so Symfony's
+  `SameOriginCsrfTokenManager` validates the token against the
+  `__Host-csrf` cookie instead of a session-bound token. The
+  matching `<input type="hidden" name="_token">` fields gain
+  `data-controller="csrf-protection"` so the bundled Stimulus
+  controller mirrors the cookie value into the field on submit.
+  Symfony Form-built submissions (`UserCreateType`,
+  `OrganizationType`, `ProfileType`, `AssistantType`) were
+  already stateless via the `submit` intent; this aligns the
+  hand-rolled paths with that approach, removing the
+  session-bound CSRF code path from the project entirely
+  ([#111](https://github.com/itk-dev/ai-reolen/issues/111)).
 - Branded HTTP 401 and 403 pages for the firewall entry
   points. `App\Security\UnauthorizedEntryPoint` now renders
   `templates/security/unauthorized.html.twig` ("Log ind

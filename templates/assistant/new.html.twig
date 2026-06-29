@@ -104,7 +104,7 @@
                 </p>
             </div>
 
-            <input type="hidden" name="_token" value="{{ csrf_token('assistant-create') }}">
+            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('assistant-create') }}">
 
             <div class="flex items-center gap-4">
                 <twig:Form:Button type="submit">
