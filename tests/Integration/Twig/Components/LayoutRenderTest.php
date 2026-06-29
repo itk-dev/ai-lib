@@ -26,8 +26,8 @@ final class LayoutRenderTest extends KernelTestCase
         $this->twig = self::getContainer()->get('twig');
     }
 
-    // Verifies SingleColumn renders the view-root animation hook around its content.
-    public function testSingleColumnRendersViewRootGrid(): void
+    // Verifies SingleColumn wraps content in the narrow inner container plus the view-root animation hook.
+    public function testSingleColumnRendersNarrowContainerWithViewRoot(): void
     {
         $html = $this->renderInline(<<<'TWIG'
             <twig:Layout:SingleColumn>
@@ -35,7 +35,10 @@ final class LayoutRenderTest extends KernelTestCase
             </twig:Layout:SingleColumn>
             TWIG);
 
-        self::assertMatchesRegularExpression('#<div[^>]*class="[^"]*view-root[^"]*grid[^"]*grid-cols-1[^"]*"[^>]*>\s*<p>flow</p>\s*</div>#s', $html);
+        // The single-column variant centers content at the narrow
+        // width (max-w-narrow) inside the wide <main> and keeps the
+        // view-root fade-up hook on its direct children.
+        self::assertMatchesRegularExpression('#<div[^>]*class="[^"]*max-w-narrow[^"]*view-root[^"]*grid[^"]*grid-cols-1[^"]*"[^>]*>\s*<p>flow</p>\s*</div>#s', $html);
     }
 
     // Tests that SingleColumn appends a caller-supplied `class` prop to its wrapper.

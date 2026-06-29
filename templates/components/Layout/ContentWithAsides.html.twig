@@ -15,10 +15,7 @@
     - `meta`    — first sticky aside (e.g. structured metadata).
     - `actions` — second sticky aside (e.g. download / share).
 
-    Pages adopting this layout should opt into the wide container by
-    overriding the base template's `main_max_width` block:
-
-        {% block main_max_width %}max-w-wide{% endblock %}
+    Stretches to fill the wide `<main>` container (≈ 1600px).
 #}
 <div class="layout-content-with-asides{{ class ? ' ' ~ class : '' }}">
     <div>{% block main %}{% endblock %}</div>
