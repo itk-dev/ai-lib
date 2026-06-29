@@ -170,6 +170,9 @@ catalog:
     result_count:
         one: "1 resultat"
         many: "%count% resultater"
+    search:
+        placeholder: "Søg …"
+        submit: "Søg"
     sort:
         eyebrow: "Sortér"
         heading: "Sortering"

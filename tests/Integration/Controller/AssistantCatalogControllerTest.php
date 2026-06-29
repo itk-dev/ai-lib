@@ -208,7 +208,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/search?language_model%5B%5D=gpt-4o');
 
         self::assertResponseIsSuccessful();
-        $hidden = $crawler->filter('input[type="hidden"][name="language_model[]"]');
+        $hidden = $crawler->filter('aside[aria-label="Sortering"] input[type="hidden"][name="language_model[]"]');
         self::assertCount(1, $hidden, 'the sort form mirrors the active facet as a hidden input');
         self::assertSame('gpt-4o', $hidden->attr('value'));
     }
@@ -219,7 +219,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/search?sort=name');
 
         self::assertResponseIsSuccessful();
-        $hidden = $crawler->filter('input[type="hidden"][name="sort"]');
+        $hidden = $crawler->filter('aside[aria-label="Filtre"] input[type="hidden"][name="sort"]');
         self::assertCount(1, $hidden, 'the filter form mirrors the active sort as a hidden input');
         self::assertSame('name', $hidden->attr('value'));
     }
@@ -232,8 +232,33 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertCount(
             0,
-            $crawler->filter('input[type="hidden"][name="sort"]'),
+            $crawler->filter('aside[aria-label="Filtre"] input[type="hidden"][name="sort"]'),
             'the default sort is implicit and must not be emitted as a hidden input',
         );
+    }
+
+    // Ensures the search box renders in the results column, not inside the filter rail.
+    public function testSearchBoxRendersInResultsColumn(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('section #catalog-search'), 'the search box sits in the results column');
+        self::assertCount(
+            0,
+            $crawler->filter('aside[aria-label="Filtre"] #catalog-search'),
+            'the search box no longer lives in the filter rail',
+        );
+    }
+
+    // Ensures the filter form carries the active search query so toggling a facet preserves it.
+    public function testFilterFormCarriesSearchQuery(): void
+    {
+        $crawler = $this->client->request('GET', '/search?q=borgerservice');
+
+        self::assertResponseIsSuccessful();
+        $hidden = $crawler->filter('aside[aria-label="Filtre"] input[type="hidden"][name="q"]');
+        self::assertCount(1, $hidden, 'the filter form mirrors the active search query as a hidden input');
+        self::assertSame('borgerservice', $hidden->attr('value'));
     }
 }

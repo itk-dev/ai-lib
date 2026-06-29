@@ -12,21 +12,13 @@
                 reset="{{ not criteria.isEmpty }}"
             >
                 {% set query = criteria.toQueryArray %}
+                {# Carry the search query and sort so toggling a facet keeps them. #}
+                {% if criteria.q %}
+                    <input type="hidden" name="q" value="{{ criteria.q }}">
+                {% endif %}
                 {% if query.sort is defined %}
-                    {# Carry the active sort so toggling a facet keeps the chosen order. #}
                     <input type="hidden" name="sort" value="{{ query.sort }}">
                 {% endif %}
-
-                <twig:Filter:Group label="catalog.filters.search">
-                    <label for="catalog-search" class="sr-only">{{ 'catalog.filters.search'|trans }}</label>
-                    <twig:Form:TextInput
-                        id="catalog-search"
-                        name="q"
-                        type="search"
-                        value="{{ criteria.q }}"
-                        autocomplete="off"
-                    />
-                </twig:Filter:Group>
 
                 <twig:Filter:Group label="catalog.filters.language_model">
                     {% for value, count in facets.language_model %}
@@ -67,15 +59,20 @@
         </div>
 
         <section class="flex flex-col gap-8">
-            <twig:PageHeader eyebrow="catalog.eyebrow" heading="catalog.heading" />
+            {# Heading kept for the document outline / screen readers, hidden visually. #}
+            <h1 class="sr-only">{{ 'catalog.heading'|trans }}</h1>
 
-            <p class="text-sm text-text-muted">
-                {% if metadata.total == 1 %}
-                    {{ 'catalog.result_count.one'|trans }}
-                {% else %}
-                    {{ 'catalog.result_count.many'|trans({'%count%': metadata.total}) }}
-                {% endif %}
-            </p>
+            <div class="flex flex-wrap items-center gap-4">
+                <twig:Catalog:SearchBar criteria="{{ criteria }}" />
+
+                <p class="ml-auto text-sm text-text-muted">
+                    {% if metadata.total == 1 %}
+                        {{ 'catalog.result_count.one'|trans }}
+                    {% else %}
+                        {{ 'catalog.result_count.many'|trans({'%count%': metadata.total}) }}
+                    {% endif %}
+                </p>
+            </div>
 
             {% if not criteria.isEmpty %}
                 <twig:Filter:ActiveBar>
