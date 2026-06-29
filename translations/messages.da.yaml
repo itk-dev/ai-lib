@@ -49,6 +49,19 @@ security:
         email_label: "E-mail"
         password_label: "Adgangskode"
         submit: "Log ind"
+    access_denied:
+        title: "Adgang nægtet – %brand%"
+        eyebrow: "Adgang nægtet"
+        heading: "Du har ikke adgang til denne side"
+        lead: "Din konto har ikke rettigheder til at se den side, du forsøgte at åbne. Kontakt en administrator, hvis du mener, det er en fejl."
+        back_link: "← Til forsiden"
+    unauthorized:
+        title: "Log ind påkrævet – %brand%"
+        eyebrow: "Log ind påkrævet"
+        heading: "Du skal være logget ind"
+        lead: "Den side du forsøgte at åbne kræver, at du er logget ind. Log ind med din konto, eller opret en ny."
+        login_link: "Log ind"
+        register_link: "Opret bruger"
 
 admin:
     organization:
