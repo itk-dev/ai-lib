@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Catalogue right-hand sidebar and one-per-row results. The `/search`
+  page becomes a three-column layout — facet rail, results, and a new
+  sidebar with an "Aktive filtre" box (active-filter chips, moved out of
+  the results column, with an empty state), a "Seneste søgninger" box
+  listing the user's recent searches as re-runnable links (per-session,
+  deduplicated, most-recent-first), and an informational "Klar til
+  hjemtagning" box. Result cards now render one per row
+  ([#19](https://github.com/itk-dev/ai-reolen/issues/19)).
 - Catalogue result ordering. The `/search` page gains a "Sortering"
   box in the filter column, above the filters, offering newest, oldest,
   recently-updated, and name (A–Å / Å–A) orderings, defaulting to

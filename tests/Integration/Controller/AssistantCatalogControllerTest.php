@@ -261,4 +261,48 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertCount(1, $hidden, 'the filter form mirrors the active search query as a hidden input');
         self::assertSame('borgerservice', $hidden->attr('value'));
     }
+
+    // Ensures the "Aktive filtre" sidebar box shows its empty state when no filter is applied.
+    public function testActiveFiltersBoxShowsEmptyStateWhenNoFilters(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('aside[aria-label="Aktive filtre"]', 'Ingen filtre aktive');
+    }
+
+    // Ensures the "Seneste søgninger" box shows its empty state before any search is run.
+    public function testRecentSearchesBoxStartsEmpty(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('aside[aria-label="Seneste søgninger"]', 'Ingen søgninger endnu');
+    }
+
+    // Tests that a performed search is recorded and rendered as a re-runnable link in the recent-searches box.
+    public function testRecentSearchesBoxListsThePerformedSearch(): void
+    {
+        $crawler = $this->client->request('GET', '/search?q=borgerservice');
+
+        self::assertResponseIsSuccessful();
+        $link = $crawler->filter('aside[aria-label="Seneste søgninger"] a[href*="q=borgerservice"]');
+        self::assertCount(1, $link, 'the recent-searches box links back to the performed search');
+        self::assertSame('borgerservice', trim($link->text()));
+    }
+
+    // Verifies the "Klar til hjemtagning" box reports the current result count.
+    public function testReadyForExportBoxReportsResultCount(): void
+    {
+        $total = self::getContainer()->get(AssistantRepository::class)->frameworkFacetCounts()['openwebui'] ?? 0;
+        self::assertGreaterThan(0, $total, 'fixture baseline must seed assistants');
+
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains(
+            'aside[aria-label="Klar til hjemtagning"]',
+            sprintf('Alle %d resultater', $total),
+        );
+    }
 }

@@ -174,7 +174,6 @@ catalog:
         placeholder: "Søg …"
         submit: "Søg"
     sort:
-        eyebrow: "Sortér"
         heading: "Sortering"
         label: "Sortér efter"
         apply: "Sortér"
@@ -186,10 +185,18 @@ catalog:
     empty:
         heading: "Ingen assistenter matcher"
         help: "Prøv at slække på filtrene eller fjerne en facet."
+    active:
+        heading: "Aktive filtre"
+        empty: "Ingen filtre aktive."
+    recent:
+        heading: "Seneste søgninger"
+        empty: "Ingen søgninger endnu."
+    export:
+        heading: "Klar til hjemtagning"
+        body: "Alle %count% resultater kan eksporteres som OpenWebUI-JSON og køres lokalt."
     results:
         label: "Søgeresultater"
     filters:
-        eyebrow: "Filtrér"
         heading: "Filtre"
         active: "Aktive filtre"
         chip_remove: "Fjern filter: %filter%"

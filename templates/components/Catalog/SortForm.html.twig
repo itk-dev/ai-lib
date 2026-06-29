@@ -17,10 +17,7 @@
 {% props criteria, options %}
 <aside aria-label="{{ 'catalog.sort.heading'|trans }}"
        class="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5">
-    <header>
-        <twig:Eyebrow as="p" class="mb-2">{{ 'catalog.sort.eyebrow'|trans }}</twig:Eyebrow>
-        <twig:Heading level="2">{{ 'catalog.sort.heading'|trans }}</twig:Heading>
-    </header>
+    <h3 class="font-display text-xl">{{ 'catalog.sort.heading'|trans }}</h3>
 
     <form method="get" action="{{ path('app_assistant_catalog') }}"
           class="flex flex-col gap-3"
