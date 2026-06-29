@@ -37,6 +37,28 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
+     * Count the users currently holding {@see Roles::ADMIN}.
+     *
+     * Used by {@see \App\Security\UserRoles} to enforce the
+     * last-admin invariant: the site must always keep at least one
+     * administrator, so demotion attempts on the only remaining
+     * admin are refused. Role storage is a JSON column; SQL `LIKE`
+     * on the quoted role name is the cheapest way to filter without
+     * loading every row into memory.
+     *
+     * @return int number of users whose role list contains `ROLE_ADMIN`
+     */
+    public function countAdmins(): int
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.roles LIKE :role')
+            ->setParameter('role', '%"'.Roles::ADMIN.'"%');
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
      * Find users visible to the acting user, optionally filtered by status.
      *
      * Decision flow mirrors {@see \App\Security\Voter\ManageUserVoter}:

@@ -1,0 +1,55 @@
+{#
+    Inline role picker rendered in the Role column of /admin/users.
+
+    Decides between a <select> dropdown (when the actor may mutate the
+    target's role) and a plain label (when they may not). The dropdown
+    posts to `app_admin_user_role` via the `role-picker` Stimulus
+    controller and updates the inline label + an aria-live feedback
+    span without a page reload.
+
+    Required context:
+    - `user`            the row's User entity
+    - `current_role`    one of 'admin' | 'manager' | 'none'
+    - `can_promote_manager`, `can_promote_admin`, `can_demote` booleans
+#}
+{% set picker_id = 'role-picker-' ~ user.id %}
+{% set feedback_id = picker_id ~ '-feedback' %}
+{% set can_change = can_promote_manager or can_promote_admin or can_demote %}
+
+<div data-controller="role-picker"
+     data-role-picker-url-value="{{ path('app_admin_user_role', {id: user.id}) }}"
+     data-role-picker-csrf-token-value="{{ csrf_token('admin-user-action') }}"
+     data-role-picker-success-message-value="{{ 'admin.users.role.flash.success'|trans }}"
+     class="grid gap-1">
+    <span class="text-sm text-text" data-role-picker-target="label">
+        {{ ('admin.users.role.' ~ current_role)|trans }}
+    </span>
+
+    {% if can_change %}
+        <label for="{{ picker_id }}" class="sr-only">
+            {{ 'admin.users.role.label'|trans({'%name%': user.name}) }}
+        </label>
+        <select id="{{ picker_id }}"
+                data-role-picker-target="select"
+                data-action="change->role-picker#submit"
+                aria-describedby="{{ feedback_id }}"
+                class="rounded-lg border border-line bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <option value="">{{ 'admin.users.role.placeholder'|trans }}</option>
+            {% if can_promote_manager %}
+                <option value="manager">{{ 'admin.users.role.promote.manager'|trans }}</option>
+            {% endif %}
+            {% if can_promote_admin %}
+                <option value="admin">{{ 'admin.users.role.promote.admin'|trans }}</option>
+            {% endif %}
+            {% if can_demote %}
+                <option value="none">{{ 'admin.users.role.remove'|trans }}</option>
+            {% endif %}
+        </select>
+    {% endif %}
+
+    <span id="{{ feedback_id }}"
+          data-role-picker-target="feedback"
+          role="status"
+          aria-live="polite"
+          class="text-xs text-text-muted"></span>
+</div>

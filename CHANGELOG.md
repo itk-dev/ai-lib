@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Inline role promotion on `/admin/users`. The user list grows a
+  **Rolle** column and a per-row dropdown that posts to a new
+  `POST /admin/users/{id}/role` JSON endpoint. Three transitions
+  are wired: promote to manager, promote to admin, remove all
+  permissions. Authorisation centralises in
+  `App\Security\Voter\ManageUserVoter`, which now supports three
+  new attributes (`PROMOTE_TO_MANAGER`, `PROMOTE_TO_ADMIN`,
+  `DEMOTE_USER`) and enforces the headline rule the issue closes:
+  **a manager must never edit an admin** — not even within their
+  own email domain — and only an admin may mint a new admin. The
+  rule applies at both layers: the dropdown's "Promote to Admin"
+  option only renders when the actor holds `ROLE_ADMIN`, and the
+  endpoint denies forbidden combinations with `403` even when
+  hand-crafted. The role transitions go through a new
+  `App\Security\UserRoles` service that refuses to demote the
+  last remaining admin (surfaced as HTTP `409` with the
+  `last_admin` error code via a `LastAdminException`), so a site
+  can't be accidentally locked out. The endpoint validates a
+  fresh `admin-user-action` CSRF token in the JSON body (`403`
+  on reject), returns `422` for malformed role payloads, and
+  `200` with `{ role, label }` on success. The Stimulus
+  `role-picker` controller fires the POST, swaps the inline role
+  label on success, and surfaces server errors via an
+  `aria-live="polite"` feedback span next to the dropdown
+  ([#148](https://github.com/itk-dev/ai-reolen/issues/148)).
 - Branded HTTP 401 and 403 pages for the firewall entry
   points. `App\Security\UnauthorizedEntryPoint` now renders
   `templates/security/unauthorized.html.twig` ("Log ind

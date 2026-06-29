@@ -49,12 +49,17 @@
                         <twig:Table:HeadCell>{{ 'admin.users.columns.name'|trans }}</twig:Table:HeadCell>
                         <twig:Table:HeadCell>{{ 'admin.users.columns.email'|trans }}</twig:Table:HeadCell>
                         <twig:Table:HeadCell>{{ 'admin.users.columns.status'|trans }}</twig:Table:HeadCell>
+                        <twig:Table:HeadCell>{{ 'admin.users.columns.role'|trans }}</twig:Table:HeadCell>
                         <twig:Table:HeadCell align="right">{{ 'admin.users.columns.actions'|trans }}</twig:Table:HeadCell>
                     </twig:Table:Row>
                 </twig:Table:Head>
                 <twig:Table:Body>
                     {% for u in users %}
                         {% set back_url = path('app_admin_users', status_filter ? {status: status_filter.value} : {}) %}
+                        {% set current_role = 'ROLE_ADMIN' in u.roles
+                            ? 'admin'
+                            : ('ROLE_DOMAIN_MANAGER' in u.roles ? 'manager' : 'none')
+                        %}
                         <twig:Table:Row>
                             <twig:Table:Cell>
                                 <span class="font-medium text-ink">{{ u.name }}</span>
@@ -64,6 +69,15 @@
                                 <span class="rounded-full border border-line px-2 py-0.5 text-xs text-text">
                                     {{ ('admin.users.status.' ~ u.status.value)|trans }}
                                 </span>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell>
+                                {{ include('admin/user/_role_picker.html.twig', {
+                                    user: u,
+                                    current_role: current_role,
+                                    can_promote_manager: is_granted('PROMOTE_TO_MANAGER', u),
+                                    can_promote_admin: is_granted('PROMOTE_TO_ADMIN', u),
+                                    can_demote: is_granted('DEMOTE_USER', u),
+                                }, with_context: false) }}
                             </twig:Table:Cell>
                             <twig:Table:Cell align="right">
                                 <div class="inline-flex flex-wrap items-center gap-2">

@@ -240,6 +240,72 @@ final class UserControllerTest extends WebTestCase
         self::assertResponseRedirects('/admin/users');
     }
 
+    // Verifies the Role column renders with the user's current role label.
+    public function testAdminListRendersRoleColumn(): void
+    {
+        $um = self::getContainer()->get(UserManager::class);
+        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
+        $um->createUser('mgr@example.test', 'Mgr', 'pw', [Roles::DOMAIN_MANAGER]);
+        $this->loginAsApproved('admin@example.test');
+
+        $crawler = $this->client->request('GET', '/admin/users');
+
+        self::assertResponseIsSuccessful();
+        $headers = $crawler->filter('thead th')->each(fn ($th) => trim($th->text()));
+        self::assertContains('Rolle', $headers, 'Role column header must render.');
+        // The label cell for the manager row mentions the manager label.
+        $bodyText = $crawler->filter('tbody')->text();
+        self::assertStringContainsString('Domæne-ansvarlig', $bodyText);
+    }
+
+    // Tests that an admin sees the 'Promote to Admin' option in the dropdown.
+    public function testAdminSeesPromoteToAdminOption(): void
+    {
+        $um = self::getContainer()->get(UserManager::class);
+        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
+        $um->createUser('target@example.test', 'Target', 'pw');
+        $this->loginAsApproved('admin@example.test');
+
+        $crawler = $this->client->request('GET', '/admin/users');
+
+        self::assertResponseIsSuccessful();
+        $optionLabels = $crawler->filter('select option')->each(fn ($o) => trim($o->text()));
+        self::assertContains('Forfrem til administrator', $optionLabels);
+    }
+
+    // Tests that a manager does NOT see the 'Promote to Admin' option for any user.
+    public function testManagerDoesNotSeePromoteToAdminOption(): void
+    {
+        $um = self::getContainer()->get(UserManager::class);
+        $um->createUser('mgr@example.test', 'Mgr', 'pw', [Roles::DOMAIN_MANAGER]);
+        $um->createUser('target@example.test', 'Target', 'pw');
+        $this->loginAsApproved('mgr@example.test');
+
+        $crawler = $this->client->request('GET', '/admin/users');
+
+        self::assertResponseIsSuccessful();
+        $optionLabels = $crawler->filter('select option')->each(fn ($o) => trim($o->text()));
+        self::assertNotContains('Forfrem til administrator', $optionLabels);
+    }
+
+    // Verifies the dropdown is omitted entirely for admin rows when the actor is a manager.
+    public function testManagerSeesNoDropdownForAdminTargets(): void
+    {
+        $um = self::getContainer()->get(UserManager::class);
+        $um->createUser('mgr@example.test', 'Mgr', 'pw', [Roles::DOMAIN_MANAGER]);
+        $um->createUser('inhouse-admin@example.test', 'Inhouse Admin', 'pw', [Roles::ADMIN]);
+        $this->loginAsApproved('mgr@example.test');
+
+        $crawler = $this->client->request('GET', '/admin/users');
+
+        self::assertResponseIsSuccessful();
+        // The manager only sees same-domain rows. The admin row renders
+        // its current role label, but no <select> next to it.
+        $adminRow = $crawler->filter('tbody tr:contains("inhouse-admin@example.test")');
+        self::assertGreaterThan(0, $adminRow->count(), 'Admin row must render for an in-domain manager.');
+        self::assertCount(0, $adminRow->filter('select'), 'Manager must not be offered a dropdown on an admin row.');
+    }
+
     private function loginAsApproved(string $email): void
     {
         $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]);
