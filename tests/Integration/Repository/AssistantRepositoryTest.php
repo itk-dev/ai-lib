@@ -6,6 +6,7 @@ namespace App\Tests\Integration\Repository;
 
 use App\Catalog\CatalogCriteria;
 use App\Entity\Assistant;
+use App\Entity\Tag;
 use App\Repository\AssistantRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -28,7 +29,10 @@ final class AssistantRepositoryTest extends KernelTestCase
 
         self::assertInstanceOf(Assistant::class, $assistant);
         self::assertSame('Borgerservice-vejviser', $assistant->getTitle());
-        self::assertSame(['borgerservice', 'social', 'jura'], $assistant->getTags());
+        self::assertSame(
+            ['borgerservice', 'social', 'jura'],
+            array_map(static fn (Tag $t) => $t->getName(), $assistant->getTags()->toArray()),
+        );
     }
 
     // Tests that empty criteria returns every fixture row (no IN clauses applied).
@@ -106,5 +110,78 @@ final class AssistantRepositoryTest extends KernelTestCase
         self::assertSame(21, array_sum($languageModels), 'facet counts sum to total fixture rows');
 
         self::assertSame(['openwebui' => 21], $frameworks);
+    }
+
+    // Tests that a `q` query narrows to rows whose title contains the term (case-insensitive).
+    public function testFindPaginatedFiltersByQueryOnTitle(): void
+    {
+        $criteria = new CatalogCriteria(q: 'JOURNALISERINGSASSISTENT');
+
+        $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
+
+        $titles = array_map(static fn (Assistant $a) => $a->getTitle(), iterator_to_array($paginator->getIterator()));
+        self::assertSame(['Journaliseringsassistent'], $titles, 'query matches the title case-insensitively');
+    }
+
+    // Tests that a `q` query also matches the description, reaching every row that mentions the term.
+    public function testFindPaginatedFiltersByQueryOnDescription(): void
+    {
+        // "KPI-rapporter" appears only in the Statistikfortolker description,
+        // generated twice across the fifteen rotated entries.
+        $criteria = new CatalogCriteria(q: 'kpi');
+
+        $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
+
+        self::assertCount(2, $paginator, 'both KPI-mentioning rows are reached via the description');
+        foreach ($paginator as $assistant) {
+            self::assertStringContainsStringIgnoringCase('kpi', $assistant->getDescription());
+        }
+    }
+
+    // Tests that the tags criterion keeps rows carrying at least one of the named tags (OR-within), without duplicate rows.
+    public function testFindPaginatedFiltersByTags(): void
+    {
+        $criteria = new CatalogCriteria(tags: ['jura']);
+
+        $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
+
+        // 'jura' is on the Borgerservice-vejviser detailed row plus the two
+        // Forvaltningsret-vejviser generated rows.
+        self::assertCount(3, $paginator);
+        foreach ($paginator as $assistant) {
+            self::assertContains(
+                'jura',
+                array_map(static fn (Tag $t) => $t->getName(), $assistant->getTags()->toArray()),
+            );
+        }
+    }
+
+    // Ensures multiple tags OR within the facet — the result is the union, deduplicated to one row per assistant.
+    public function testFindPaginatedTagsOrWithinFacet(): void
+    {
+        $criteria = new CatalogCriteria(tags: ['jura', 'arkiv']);
+
+        $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
+
+        // jura (3 rows) ∪ arkiv (1 distinct row) = 4, no duplicates from the join.
+        self::assertCount(4, $paginator);
+        $ids = array_map(static fn (Assistant $a) => (string) $a->getId(), iterator_to_array($paginator->getIterator()));
+        self::assertSame($ids, array_values(array_unique($ids)), 'no assistant appears twice');
+    }
+
+    // Verifies tagFacetCounts() reflects the fixture baseline: 24 distinct tags summing to 45, ordered by count DESC.
+    public function testTagFacetCountsReflectFixtureBaseline(): void
+    {
+        $tags = $this->repository->tagFacetCounts();
+
+        self::assertCount(24, $tags, 'fixture baseline seeds 24 distinct tags');
+        self::assertSame(45, array_sum($tags), 'tag counts sum to the number of assistant-tag links');
+        self::assertSame(3, $tags['jura'], 'jura spans one detailed and two generated rows');
+        self::assertSame(1, $tags['social']);
+
+        $counts = array_values($tags);
+        $sorted = $counts;
+        rsort($sorted);
+        self::assertSame($sorted, $counts, 'buckets are ordered by count DESC');
     }
 }

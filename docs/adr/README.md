@@ -28,3 +28,4 @@ See [adr.github.io](https://adr.github.io/) for background on the format.
 | [005](005-organization-entity-and-assistant-derivation.md) | Organization entity and assistant derivation | Draft | 2026-06-12 |
 | [006](006-user-approval-and-account-state.md) | User registration, approval, and account state. | Draft | 2026-06-12 |
 | [007](007-entity-foundation-entity-bundle.md) | Entity foundation via itk-dev/entity-bundle | Draft | 2026-06-23 |
+| [008](008-tags-as-relational-entity.md) | Assistant tags as a relational Tag entity | Draft | 2026-06-26 |
