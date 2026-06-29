@@ -2,12 +2,14 @@
 {#
     Single-column page layout — the default shape.
 
-    Wraps the page body in a centered, narrow container
-    (`max-w-narrow`, ≈ 1180px) inside the wider `<main>` element
-    (which shares its width with the header and footer at
-    ≈ 1600px). Use for routes whose body is a single line of
-    content: frontpage, login, registration, simple admin forms,
-    error pages.
+    Renders the page body as one stacked flow inside the wide
+    `<main>` element (which shares its width with the header and
+    footer at ≈ 1600px, matching the mocks). No extra horizontal
+    constraint is applied here — inner components (`<twig:Hero>`,
+    `<twig:Box>`, the various form sections, etc.) own whatever
+    narrower max-width they need at the section level. Use for
+    routes whose body is a single line of content: frontpage,
+    login, registration, simple admin forms, error pages.
 
     The `view-root` class hooks into the global fade-up animation
     in `assets/styles/app.css`, so direct children fade up in
@@ -16,6 +18,6 @@
     Slot:
     - `content` — the page body.
 #}
-<div class="mx-auto w-full max-w-narrow view-root grid grid-cols-1 gap-12{{ class ? ' ' ~ class : '' }}">
+<div class="view-root grid grid-cols-1 gap-12{{ class ? ' ' ~ class : '' }}">
     {% block content %}{% endblock %}
 </div>

@@ -11,21 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Three reusable page layout components under
   `templates/components/Layout/`. Site header, `<main>`, and
-  footer now share the wide container (`max-w-wide`, ≈ 1600px from
-  the mocks' `--container-wide`) so all three chrome edges align.
-  `<twig:Layout:SingleColumn>` centers a narrow flow
-  (`max-w-narrow`, ≈ 1180px from `--container-narrow`) inside the
-  wide `<main>` and is adopted on the frontpage as the reference
-  consumer. `<twig:Layout:ThreeColumn>` (slots `start`, `main`,
-  `end`) and `<twig:Layout:ContentWithAsides>` (slots `main`,
-  `meta`, `actions` with sticky asides) stretch to fill the wide
-  `<main>` and cover the catalogue and detail surfaces
-  respectively. The previous ad-hoc `max-w-[1600px]` literals on
-  the header, footer, and `<main>` are replaced by the
-  token-backed `max-w-wide` utility. Grid CSS lives in
-  `assets/styles/app.css` under `@layer components`. Existing
-  templates carry their own internal max-widths and migrate to
-  the new layouts in separate follow-up issues
+  footer now share the wide container (`max-w-wide`, ≈ 1600px
+  from the mocks' `--container-wide`) so all three chrome edges
+  align — matching the prototype's `index.html`, which puts
+  `container-wide` on all three. `<twig:Layout:SingleColumn>`
+  renders a stacked flow inside that wide `<main>` (no extra
+  horizontal constraint of its own — inner components like
+  `<twig:Hero>` or `<twig:Box>` carry whatever narrower
+  max-width they need) and is adopted on the frontpage as the
+  reference consumer. `<twig:Layout:ThreeColumn>` (slots `start`,
+  `main`, `end`) and `<twig:Layout:ContentWithAsides>` (slots
+  `main`, `meta`, `actions` with sticky asides) cover the
+  catalogue and detail surfaces. The previous ad-hoc
+  `max-w-[1600px]` literals on the header, footer, and `<main>`
+  are replaced by the token-backed `max-w-wide` utility. The
+  narrow `--container-narrow` token (≈ 1180px) is defined in
+  `@theme` for future use but no current page applies it,
+  mirroring the prototype where `.container` is defined but
+  unused. Grid CSS lives in `assets/styles/app.css` under
+  `@layer components`
   ([#144](https://github.com/itk-dev/ai-reolen/issues/144)).
 - Branded HTTP 401 and 403 pages for the firewall entry
   points. `App\Security\UnauthorizedEntryPoint` now renders
