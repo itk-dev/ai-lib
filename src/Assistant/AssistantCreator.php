@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Assistant;
 
 use App\Entity\Assistant;
+use App\Entity\Tag;
+use App\Repository\TagRepository;
 use App\Validator\OpenWebUiConfigValidator;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -21,10 +23,12 @@ final class AssistantCreator
     /**
      * @param OpenWebUiConfigValidator $validator     full validation pipeline for the uploaded JSON
      * @param EntityManagerInterface   $entityManager Doctrine entity manager that persists the Assistant
+     * @param TagRepository            $tags          resolves tag names to shared Tag entities
      */
     public function __construct(
         private readonly OpenWebUiConfigValidator $validator,
         private readonly EntityManagerInterface $entityManager,
+        private readonly TagRepository $tags,
     ) {
     }
 
@@ -70,7 +74,7 @@ final class AssistantCreator
             description: $description,
             languageModel: $languageModel,
             framework: $framework,
-            tags: $tags,
+            tags: $this->resolveTags($tags),
         );
         $assistant->setOpenwebuiConfig($decoded);
 
@@ -78,5 +82,28 @@ final class AssistantCreator
         $this->entityManager->flush();
 
         return $assistant;
+    }
+
+    /**
+     * Resolve a list of tag names to shared {@see Tag} entities.
+     *
+     * Reuses an existing tag when one already carries the name — so the
+     * unique-name constraint holds and the catalogue's tag facet stays
+     * deduplicated — and creates a new (unpersisted) tag otherwise; the
+     * assistant's cascade persists any new tags on flush. Duplicate names
+     * within one submission collapse to a single entity.
+     *
+     * @param list<string> $names submitted tag names, already trimmed and non-empty
+     *
+     * @return list<Tag> one entity per distinct name, in first-seen order
+     */
+    private function resolveTags(array $names): array
+    {
+        $resolved = [];
+        foreach ($names as $name) {
+            $resolved[$name] ??= $this->tags->findOneByName($name) ?? new Tag($name);
+        }
+
+        return array_values($resolved);
     }
 }

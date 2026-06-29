@@ -40,7 +40,7 @@ final class AssistantFixturesTest extends TestCase
             ],
             $detailedTitles,
         );
-        self::assertSame([], $persisted[5]->getTags(), 'tagless detailed entry must carry no tags');
+        self::assertCount(0, $persisted[5]->getTags(), 'tagless detailed entry must carry no tags');
 
         $generated = \array_slice($persisted, 6);
         self::assertCount(15, $generated);

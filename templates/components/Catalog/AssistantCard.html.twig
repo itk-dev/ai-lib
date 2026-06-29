@@ -15,7 +15,7 @@
             aria-label="{{ 'assistant.detail.tags_heading'|trans }}">
             {% for tag in assistant.tags %}
                 <li class="inline-flex items-center rounded-full border border-line bg-surface-2 px-2 py-0.5 text-xs text-text">
-                    {{ tag }}
+                    {{ tag.name }}
                 </li>
             {% endfor %}
         </ul>

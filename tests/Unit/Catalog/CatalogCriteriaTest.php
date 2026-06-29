@@ -26,6 +26,7 @@ final class CatalogCriteriaTest extends TestCase
         self::assertNull($criteria->q);
         self::assertSame([], $criteria->languageModels);
         self::assertSame([], $criteria->frameworks);
+        self::assertSame([], $criteria->tags);
         self::assertTrue($criteria->isEmpty());
         self::assertSame([], $criteria->activeFilters());
         self::assertSame([], $criteria->toQueryArray());
@@ -43,14 +44,15 @@ final class CatalogCriteriaTest extends TestCase
         self::assertTrue($criteria->isEmpty());
     }
 
-    // Verifies that a populated request parses into `q` plus both facet lists and round-trips through toQueryArray().
-    public function testFromRequestReadsQAndBothFacets(): void
+    // Verifies that a populated request parses into `q` plus all facet lists and round-trips through toQueryArray().
+    public function testFromRequestReadsQAndAllFacets(): void
     {
         $criteria = CatalogCriteria::fromRequest(
             Request::create('/search', 'GET', [
                 'q' => 'borger',
                 'language_model' => ['gpt-4o'],
                 'framework' => ['openwebui'],
+                'tag' => ['jura', 'social'],
             ]),
             $this->lists,
         );
@@ -58,26 +60,46 @@ final class CatalogCriteriaTest extends TestCase
         self::assertSame('borger', $criteria->q);
         self::assertSame(['gpt-4o'], $criteria->languageModels);
         self::assertSame(['openwebui'], $criteria->frameworks);
+        self::assertSame(['jura', 'social'], $criteria->tags);
         self::assertFalse($criteria->isEmpty());
         self::assertSame(
-            ['q' => 'borger', 'language_model' => ['gpt-4o'], 'framework' => ['openwebui']],
+            [
+                'q' => 'borger',
+                'language_model' => ['gpt-4o'],
+                'framework' => ['openwebui'],
+                'tag' => ['jura', 'social'],
+            ],
             $criteria->toQueryArray(),
         );
     }
 
-    // Tests that activeFilters() yields chips in fixed order — `q` first, then language models, then frameworks — with the search-query label quoted.
-    public function testActiveFiltersYieldsQThenLanguageModelsThenFrameworks(): void
+    // Ensures a request carrying only `?tag[]=` is non-empty and narrows on the tag facet alone.
+    public function testFromRequestReadsTagsOnly(): void
+    {
+        $criteria = CatalogCriteria::fromRequest(
+            Request::create('/search', 'GET', ['tag' => ['jura']]),
+            $this->lists,
+        );
+
+        self::assertSame(['jura'], $criteria->tags);
+        self::assertFalse($criteria->isEmpty());
+        self::assertSame(['tag' => ['jura']], $criteria->toQueryArray());
+    }
+
+    // Tests that activeFilters() yields chips in fixed order — `q`, then language models, frameworks, then tags — with the search-query label quoted.
+    public function testActiveFiltersYieldsQThenLanguageModelsThenFrameworksThenTags(): void
     {
         $criteria = new CatalogCriteria(
             q: 'borger',
             languageModels: ['gpt-4o', 'mistral-large'],
             frameworks: ['openwebui'],
+            tags: ['jura'],
         );
 
         $filters = $criteria->activeFilters();
 
-        self::assertCount(4, $filters);
-        self::assertSame(['q', 'language_model', 'language_model', 'framework'], array_map(
+        self::assertCount(5, $filters);
+        self::assertSame(['q', 'language_model', 'language_model', 'framework', 'tag'], array_map(
             static fn ($f) => $f->type,
             $filters,
         ));
@@ -85,6 +107,23 @@ final class CatalogCriteriaTest extends TestCase
         self::assertSame('"borger"', $filters[0]->label, 'search-query chip wraps the value in quotes');
         self::assertSame('gpt-4o', $filters[1]->value);
         self::assertSame('gpt-4o', $filters[1]->label, 'facet chips display the raw value');
+        self::assertSame('jura', $filters[4]->value);
+        self::assertSame('jura', $filters[4]->label, 'tag chips display the raw tag name');
+    }
+
+    // Ensures a tag chip's removeQuery drops only that tag while preserving the search query and the other tags.
+    public function testTagChipRemoveQueryDropsOnlyTargetedTag(): void
+    {
+        $criteria = new CatalogCriteria(q: 'borger', tags: ['jura', 'social']);
+
+        $filters = $criteria->activeFilters();
+
+        // The tag chips follow the `q` chip, so index 1 targets 'jura'.
+        self::assertSame('jura', $filters[1]->value);
+        self::assertSame(
+            ['q' => 'borger', 'tag' => ['social']],
+            $filters[1]->removeQuery,
+        );
     }
 
     // Ensures a chip's removeQuery drops only its own value while preserving siblings on the same facet and the other facets.

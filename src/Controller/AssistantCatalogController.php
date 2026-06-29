@@ -39,6 +39,7 @@ final class AssistantCatalogController extends AbstractController
             'facets' => [
                 'language_model' => $this->assistants->languageModelFacetCounts(),
                 'framework' => $this->assistants->frameworkFacetCounts(),
+                'tag' => $this->assistants->tagFacetCounts(),
             ],
         ]);
     }
