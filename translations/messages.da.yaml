@@ -232,6 +232,17 @@ register:
         body: "Din konto venter på godkendelse fra en administrator. Du modtager besked, når kontoen er klar, og kan så logge ind."
         login_link: "← Tilbage til log ind"
 
+profile:
+    edit:
+        title: "Redigér profil – %brand%"
+        eyebrow: "Min profil"
+        heading: "Redigér profil"
+        lead: "Opdatér oplysningerne om din egen konto. E-mail, rolle og status ændres af en administrator."
+        name_label: "Navn"
+        submit: "Gem ændringer"
+        flash:
+            saved: "Profilen er opdateret."
+
 assistant:
     detail:
         title: "%title% – %brand%"

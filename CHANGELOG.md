@@ -19,6 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   survives pagination. Changing the order auto-submits (Stimulus, with a
   no-JS fallback) and returns to page 1
   ([#19](https://github.com/itk-dev/ai-reolen/issues/19)).
+- Self-service profile edit page at `/profile/edit`. Any
+  authenticated user — regardless of role — can update their
+  own display name. The subject is always read off the
+  security context, never a path parameter, so the route
+  can't be used to address another user's row. The
+  controller stays thin: hands the submission to a new
+  `App\Form\ProfileType` and persists through the existing
+  `UserManager::updateUser($email, name: ...)` path so
+  password / role / status mutations stay in one place. The
+  `UserMenu` "Redigér profil" item lights up automatically
+  now that the route exists
+  ([#128](https://github.com/itk-dev/ai-reolen/issues/128)).
 - Catalogue free-text search and tag filtering. The `/search`
   page gains a search box that matches the assistant title and
   description (case-insensitive) and a "Tags" facet alongside
