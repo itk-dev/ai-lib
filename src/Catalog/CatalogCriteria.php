@@ -21,28 +21,33 @@ final class CatalogCriteria
      * {@see self::toQueryArray()}.
      *
      * `q` is the free-text search input, matched against the assistant
-     * title and description by the repository.
+     * title and description by the repository. `sort` is the result
+     * ordering; it is orthogonal to the filters and so does not count
+     * towards {@see self::isEmpty()} or appear in {@see self::activeFilters()}.
      *
      * @param string|null  $q              optional free-text search query, trimmed and null when empty
      * @param list<string> $languageModels exact `languageModel` values to keep; empty list means no narrowing on this facet
      * @param list<string> $frameworks     exact `framework` values to keep; empty list means no narrowing on this facet
      * @param list<string> $tags           exact tag names to keep; empty list means no narrowing on this facet
+     * @param CatalogSort  $sort           the ordering applied to the result set; defaults to newest-first
      */
     public function __construct(
         public readonly ?string $q = null,
         public readonly array $languageModels = [],
         public readonly array $frameworks = [],
         public readonly array $tags = [],
+        public readonly CatalogSort $sort = CatalogSort::Newest,
     ) {
     }
 
     /**
      * Named constructor — parse a `CatalogCriteria` out of an HTTP request.
      *
-     * Reads `?q=`, `?language_model[]=`, `?framework[]=` and `?tag[]=`
-     * from the query string. Empty values are normalised away so callers
-     * can trust the constructed object: a missing query becomes `null`,
-     * missing facet selections become `[]`.
+     * Reads `?q=`, `?language_model[]=`, `?framework[]=`, `?tag[]=` and
+     * `?sort=` from the query string. Empty values are normalised away so
+     * callers can trust the constructed object: a missing query becomes
+     * `null`, missing facet selections become `[]`, and a missing or
+     * unrecognised sort collapses to {@see CatalogSort::default()}.
      *
      * @param Request         $request the incoming HTTP request whose query string carries the user's selections
      * @param QueryStringList $lists   helper for reading list-shaped query parameters into `list<string>`
@@ -58,6 +63,7 @@ final class CatalogCriteria
             languageModels: $lists->fromRequest($request, 'language_model'),
             frameworks: $lists->fromRequest($request, 'framework'),
             tags: $lists->fromRequest($request, 'tag'),
+            sort: CatalogSort::fromString($request->query->get('sort')),
         );
     }
 
@@ -135,8 +141,10 @@ final class CatalogCriteria
      * Serialise the criteria as a `path()`-compatible query map.
      *
      * Only set values are emitted: a `null` search query is skipped,
-     * empty facet lists are skipped. Used as the base map for
-     * pagination links so the active filters survive page navigation.
+     * empty facet lists are skipped, and the sort is emitted only when it
+     * differs from {@see CatalogSort::default()} so canonical URLs stay
+     * clean. Used as the base map for pagination links so the active
+     * filters and the chosen ordering survive page navigation.
      *
      * @return array<string, mixed> map of query-string keys to values, ready for `path('app_assistant_catalog', $map)`
      */
@@ -155,6 +163,9 @@ final class CatalogCriteria
         }
         if ([] !== $this->tags) {
             $query['tag'] = $this->tags;
+        }
+        if (CatalogSort::default() !== $this->sort) {
+            $query['sort'] = $this->sort->value;
         }
 
         return $query;

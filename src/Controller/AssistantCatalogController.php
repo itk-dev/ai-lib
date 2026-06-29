@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Catalog\CatalogCriteria;
+use App\Catalog\CatalogSort;
 use App\Http\QueryStringList;
 use App\Pagination\PageMetadata;
 use App\Repository\AssistantRepository;
@@ -36,6 +37,7 @@ final class AssistantCatalogController extends AbstractController
             'results' => $paginator,
             'criteria' => $criteria,
             'metadata' => $metadata,
+            'sortOptions' => CatalogSort::cases(),
             'facets' => [
                 'language_model' => $this->assistants->languageModelFacetCounts(),
                 'framework' => $this->assistants->frameworkFacetCounts(),
