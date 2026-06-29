@@ -188,6 +188,53 @@ final class SettingsControllerTest extends WebTestCase
         self::assertSame('ops@example.test', $value);
     }
 
+    // Verifies the email form pre-fills the subject + body templates from SettingsManager defaults so admins see what they'll be editing.
+    public function testEmailFormPrefillsContentDefaults(): void
+    {
+        $this->loginAsAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/settings/email');
+
+        self::assertResponseIsSuccessful();
+        self::assertNotEmpty(
+            $crawler->filter('input[name="admin_notification_subject"]')->attr('value'),
+            'admin notification subject must be pre-filled with the default',
+        );
+        self::assertNotEmpty(
+            $crawler->filter('textarea[name="admin_notification_body"]')->text(),
+            'admin notification body must be pre-filled with the default',
+        );
+        self::assertNotEmpty(
+            $crawler->filter('input[name="registration_confirmation_subject"]')->attr('value'),
+        );
+        self::assertNotEmpty(
+            $crawler->filter('textarea[name="registration_confirmation_body"]')->text(),
+        );
+    }
+
+    // Tests that submitting custom subject + body values persists every email-content field through SettingsManager.
+    public function testValidEmailSubmitPersistsEmailContentFields(): void
+    {
+        $this->loginAsAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/settings/email');
+        $form = $crawler->filter('form[action$="/admin/settings/email"]')->form([
+            'admin_recipient' => 'ops@example.test',
+            'admin_notification_subject' => 'Custom admin subject',
+            'admin_notification_body' => 'Custom admin body for %name%',
+            'registration_confirmation_subject' => 'Custom user subject',
+            'registration_confirmation_body' => 'Custom user body for %name%',
+        ]);
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/admin/settings/email');
+        $settings = self::getContainer()->get(SettingsManager::class);
+        self::assertSame('Custom admin subject', $settings->getAdminNotificationSubject());
+        self::assertSame('Custom admin body for %name%', $settings->getAdminNotificationBody());
+        self::assertSame('Custom user subject', $settings->getRegistrationConfirmationSubject());
+        self::assertSame('Custom user body for %name%', $settings->getRegistrationConfirmationBody());
+    }
+
     // Tests that submitting a valid email persists the value and redirects back to the form.
     public function testValidEmailSubmitPersistsRecipient(): void
     {

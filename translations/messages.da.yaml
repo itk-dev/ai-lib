@@ -157,11 +157,21 @@ admin:
         email:
             title: "E-mailindstillinger – %brand%"
             heading: "E-mail"
-            lead: "Modtagere og afsendere af systemmails."
+            lead: "Modtagere og indhold af systemmails. Lad et felt stå tomt for at gå tilbage til standardindholdet."
+            section:
+                recipient: "Modtager af besked om nye brugere"
+                admin_notification: "Admin: Ny bruger venter godkendelse"
+                registration_confirmation: "Bruger: Velkomst-mail"
+            tokens_label: "Tilgængelige pladsholdere:"
             fields:
                 admin_recipient:
-                    label: "Modtager af administrator-mails"
-                    help: "E-mailadresse der modtager besked, når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
+                    label: "E-mailadresse"
+                    help: "Modtager besked når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
+                subject:
+                    label: "Emne"
+                body:
+                    label: "Indhold (Markdown)"
+                    help: "Skrives som Markdown. Brug pladsholdere fra listen ovenfor."
 
 catalog:
     title: "Katalog – %brand%"
@@ -238,6 +248,33 @@ register:
         heading: "Tak — vi har modtaget din oprettelse"
         body: "Din konto venter på godkendelse fra en administrator. Du modtager besked, når kontoen er klar, og kan så logge ind."
         login_link: "← Tilbage til log ind"
+
+# Default templates for the admin-editable transactional email
+# settings. `SettingsManager` falls back to these keys when no
+# row exists in the `setting` table. The `%token%` placeholders
+# are intentionally NOT translator parameters — `EmailTemplateRenderer`
+# substitutes them at send time with the recipient-specific values.
+settings:
+    admin:
+        notification_subject: "Ny bruger venter godkendelse — %brand_name%"
+        notification_body: |
+            En ny bruger har netop oprettet sig:
+
+            - **Navn:** %name%
+            - **E-mail:** %email%
+
+            Brugeren afventer godkendelse. Gennemse køen på
+            [%approval_url%](%approval_url%).
+    registration:
+        confirmation_subject: "Velkommen til %brand_name%"
+        confirmation_body: |
+            Hej %name%,
+
+            Tak for din oprettelse på %brand_name%. Vi har modtaget din
+            forespørgsel og en administrator vil godkende kontoen,
+            før du kan logge ind.
+
+            Du modtager besked, så snart kontoen er klar.
 
 profile:
     edit:
