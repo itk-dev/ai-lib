@@ -10,14 +10,35 @@ use Twig\Extension\GlobalsInterface;
 
 /**
  * Exposes the brand identity globals (`brand_name`,
- * `brand_tagline`, `brand_initials`) to every Twig template.
+ * `brand_tagline`, `brand_initials`) and the design-palette
+ * globals (`palette_text`, `palette_line`,
+ * `palette_text_muted`) to every Twig template.
  *
- * Delegates to {@see SettingsManager} so an admin-typed value in
- * the `Setting` table wins over the `BRAND_*` env vars, which
- * remain the deploy-time defaults.
+ * Brand identity delegates to {@see SettingsManager} so an
+ * admin-typed value in the `Setting` table wins over the
+ * `BRAND_*` env vars, which remain the deploy-time defaults.
+ * Palette values are constants mirroring the CSS
+ * `@theme` tokens declared in `assets/styles/app.css`; they
+ * exist as Twig globals so contexts that cannot read CSS
+ * variables (HTML email, inline styles) reference one source.
  */
 final class BrandExtension extends AbstractExtension implements GlobalsInterface
 {
+    /**
+     * Primary text colour. Mirrors `--color-text` in `assets/styles/app.css`.
+     */
+    public const string PALETTE_TEXT = '#1c2433';
+
+    /**
+     * Divider / hairline colour. Mirrors `--color-line` in `assets/styles/app.css`.
+     */
+    public const string PALETTE_LINE = '#ddd5c4';
+
+    /**
+     * Muted secondary text colour. Mirrors `--color-text-muted` in `assets/styles/app.css`.
+     */
+    public const string PALETTE_TEXT_MUTED = '#5b6478';
+
     /**
      * @param SettingsManager $settings typed accessor for runtime-editable settings
      */
@@ -26,14 +47,14 @@ final class BrandExtension extends AbstractExtension implements GlobalsInterface
     }
 
     /**
-     * Resolve the brand globals at render time.
+     * Resolve the brand and palette globals at render time.
      *
      * Symfony calls `getGlobals()` for each environment instance
      * Twig builds; the values are resolved on each call so updates
      * persisted through the admin form take effect on the next
      * request without a cache clear.
      *
-     * @return array{brand_name: string, brand_tagline: string, brand_initials: string}
+     * @return array{brand_name: string, brand_tagline: string, brand_initials: string, palette_text: string, palette_line: string, palette_text_muted: string}
      */
     public function getGlobals(): array
     {
@@ -41,6 +62,9 @@ final class BrandExtension extends AbstractExtension implements GlobalsInterface
             'brand_name' => $this->settings->getBrandName(),
             'brand_tagline' => $this->settings->getBrandTagline(),
             'brand_initials' => $this->settings->getBrandInitials(),
+            'palette_text' => self::PALETTE_TEXT,
+            'palette_line' => self::PALETTE_LINE,
+            'palette_text_muted' => self::PALETTE_TEXT_MUTED,
         ];
     }
 }
