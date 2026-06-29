@@ -29,7 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `@theme` for future use but no current page applies it,
   mirroring the prototype where `.container` is defined but
   unused. Grid CSS lives in `assets/styles/app.css` under
-  `@layer components`
+  `@layer components`. Three pages adopt the new layouts as
+  reference consumers: the frontpage (`SingleColumn`),
+  `/assistant/new` (`SingleColumn`), `/search` (`ThreeColumn`
+  with filters in the `start` slot and an empty `end` slot
+  reserved for a future context rail), and `/assistant/{id}`
+  (`ContentWithAsides` with the title + description in `main`,
+  runtime details in `meta`, and tags in `actions`)
   ([#144](https://github.com/itk-dev/ai-reolen/issues/144)).
 - Branded HTTP 401 and 403 pages for the firewall entry
   points. `App\Security\UnauthorizedEntryPoint` now renders
