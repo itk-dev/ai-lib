@@ -7,7 +7,16 @@
     autocomplete = null,
     required = false,
     autofocus = false,
+    size = 'md',
 %}
+{# `size` maps to a padding/text-size utility group so a larger field (e.g. #}
+{# the prominent catalogue search bar) can be requested without restyling at #}
+{# the call site. `md` matches the original appearance, so existing call #}
+{# sites are unaffected. #}
+{% set sizes = {
+    md: 'px-3 py-2 text-base',
+    lg: 'px-4 py-2.5 text-lg',
+} %}
 {# `{{ attributes }}` spreads arbitrary call-site attributes and merges any #}
 {# extra `class` onto the default appearance, so call sites can size the #}
 {# field (e.g. `w-full flex-1`) without restyling it. #}
@@ -19,4 +28,4 @@
        {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
        {% if required %}required{% endif %}
        {% if autofocus %}autofocus{% endif %}
-       {{ attributes.defaults({class: 'rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40'}) }}>
+       {{ attributes.defaults({class: 'rounded-lg border border-line bg-surface ' ~ sizes[size] ~ ' text-ink focus:outline-none focus:ring-2 focus:ring-primary/40'}) }}>

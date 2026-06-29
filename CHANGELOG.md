@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `assets-build` Taskfile target to compile the Tailwind CSS bundle
+  (supports `-- --watch` and `-- --minify`); `site-install` now reuses it.
+- Enlarged the catalogue search bar to match the design — it now uses a
+  larger input and button. Adds a `size` prop to the `Form:TextInput`
+  component and an `lg` size to `Form:Button`. The `Form:Button` no longer
+  shrinks or wraps its label below its content width when placed beside a
+  growing field, so the "Søg" label stays fully visible.
+- Made the catalogue right-hand sidebar box headings more pronounced by
+  rendering them in the dark ink colour instead of muted grey, matching the
+  design.
+- Tightened the spacing across the catalogue layout — the gap between the
+  three columns, between stacked sidebar boxes, and within the results
+  column — for a more compact arrangement matching the design.
+- Catalogue right-hand sidebar and one-per-row results. The `/search`
+  page becomes a three-column layout — facet rail, results, and a new
+  sidebar with an "Aktive filtre" box (active-filter chips, moved out of
+  the results column, with an empty state), a "Seneste søgninger" box
+  listing the user's recent searches as re-runnable links (per-session,
+  deduplicated, most-recent-first), and an informational "Klar til
+  hjemtagning" box. Result cards now render one per row, restructured
+  to lead with the title (large display serif), a language-model kicker,
+  the description, and the framework plus tags as pills
+  ([#19](https://github.com/itk-dev/ai-reolen/issues/19)).
 - Branded HTTP 401 and 403 pages for the firewall entry
   points. `App\Security\UnauthorizedEntryPoint` now renders
   `templates/security/unauthorized.html.twig` ("Log ind
