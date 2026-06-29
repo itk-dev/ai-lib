@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the results column, with an empty state), a "Seneste søgninger" box
   listing the user's recent searches as re-runnable links (per-session,
   deduplicated, most-recent-first), and an informational "Klar til
-  hjemtagning" box. Result cards now render one per row
+  hjemtagning" box. Result cards now render one per row, restructured
+  to lead with the title (large display serif), a language-model kicker,
+  the description, and the framework plus tags as pills
   ([#19](https://github.com/itk-dev/ai-reolen/issues/19)).
 - Catalogue result ordering. The `/search` page gains a "Sortering"
   box in the filter column, above the filters, offering newest, oldest,
