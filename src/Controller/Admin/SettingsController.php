@@ -70,10 +70,20 @@ final class SettingsController extends AbstractController
     {
         $submitted = [
             'admin_recipient' => $this->settingsManager->getAdminRecipient() ?? '',
+            'admin_notification_subject' => $this->settingsManager->getAdminNotificationSubject(),
+            'admin_notification_body' => $this->settingsManager->getAdminNotificationBody(),
+            'registration_confirmation_subject' => $this->settingsManager->getRegistrationConfirmationSubject(),
+            'registration_confirmation_body' => $this->settingsManager->getRegistrationConfirmationBody(),
         ];
 
         if ('POST' === $request->getMethod()) {
-            $submitted['admin_recipient'] = (string) $request->request->get('admin_recipient', '');
+            $submitted = [
+                'admin_recipient' => (string) $request->request->get('admin_recipient', ''),
+                'admin_notification_subject' => (string) $request->request->get('admin_notification_subject', ''),
+                'admin_notification_body' => (string) $request->request->get('admin_notification_body', ''),
+                'registration_confirmation_subject' => (string) $request->request->get('registration_confirmation_subject', ''),
+                'registration_confirmation_body' => (string) $request->request->get('registration_confirmation_body', ''),
+            ];
 
             if (!$this->isCsrfTokenValid('admin-settings-email', (string) $request->request->get('_token'))) {
                 return $this->render('admin/settings/email.html.twig', [
@@ -88,6 +98,13 @@ final class SettingsController extends AbstractController
                     'error' => 'admin.settings.error.invalid_email',
                 ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
             }
+
+            $this->settingsManager->applyEmailContent(
+                $submitted['admin_notification_subject'],
+                $submitted['admin_notification_body'],
+                $submitted['registration_confirmation_subject'],
+                $submitted['registration_confirmation_body'],
+            );
 
             $this->addFlash('success', 'admin.settings.flash.saved');
 

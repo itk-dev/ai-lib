@@ -3,7 +3,7 @@
 {% block title %}{{ 'admin.settings.email.title'|trans({'%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
-    <section class="max-w-md">
+    <section class="max-w-2xl">
         <twig:Eyebrow as="p" class="mb-4">{{ 'admin.settings.eyebrow'|trans }}</twig:Eyebrow>
         <twig:Heading level="1" size="lg" class="mb-6">{{ 'admin.settings.email.heading'|trans }}</twig:Heading>
 
@@ -23,17 +23,74 @@
             </div>
         {% endif %}
 
-        <form action="{{ path('app_admin_settings_email') }}" method="post" class="grid gap-4">
-            <twig:Form:Label for="inputAdminRecipient" text="{{ 'admin.settings.email.fields.admin_recipient.label'|trans }}">
-                <twig:Form:TextInput
-                    id="inputAdminRecipient"
-                    name="admin_recipient"
-                    type="email"
-                    value="{{ submitted.admin_recipient }}"
-                    autocomplete="email"
-                />
-                <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.admin_recipient.help'|trans }}</p>
-            </twig:Form:Label>
+        <form action="{{ path('app_admin_settings_email') }}" method="post" class="grid gap-8">
+            <fieldset class="grid gap-4">
+                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.recipient'|trans }}</legend>
+
+                <twig:Form:Label for="inputAdminRecipient" text="{{ 'admin.settings.email.fields.admin_recipient.label'|trans }}">
+                    <twig:Form:TextInput
+                        id="inputAdminRecipient"
+                        name="admin_recipient"
+                        type="email"
+                        value="{{ submitted.admin_recipient }}"
+                        autocomplete="email"
+                    />
+                    <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.admin_recipient.help'|trans }}</p>
+                </twig:Form:Label>
+            </fieldset>
+
+            <fieldset class="grid gap-4">
+                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.admin_notification'|trans }}</legend>
+                <p class="text-sm text-text">
+                    {{ 'admin.settings.email.tokens_label'|trans }}
+                    <code class="rounded bg-surface-2 px-1">%name%</code>,
+                    <code class="rounded bg-surface-2 px-1">%email%</code>,
+                    <code class="rounded bg-surface-2 px-1">%brand_name%</code>,
+                    <code class="rounded bg-surface-2 px-1">%approval_url%</code>.
+                </p>
+
+                <twig:Form:Label for="inputAdminNotificationSubject" text="{{ 'admin.settings.email.fields.subject.label'|trans }}">
+                    <twig:Form:TextInput
+                        id="inputAdminNotificationSubject"
+                        name="admin_notification_subject"
+                        value="{{ submitted.admin_notification_subject }}"
+                    />
+                </twig:Form:Label>
+
+                <twig:Form:Label for="inputAdminNotificationBody" text="{{ 'admin.settings.email.fields.body.label'|trans }}">
+                    <textarea id="inputAdminNotificationBody"
+                              name="admin_notification_body"
+                              rows="8"
+                              class="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.admin_notification_body }}</textarea>
+                    <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.body.help'|trans }}</p>
+                </twig:Form:Label>
+            </fieldset>
+
+            <fieldset class="grid gap-4">
+                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.registration_confirmation'|trans }}</legend>
+                <p class="text-sm text-text">
+                    {{ 'admin.settings.email.tokens_label'|trans }}
+                    <code class="rounded bg-surface-2 px-1">%name%</code>,
+                    <code class="rounded bg-surface-2 px-1">%email%</code>,
+                    <code class="rounded bg-surface-2 px-1">%brand_name%</code>.
+                </p>
+
+                <twig:Form:Label for="inputRegistrationConfirmationSubject" text="{{ 'admin.settings.email.fields.subject.label'|trans }}">
+                    <twig:Form:TextInput
+                        id="inputRegistrationConfirmationSubject"
+                        name="registration_confirmation_subject"
+                        value="{{ submitted.registration_confirmation_subject }}"
+                    />
+                </twig:Form:Label>
+
+                <twig:Form:Label for="inputRegistrationConfirmationBody" text="{{ 'admin.settings.email.fields.body.label'|trans }}">
+                    <textarea id="inputRegistrationConfirmationBody"
+                              name="registration_confirmation_body"
+                              rows="8"
+                              class="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.registration_confirmation_body }}</textarea>
+                    <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.body.help'|trans }}</p>
+                </twig:Form:Label>
+            </fieldset>
 
             <input type="hidden" name="_token" value="{{ csrf_token('admin-settings-email') }}">
 
