@@ -324,6 +324,48 @@ final class UserControllerTest extends WebTestCase
         self::assertCount(0, $adminRow->filter('form[action*="/block"]'), 'Manager must not see the block form on an admin row.');
     }
 
+    // Ensures the last active admin cannot block themselves: the block service refuses, a localised error flash renders, and the admin remains Approved.
+    public function testLastActiveAdminCannotBlockSelf(): void
+    {
+        // Strip every other admin so the fixture admin is the only
+        // active administrator on the site. The block guard then
+        // must refuse the self-block.
+        $userRepository = self::getContainer()->get(UserRepository::class);
+        foreach ($userRepository->findAll() as $user) {
+            if ($user->getEmail() === UserFixtures::ADMIN_EMAIL) {
+                continue;
+            }
+            if (\in_array(Roles::ADMIN, $user->getRoles(), true)) {
+                $user->setRoles([]);
+            }
+        }
+        self::getContainer()->get('doctrine')->getManager()->flush();
+
+        $this->loginAsApproved(UserFixtures::ADMIN_EMAIL);
+        $admin = $userRepository->findOneBy(['email' => UserFixtures::ADMIN_EMAIL]);
+        self::assertNotNull($admin);
+
+        $crawler = $this->client->request('GET', '/admin/users');
+        // Pick the block form scoped to the admin row itself —
+        // the form's action carries the user's ULID.
+        $form = $crawler->filter('form[action$="/'.$admin->getId().'/block"]')->form();
+        $this->client->submit($form);
+
+        // The controller redirects back to the list with an error
+        // flash; following the redirect surfaces the flash render.
+        $followup = $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString(
+            'Mindst én administrator',
+            $followup->filter('[role="alert"]')->text(),
+            'Error flash explaining the refusal must render on the redirected page.',
+        );
+
+        $reloaded = $userRepository->find($admin->getId());
+        self::assertNotNull($reloaded);
+        self::assertSame(UserStatus::Approved, $reloaded->getStatus(), 'Last-admin self-block must not flip the status.');
+    }
+
     // Verifies a hand-crafted POST to /admin/users/{adminId}/block as a manager actor returns 403 and does not flip the admin's status.
     public function testManagerCannotBlockAdminViaDirectPost(): void
     {

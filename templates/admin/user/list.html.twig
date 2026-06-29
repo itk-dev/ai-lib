@@ -13,6 +13,12 @@
             </twig:Alert>
         {% endfor %}
 
+        {% for flash in app.flashes('error') %}
+            <twig:Alert type="error" class="mb-4">
+                {{ flash|trans }}
+            </twig:Alert>
+        {% endfor %}
+
         {% if is_granted('ROLE_ADMIN') %}
             <p class="mb-6">
                 <twig:Form:Button href="{{ path('app_admin_user_new') }}">

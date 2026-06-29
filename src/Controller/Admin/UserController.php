@@ -117,7 +117,17 @@ final class UserController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $this->userApproval->block($user);
+        try {
+            $this->userApproval->block($user);
+        } catch (LastAdminException) {
+            // Blocking the last active admin would lock the site. The
+            // guard lives in the service; surface it as an error flash
+            // and bounce back to the list without mutating anything.
+            $this->addFlash('error', 'admin.users.flash.last_admin_block');
+
+            return $this->redirectToBackUrl($request);
+        }
+
         $this->addFlash('success', 'admin.users.flash.blocked');
 
         return $this->redirectToBackUrl($request);
