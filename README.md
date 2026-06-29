@@ -113,6 +113,39 @@ For one-off commands without a dedicated task, fall back to the underlying
 tools, e.g. `docker compose --profile dev run --rm prettier <args>` or
 `itkdev-docker-compose <args>`.
 
+### Page layouts
+
+Every page picks one of three reusable layout components under
+[`templates/components/Layout/`](templates/components/Layout). They
+own the page's inner grid; `base.html.twig` owns the outer
+`<main>` landmark and its max-width.
+
+- **`<twig:Layout:SingleColumn>`** — the default. One stacked flow
+  inside the narrow container (≈ 1180px). Slot: `content`. Use for
+  the frontpage, login / register, simple admin forms, error pages.
+- **`<twig:Layout:ThreeColumn>`** — broad middle with a narrow left
+  column and an optional right rail. Slots: `start`, `main`, `end`.
+  Collapses to a single stacked column below 768px. Use for the
+  catalogue / search surfaces.
+- **`<twig:Layout:ContentWithAsides>`** — wide main content with two
+  sticky right-side asides. Slots: `main`, `meta`, `actions`. Use
+  for assistant detail pages and similar surfaces with secondary
+  panels alongside the primary content.
+
+The two multi-column variants need the wide container — opt in by
+overriding the base template's `main_max_width` block from the
+adopting page:
+
+```twig
+{% extends 'base.html.twig' %}
+{% block main_max_width %}max-w-wide{% endblock %}
+```
+
+Container widths come from the `--container-narrow` / `--container-wide`
+tokens in `assets/styles/app.css` (exposed as the `max-w-narrow`
+and `max-w-wide` utilities by Tailwind v4's `@theme`). The grid CSS
+lives in the same file under `@layer components`.
+
 > The commands below describe the intended ITK Dev standard setup. The actual
 > Docker + Symfony scaffolding is added in
 > [#1 Set up Docker + Symfony](https://github.com/itk-dev/ai-reolen/issues/1);

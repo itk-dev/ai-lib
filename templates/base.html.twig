@@ -34,8 +34,16 @@
             </twig:Nav:Menu>
         </twig:Layout:SiteHeader>
 
+        {#
+            Default page container: the narrow constraint (`max-w-narrow`,
+            ≈ 1180px) from the mocks' `--container-narrow` token. Pages
+            adopting `<twig:Layout:ThreeColumn>` or
+            `<twig:Layout:ContentWithAsides>` should opt up to the wide
+            container by overriding the `main_max_width` block with
+            `max-w-wide`. Skip-link target / focus ring stay on `#main`.
+        #}
         <main id="main"
-              class="mx-auto w-full max-w-[1600px] flex-1 px-[clamp(20px,4vw,56px)] py-[clamp(24px,4vw,56px)]"
+              class="mx-auto w-full {% block main_max_width %}max-w-narrow{% endblock %} flex-1 px-[clamp(20px,4vw,56px)] py-[clamp(24px,4vw,56px)]"
               tabindex="-1">
             {% block body %}{% endblock %}
         </main>
