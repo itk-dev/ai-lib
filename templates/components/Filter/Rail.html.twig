@@ -7,7 +7,7 @@
 %}
 <aside aria-label="{{ heading|trans }}"
        class="flex flex-col gap-6 rounded-xl border border-line bg-surface p-5 lg:sticky lg:top-28">
-    <h3 class="font-display text-xl">{{ heading|trans }}</h3>
+    <twig:Heading level="3" size="sm" weight="normal">{{ heading|trans }}</twig:Heading>
 
     <form method="get" action="{{ action }}" class="flex flex-col gap-6"
           data-controller="filter-autosubmit"
