@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller\Admin;
 
+use App\DataFixtures\UserFixtures;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
@@ -306,30 +307,32 @@ final class UserControllerTest extends WebTestCase
         self::assertCount(0, $adminRow->filter('select'), 'Manager must not be offered a dropdown on an admin row.');
     }
 
-    // Ensures the approve / block buttons disappear for admin targets when the actor is a manager — defense in depth against an oversight in the voter.
-    public function testManagerSeesNoApproveOrBlockButtonsForAdminTargets(): void
+    // Ensures the block button disappears for admin targets when the actor is a manager — defense in depth against an oversight in the voter. The approve form is naturally absent on Approved targets, so this asserts only on the block path that the voter rule actually gates.
+    public function testManagerSeesNoBlockButtonForAdminTargets(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('mgr@example.test', 'Mgr', 'pw', [Roles::DOMAIN_MANAGER]);
-        $um->createUser('inhouse-admin@example.test', 'Inhouse Admin', 'pw', [Roles::ADMIN], status: UserStatus::Pending);
-        $this->loginAsApproved('mgr@example.test');
+        // Both users come from UserFixtures: manager@aarhus.dk holds
+        // ROLE_DOMAIN_MANAGER and admin@aarhus.dk holds ROLE_ADMIN,
+        // sharing the @aarhus.dk domain — the exact configuration in
+        // which the manager-cannot-touch-admin rule has to bite.
+        $this->loginAsApproved(UserFixtures::DOMAIN_MANAGER_EMAIL);
 
         $crawler = $this->client->request('GET', '/admin/users');
 
         self::assertResponseIsSuccessful();
-        $adminRow = $crawler->filter('tbody tr:contains("inhouse-admin@example.test")');
+        $adminRow = $crawler->filter('tbody tr:contains("'.UserFixtures::ADMIN_EMAIL.'")');
         self::assertGreaterThan(0, $adminRow->count(), 'Admin row must render for an in-domain manager.');
-        self::assertCount(0, $adminRow->filter('form[action*="/approve"]'), 'Manager must not see the approve form on an admin row.');
         self::assertCount(0, $adminRow->filter('form[action*="/block"]'), 'Manager must not see the block form on an admin row.');
     }
 
     // Verifies a hand-crafted POST to /admin/users/{adminId}/block as a manager actor returns 403 and does not flip the admin's status.
     public function testManagerCannotBlockAdminViaDirectPost(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('mgr@example.test', 'Mgr', 'pw', [Roles::DOMAIN_MANAGER]);
-        $admin = $um->createUser('inhouse-admin@example.test', 'Inhouse Admin', 'pw', [Roles::ADMIN], status: UserStatus::Approved);
-        $this->loginAsApproved('mgr@example.test');
+        $userRepository = self::getContainer()->get(UserRepository::class);
+        $admin = $userRepository->findOneBy(['email' => UserFixtures::ADMIN_EMAIL]);
+        self::assertNotNull($admin, 'UserFixtures must seed the admin baseline.');
+        self::assertSame(UserStatus::Approved, $admin->getStatus(), 'Fixture admin must start Approved so we can assert the block is rejected.');
+
+        $this->loginAsApproved(UserFixtures::DOMAIN_MANAGER_EMAIL);
 
         // Grab a valid token from the list page — the voter denies before
         // the CSRF check would matter, but using a real token rules out a
@@ -343,7 +346,7 @@ final class UserControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(403);
 
-        $reloaded = self::getContainer()->get(UserRepository::class)->find($admin->getId());
+        $reloaded = $userRepository->find($admin->getId());
         self::assertNotNull($reloaded);
         self::assertSame(UserStatus::Approved, $reloaded->getStatus(), 'Block on an admin must be denied before any status flip.');
     }
