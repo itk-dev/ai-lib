@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Repository;
 
 use App\Catalog\CatalogCriteria;
+use App\Catalog\CatalogSort;
 use App\Entity\Assistant;
 use App\Entity\Tag;
 use App\Repository\AssistantRepository;
@@ -83,8 +84,11 @@ final class AssistantRepositoryTest extends KernelTestCase
     {
         $perPage = 10;
 
-        $firstPage = $this->repository->findPaginated(new CatalogCriteria(), page: 1, perPage: $perPage);
-        $secondPage = $this->repository->findPaginated(new CatalogCriteria(), page: 2, perPage: $perPage);
+        // Oldest-first sorts by createdAt ASC with an id-ASC tiebreaker, so
+        // (since fixtures share a creation instant) the page order is id-ASC.
+        $criteria = new CatalogCriteria(sort: CatalogSort::Oldest);
+        $firstPage = $this->repository->findPaginated($criteria, page: 1, perPage: $perPage);
+        $secondPage = $this->repository->findPaginated($criteria, page: 2, perPage: $perPage);
 
         $firstIds = array_map(static fn (Assistant $a) => $a->getId(), iterator_to_array($firstPage->getIterator()));
         $secondIds = array_map(static fn (Assistant $a) => $a->getId(), iterator_to_array($secondPage->getIterator()));
@@ -183,5 +187,64 @@ final class AssistantRepositoryTest extends KernelTestCase
         $sorted = $counts;
         rsort($sorted);
         self::assertSame($sorted, $counts, 'buckets are ordered by count DESC');
+    }
+
+    // Tests that name-ascending orders by title A→Å, and name-descending is its exact reverse (titles are unique).
+    public function testFindPaginatedSortsByName(): void
+    {
+        $asc = $this->titlesOf(new CatalogCriteria(sort: CatalogSort::NameAsc));
+        $desc = $this->titlesOf(new CatalogCriteria(sort: CatalogSort::NameDesc));
+
+        self::assertStringStartsWith('Borgerhenvendelse-svarudkast', $asc[0], 'A→Å lists the lowest title first');
+        self::assertSame('Uden kategorier', $asc[array_key_last($asc)], 'A→Å lists the highest title last');
+        self::assertSame(array_reverse($asc), $desc, 'name-descending is the exact reverse of name-ascending');
+    }
+
+    // Ensures the default (newest-first) ordering is the exact reverse of oldest-first across the fixture baseline.
+    public function testFindPaginatedDefaultsToNewestFirst(): void
+    {
+        $newest = $this->idsOf(new CatalogCriteria());
+        $oldest = $this->idsOf(new CatalogCriteria(sort: CatalogSort::Oldest));
+
+        self::assertSame(CatalogSort::Newest, (new CatalogCriteria())->sort, 'empty criteria defaults to newest');
+        self::assertCount(21, $newest);
+        self::assertSame(array_reverse($oldest), $newest, 'newest-first reverses oldest-first');
+    }
+
+    // Verifies recently-updated falls back to the same id-DESC order as newest, since fixtures share an update instant.
+    public function testFindPaginatedSortsByRecentlyUpdated(): void
+    {
+        $recentlyUpdated = $this->idsOf(new CatalogCriteria(sort: CatalogSort::RecentlyUpdated));
+        $newest = $this->idsOf(new CatalogCriteria(sort: CatalogSort::Newest));
+
+        self::assertSame($newest, $recentlyUpdated);
+    }
+
+    /**
+     * Collect the titles of an unpaginated catalogue query in result order.
+     *
+     * @param CatalogCriteria $criteria the filter/sort selection to run
+     *
+     * @return list<string> assistant titles in the order the repository returned them
+     */
+    private function titlesOf(CatalogCriteria $criteria): array
+    {
+        $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
+
+        return array_map(static fn (Assistant $a) => $a->getTitle(), iterator_to_array($paginator->getIterator()));
+    }
+
+    /**
+     * Collect the ids of an unpaginated catalogue query in result order.
+     *
+     * @param CatalogCriteria $criteria the filter/sort selection to run
+     *
+     * @return list<string> assistant ids (stringified ULIDs) in result order
+     */
+    private function idsOf(CatalogCriteria $criteria): array
+    {
+        $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
+
+        return array_map(static fn (Assistant $a) => (string) $a->getId(), iterator_to_array($paginator->getIterator()));
     }
 }

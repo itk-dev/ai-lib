@@ -176,4 +176,64 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertArrayNotHasKey('tag', $params, 'chip removes the tag filter');
         self::assertSame('borgerservice', $params['q'] ?? null, 'chip preserves the search query');
     }
+
+    // Tests that the sort control renders with the newest-first default option preselected.
+    public function testSortControlRendersWithDefaultSelected(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        $selected = $crawler->filter('#catalog-sort option[selected]');
+        self::assertCount(1, $selected, 'exactly one sort option is preselected');
+        self::assertSame('newest', $selected->attr('value'), 'newest-first is the default selection');
+    }
+
+    // Ensures ?sort=name reorders the cards so the alphabetically-first title leads the listing.
+    public function testSortByNameReordersResults(): void
+    {
+        $crawler = $this->client->request('GET', '/search?sort=name');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('name', $crawler->filter('#catalog-sort option[selected]')->attr('value'));
+        self::assertStringContainsString(
+            'Borgerhenvendelse-svarudkast',
+            $crawler->filter('a[href^="/assistant/"]')->first()->text(),
+            'name-ascending puts the lowest title first',
+        );
+    }
+
+    // Ensures the sort form carries the active facet as a hidden input so changing the order preserves the filter.
+    public function testSortFormPreservesActiveFilters(): void
+    {
+        $crawler = $this->client->request('GET', '/search?language_model%5B%5D=gpt-4o');
+
+        self::assertResponseIsSuccessful();
+        $hidden = $crawler->filter('input[type="hidden"][name="language_model[]"]');
+        self::assertCount(1, $hidden, 'the sort form mirrors the active facet as a hidden input');
+        self::assertSame('gpt-4o', $hidden->attr('value'));
+    }
+
+    // Ensures the filter form carries the active sort as a hidden input so toggling a facet preserves the ordering.
+    public function testFilterFormCarriesActiveSort(): void
+    {
+        $crawler = $this->client->request('GET', '/search?sort=name');
+
+        self::assertResponseIsSuccessful();
+        $hidden = $crawler->filter('input[type="hidden"][name="sort"]');
+        self::assertCount(1, $hidden, 'the filter form mirrors the active sort as a hidden input');
+        self::assertSame('name', $hidden->attr('value'));
+    }
+
+    // Ensures the default ordering is not echoed as a hidden sort input, keeping the filter form URL clean.
+    public function testFilterFormOmitsDefaultSort(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(
+            0,
+            $crawler->filter('input[type="hidden"][name="sort"]'),
+            'the default sort is implicit and must not be emitted as a hidden input',
+        );
+    }
 }

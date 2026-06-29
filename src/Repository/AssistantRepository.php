@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Catalog\CatalogCriteria;
+use App\Catalog\CatalogSort;
 use App\Entity\Assistant;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -42,8 +44,9 @@ class AssistantRepository extends ServiceEntityRepository
      * one of the named tags. An empty facet means "no filter on this
      * facet". A non-empty `q` further narrows to rows whose title or
      * description contains the query (case-insensitive substring).
-     * Results are sorted by `id ASC` for a stable, fixture-friendly
-     * ordering.
+     * Results are ordered according to `criteria->sort` (see
+     * {@see self::applySort()}), with `id` as a tiebreaker so the order
+     * is stable even when the primary sort key ties.
      *
      * The tag filter is expressed as an `id IN (subquery)` over the
      * `assistant_tag` join rather than a fetch join, so multiple selected
@@ -60,7 +63,8 @@ class AssistantRepository extends ServiceEntityRepository
      */
     public function findPaginated(CatalogCriteria $criteria, int $page, int $perPage): Paginator
     {
-        $qb = $this->createQueryBuilder('a')->orderBy('a.id', 'ASC');
+        $qb = $this->createQueryBuilder('a');
+        $this->applySort($qb, $criteria->sort);
 
         if (null !== $criteria->q) {
             // Parenthesise the OR so it binds as a unit when ANDed with the
@@ -95,6 +99,30 @@ class AssistantRepository extends ServiceEntityRepository
             ->setMaxResults($perPage);
 
         return new Paginator($qb->getQuery(), false);
+    }
+
+    /**
+     * Apply the catalogue ordering for the given sort to a query builder.
+     *
+     * Each case sets the primary `ORDER BY` and then appends `a.id` in the
+     * same direction as a tiebreaker, so rows that tie on the primary key
+     * (e.g. the timestamp sorts, since fixtures share a creation instant)
+     * still come back in a deterministic, paginatable order. Name sorts
+     * tiebreak on `a.id ASC` regardless of name direction — the tiebreak
+     * only needs to be stable, not aligned with the title direction.
+     *
+     * @param QueryBuilder $qb   the catalogue query under construction
+     * @param CatalogSort  $sort the ordering the user asked for
+     */
+    private function applySort(QueryBuilder $qb, CatalogSort $sort): void
+    {
+        match ($sort) {
+            CatalogSort::Newest => $qb->orderBy('a.createdAt', 'DESC')->addOrderBy('a.id', 'DESC'),
+            CatalogSort::Oldest => $qb->orderBy('a.createdAt', 'ASC')->addOrderBy('a.id', 'ASC'),
+            CatalogSort::RecentlyUpdated => $qb->orderBy('a.updatedAt', 'DESC')->addOrderBy('a.id', 'DESC'),
+            CatalogSort::NameAsc => $qb->orderBy('a.title', 'ASC')->addOrderBy('a.id', 'ASC'),
+            CatalogSort::NameDesc => $qb->orderBy('a.title', 'DESC')->addOrderBy('a.id', 'ASC'),
+        };
     }
 
     /**
