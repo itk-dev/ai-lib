@@ -83,6 +83,16 @@ final class SettingsManagerTest extends KernelTestCase
         self::assertNull($manager->getAdminRecipient());
     }
 
+    // Verifies applyAdminRecipient rejects garbage input without persisting it — parallels the same check on applySenderAddress.
+    public function testApplyAdminRecipientRejectsGarbage(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setAdminRecipient('keepme@example.test');
+
+        self::assertFalse($manager->applyAdminRecipient('not-an-email'));
+        self::assertSame('keepme@example.test', $manager->getAdminRecipient(), 'invalid submit must not overwrite stored value');
+    }
+
     // Verifies the sender accessor falls back to the MAILER_FROM env baked into the test container.
     public function testGetSenderAddressFallsBackToEnvWhenUnset(): void
     {
