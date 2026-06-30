@@ -3,11 +3,7 @@
 {% block title %}{{ 'frontpage.title'|trans({'%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
-    {# grid-cols-1 gives the implicit column min 0 (minmax(0, 1fr)), so #}
-    {# children like the CardRail can let their overflow-x-auto kick in #}
-    {# instead of expanding the grid to their min-content width. #}
-    <div class="view-root grid grid-cols-1 gap-12">
-
+    <twig:Layout:SingleColumn>
         <twig:Hero eyebrow="frontpage.hero.eyebrow">
             <twig:block name="heading">{{ 'frontpage.hero.heading_html'|trans|raw }}</twig:block>
             <twig:block name="lead">{{ hero_text }}</twig:block>
@@ -57,6 +53,5 @@
                 {% endfor %}
             </twig:StepList:List>
         </twig:Box>
-
-    </div>
+    </twig:Layout:SingleColumn>
 {% endblock %}

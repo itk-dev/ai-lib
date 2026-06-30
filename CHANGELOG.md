@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Three reusable page layout components under
+  `templates/components/Layout/`. Site header, `<main>`, and
+  footer now share the wide container (`max-w-wide`, ≈ 1600px
+  from the mocks' `--container-wide`) so all three chrome edges
+  align — matching the prototype's `index.html`, which puts
+  `container-wide` on all three. `<twig:Layout:SingleColumn>`
+  renders a stacked flow inside that wide `<main>` (no extra
+  horizontal constraint of its own — inner components like
+  `<twig:Hero>` or `<twig:Box>` carry whatever narrower
+  max-width they need) and is adopted on the frontpage as the
+  reference consumer. `<twig:Layout:ThreeColumn>` (slots `start`,
+  `main`, `end`) and `<twig:Layout:ContentWithAsides>` (slots
+  `main`, `meta`, `actions` with sticky asides) cover the
+  catalogue and detail surfaces. The previous ad-hoc
+  `max-w-[1600px]` literals on the header, footer, and `<main>`
+  are replaced by the token-backed `max-w-wide` utility. The
+  narrow `--container-narrow` token (≈ 1180px) is defined in
+  `@theme` for future use but no current page applies it,
+  mirroring the prototype where `.container` is defined but
+  unused. Grid CSS lives in `assets/styles/app.css` under
+  `@layer components`. Three pages adopt the new layouts as
+  reference consumers: the frontpage (`SingleColumn`),
+  `/assistant/new` (`SingleColumn`), `/search` (`ThreeColumn`
+  with filters in the `start` slot and an empty `end` slot
+  reserved for a future context rail), and `/assistant/{id}`
+  (`ContentWithAsides` with the title + description in `main`,
+  runtime details in `meta`, and tags in `actions`)
+  ([#144](https://github.com/itk-dev/ai-reolen/issues/144)).
 - Unified CSRF protection on the stateless double-submit cookie
   pattern. Every hand-rolled form intent —
   `assistant-create`, `register`, `admin-organization-delete`,

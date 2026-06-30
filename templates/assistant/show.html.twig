@@ -3,42 +3,50 @@
 {% block title %}{{ 'assistant.detail.title'|trans({'%title%': assistant.title, '%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
-    <article class="view-root grid gap-12">
-        <header class="max-w-3xl">
-            <p class="mb-4">
-                <a class="text-sm font-medium text-text-muted no-underline hover:text-primary"
-                   href="{{ path('app_frontpage') }}">
-                    {{ 'assistant.detail.back'|trans }}
-                </a>
-            </p>
-            <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.detail.eyebrow'|trans }}</twig:Eyebrow>
-            <twig:Heading level="1" class="mb-4">{{ assistant.title }}</twig:Heading>
-            <p class="max-w-[60ch] text-lg leading-relaxed text-text">
-                {{ assistant.description }}
-            </p>
-        </header>
+    <twig:Layout:ContentWithAsides>
+        <twig:block name="main">
+            <article class="grid gap-8">
+                <header>
+                    <p class="mb-4">
+                        <a class="text-sm font-medium text-text-muted no-underline hover:text-primary"
+                           href="{{ path('app_frontpage') }}">
+                            {{ 'assistant.detail.back'|trans }}
+                        </a>
+                    </p>
+                    <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.detail.eyebrow'|trans }}</twig:Eyebrow>
+                    <twig:Heading level="1" class="mb-4">{{ assistant.title }}</twig:Heading>
+                    <p class="max-w-[60ch] text-lg leading-relaxed text-text">
+                        {{ assistant.description }}
+                    </p>
+                </header>
+            </article>
+        </twig:block>
 
-        <twig:Box eyebrow="assistant.detail.runtime_heading">
-            <twig:DescriptionList:List class="sm:grid-cols-2">
-                <twig:DescriptionList:Item label="assistant.detail.framework_label">
-                    {{ assistant.framework }}
-                </twig:DescriptionList:Item>
-                <twig:DescriptionList:Item label="assistant.detail.language_model_label">
-                    {{ assistant.languageModel }}
-                </twig:DescriptionList:Item>
-            </twig:DescriptionList:List>
-        </twig:Box>
-
-        {% if assistant.tags is not empty %}
-            <twig:Box eyebrow="assistant.detail.tags_heading">
-                <ul class="flex flex-wrap gap-2" aria-label="{{ 'assistant.detail.tags_heading'|trans }}">
-                    {% for tag in assistant.tags %}
-                        <li class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text">
-                            {{ tag.name }}
-                        </li>
-                    {% endfor %}
-                </ul>
+        <twig:block name="meta">
+            <twig:Box eyebrow="assistant.detail.runtime_heading">
+                <twig:DescriptionList:List>
+                    <twig:DescriptionList:Item label="assistant.detail.framework_label">
+                        {{ assistant.framework }}
+                    </twig:DescriptionList:Item>
+                    <twig:DescriptionList:Item label="assistant.detail.language_model_label">
+                        {{ assistant.languageModel }}
+                    </twig:DescriptionList:Item>
+                </twig:DescriptionList:List>
             </twig:Box>
-        {% endif %}
-    </article>
+        </twig:block>
+
+        <twig:block name="actions">
+            {% if assistant.tags is not empty %}
+                <twig:Box eyebrow="assistant.detail.tags_heading">
+                    <ul class="flex flex-wrap gap-2" aria-label="{{ 'assistant.detail.tags_heading'|trans }}">
+                        {% for tag in assistant.tags %}
+                            <li class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text">
+                                {{ tag.name }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </twig:Box>
+            {% endif %}
+        </twig:block>
+    </twig:Layout:ContentWithAsides>
 {% endblock %}

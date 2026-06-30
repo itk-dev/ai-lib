@@ -46,11 +46,15 @@ final class AssistantControllerTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Borgerservice-vejviser');
         self::assertSelectorTextContains('article', 'Hjælper sagsbehandlere');
 
-        $runtime = $crawler->filter('article dl')->text();
+        // Runtime + tags moved into the `meta` / `actions` slots of
+        // `<twig:Layout:ContentWithAsides>`, so they are siblings of
+        // `<article>` rather than children. Scope to the layout
+        // container instead.
+        $runtime = $crawler->filter('.layout-content-with-asides dl')->text();
         self::assertStringContainsString('openwebui', $runtime);
         self::assertStringContainsString('gpt-4o', $runtime);
 
-        $tagsText = $crawler->filter('article ul')->text();
+        $tagsText = $crawler->filter('.layout-content-with-asides ul')->text();
         self::assertStringContainsString('borgerservice', $tagsText);
         self::assertStringContainsString('social', $tagsText);
         self::assertStringContainsString('jura', $tagsText);
@@ -66,7 +70,7 @@ final class AssistantControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/assistant/'.$tagless->getId());
 
         self::assertResponseIsSuccessful();
-        self::assertCount(0, $crawler->filter('article ul'), 'tags <ul> must be absent when the list is empty');
+        self::assertCount(0, $crawler->filter('.layout-content-with-asides ul'), 'tags <ul> must be absent when the list is empty');
     }
 
     // Verifies that a non-existent assistant id returns a 404 response.

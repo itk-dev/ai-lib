@@ -34,8 +34,16 @@
             </twig:Nav:Menu>
         </twig:Layout:SiteHeader>
 
+        {#
+            `<main>` shares the wide container (`max-w-wide`,
+            ≈ 1600px) with the site header and footer so the three
+            chrome edges line up. The single-column layout applies a
+            narrower `max-w-narrow` (≈ 1180px) inner wrapper on
+            content that needs it — see `<twig:Layout:SingleColumn>`.
+            Skip-link target / focus ring stay on `#main`.
+        #}
         <main id="main"
-              class="mx-auto w-full max-w-[1600px] flex-1 px-[clamp(20px,4vw,56px)] py-[clamp(24px,4vw,56px)]"
+              class="mx-auto w-full max-w-wide flex-1 px-[clamp(20px,4vw,56px)] py-[clamp(24px,4vw,56px)]"
               tabindex="-1">
             {% block body %}{% endblock %}
         </main>
