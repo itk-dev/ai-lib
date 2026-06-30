@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The inline role-picker on `/admin/users` now mints its CSRF
+  token at submit time through the bundled `csrf-protection`
+  Stimulus helper, matching the project's stateless double-submit
+  cookie pattern. The JSON fetch previously captured
+  `csrf_token('admin-user-action')` server-side — which in
+  stateless mode is the intent placeholder, not the real token —
+  and submitted it raw, so the server rejected every dropdown
+  change with HTTP 403 ("Sessionen er udløbet"). A hidden carrier
+  `<form>` in the picker cell now hosts the
+  `data-controller="csrf-protection"` input, and the role-picker
+  controller calls `generateCsrfToken()` against it at submit
+  time so the random token + matching `__Host-{intent}_{token}`
+  cookie are paired correctly before the JSON body goes out.
 - Inline role promotion on `/admin/users`. The user list grows a
   **Rolle** column and a per-row dropdown that posts to a new
   `POST /admin/users/{id}/role` JSON endpoint. Three transitions

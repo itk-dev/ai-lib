@@ -94,7 +94,6 @@
                                 {% if can_change_role %}
                                     <div data-controller="role-picker"
                                          data-role-picker-url-value="{{ path('app_admin_user_role', {id: u.id}) }}"
-                                         data-role-picker-csrf-token-value="{{ csrf_token('admin-user-action') }}"
                                          data-role-picker-success-message-value="{{ 'admin.users.role.flash.success'|trans }}"
                                          class="grid gap-1">
                                         <label for="{{ picker_id }}" class="sr-only">
@@ -121,6 +120,12 @@
                                               role="status"
                                               aria-live="polite"
                                               class="text-xs text-text-muted"></span>
+                                        {# Hidden carrier form: hosts the csrf-protection <input> so the #}
+                                        {# Stimulus controller can mint a fresh token + paired cookie at #}
+                                        {# submit time via the bundle's shared helper. #}
+                                        <form data-role-picker-target="csrfForm" hidden aria-hidden="true">
+                                            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-user-action') }}">
+                                        </form>
                                     </div>
                                 {% endif %}
                             </twig:Table:Cell>
