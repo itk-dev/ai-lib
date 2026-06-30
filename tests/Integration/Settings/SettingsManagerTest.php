@@ -82,4 +82,91 @@ final class SettingsManagerTest extends KernelTestCase
         self::assertTrue($manager->applyAdminRecipient(null));
         self::assertNull($manager->getAdminRecipient());
     }
+
+    // Verifies applyAdminRecipient rejects garbage input without persisting it — parallels the same check on applySenderAddress.
+    public function testApplyAdminRecipientRejectsGarbage(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setAdminRecipient('keepme@example.test');
+
+        self::assertFalse($manager->applyAdminRecipient('not-an-email'));
+        self::assertSame('keepme@example.test', $manager->getAdminRecipient(), 'invalid submit must not overwrite stored value');
+    }
+
+    // Verifies the sender accessor falls back to the MAILER_FROM env baked into the test container.
+    public function testGetSenderAddressFallsBackToEnvWhenUnset(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+
+        $sender = $manager->getSenderAddress();
+        self::assertNotNull($sender, 'MAILER_FROM is set in .env.test so the fallback must resolve.');
+        self::assertStringContainsString('@', $sender);
+    }
+
+    // Verifies a stored sender value wins over the env-var fallback.
+    public function testGetSenderAddressReturnsStoredValueWhenSet(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setSenderAddress('admin@aarhus.dk');
+
+        self::assertSame('admin@aarhus.dk', $manager->getSenderAddress());
+    }
+
+    // Verifies applySenderAddress accepts a bare e-mail.
+    public function testApplySenderAddressAcceptsBareEmail(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+
+        self::assertTrue($manager->applySenderAddress('noreply@example.test'));
+        self::assertSame('noreply@example.test', $manager->getSenderAddress());
+    }
+
+    // Verifies applySenderAddress accepts the "Display Name <local@domain>" form.
+    public function testApplySenderAddressAcceptsDisplayNameForm(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+
+        self::assertTrue($manager->applySenderAddress('AI Reolen <noreply@example.test>'));
+        self::assertSame('AI Reolen <noreply@example.test>', $manager->getSenderAddress());
+    }
+
+    // Verifies applySenderAddress rejects garbage input without persisting it.
+    public function testApplySenderAddressRejectsGarbage(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setSenderAddress('keepme@example.test');
+
+        self::assertFalse($manager->applySenderAddress('not-an-email-and-no-brackets'));
+        self::assertSame('keepme@example.test', $manager->getSenderAddress(), 'invalid submit must not overwrite stored value');
+    }
+
+    // Verifies applySenderAddress clears the setting on empty input.
+    public function testApplySenderAddressClearsOnEmpty(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setSenderAddress('keepme@example.test');
+
+        self::assertTrue($manager->applySenderAddress(''));
+        // Cleared → falls back to env. The env value isn't 'keepme@example.test', so the override is gone.
+        self::assertNotSame('keepme@example.test', $manager->getSenderAddress());
+    }
+
+    // Verifies getSenderAddress returns null when both the setting and the MAILER_FROM env are empty.
+    public function testGetSenderAddressReturnsNullWhenSettingAndEnvAreBothEmpty(): void
+    {
+        $container = self::getContainer();
+        // Build a fresh manager whose env-var fallback is the empty
+        // string — mirrors a deploy that left MAILER_FROM unset.
+        $manager = new SettingsManager(
+            $container->get(SettingRepository::class),
+            $container->get(EntityManagerInterface::class),
+            $container->get(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            'irrelevant',
+            'irrelevant',
+            'irrelevant',
+            '',
+        );
+
+        self::assertNull($manager->getSenderAddress());
+    }
 }

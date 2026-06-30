@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The `/admin/settings/email` form now validates the
+  `admin_recipient` and `sender_address` fields together before
+  persisting either, so a submission that pairs a valid recipient
+  with an invalid sender (or vice versa) is rejected as a whole
+  and neither row is written. `SettingsManager` grows pure
+  `validateAdminRecipient()` and `validateSenderAddress()` helpers
+  alongside the existing `apply*()` shortcuts so multi-field
+  callers can do validate-all-then-persist
+  ([#132](https://github.com/itk-dev/ai-reolen/issues/132)).
+- Transactional email sender (`From:`) is now admin-editable
+  at `/admin/settings/email` next to the existing
+  "Modtager" field. `SettingsManager::getSenderAddress()`
+  reads the new `sender_address` setting and falls back to
+  the `MAILER_FROM` env var when unset, mirroring the
+  `BRAND_NAME` pattern. Both
+  `App\Notification\AdminRegistrationNotifier` and
+  `App\Notification\RegistrationConfirmationNotifier`
+  resolve the sender at send time so admin edits take
+  effect immediately, and log + skip when both setting
+  and env are empty so a half-configured mailer doesn't
+  crash registrations. Accepts both bare e-mails
+  (`noreply@…`) and the display-name form (`"AI Reolen
+  <noreply@…>"`) — same shape Symfony's
+  `Address::create()` parses
+  ([#132](https://github.com/itk-dev/ai-reolen/issues/132)).
 - `assets-build` Taskfile target to compile the Tailwind CSS bundle
   (supports `-- --watch` and `-- --minify`); `site-install` now reuses it.
 - Enlarged the catalogue search bar to match the design — it now uses a
