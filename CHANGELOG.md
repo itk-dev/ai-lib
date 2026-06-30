@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Public-signup allow-list now sources its domains from the
+  `Organization.emailDomains` rows instead of the
+  `REGISTRATION_ALLOWED_EMAIL_DOMAINS` env var. Adding a
+  municipality through `/admin/organization` (or removing one)
+  takes effect immediately — no redeploy, no config edit.
+  `App\Security\AllowedEmailDomains` keeps its
+  `contains()`/`all()` surface and now delegates to a new
+  `App\Repository\OrganizationRepository::collectAllowedEmailDomains()`
+  query that flattens, lowercases, dedupes, and drops blank
+  entries. `OrganizationFixtures` grows an `Eksempel Kommune`
+  row that owns `example.test` so the existing fixture users
+  and the integration test suite continue to register
+  successfully. The `REGISTRATION_ALLOWED_EMAIL_DOMAINS` env
+  var is no longer read and can be removed from `.env`/`.env.test`
+  ([#161](https://github.com/itk-dev/ai-reolen/issues/161)).
+
 - The inline role-picker on `/admin/users` now mints its CSRF
   token at submit time through the bundled `csrf-protection`
   Stimulus helper, matching the project's stateless double-submit
