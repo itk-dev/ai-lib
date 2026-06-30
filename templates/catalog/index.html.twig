@@ -77,20 +77,6 @@
                     </p>
                 </div>
 
-                {% if not criteria.isEmpty %}
-                    <twig:Filter:ActiveBar>
-                        {% for filter in criteria.activeFilters %}
-                            <li>
-                                <twig:Filter:Chip
-                                    href="{{ path('app_assistant_catalog', filter.removeQuery) }}"
-                                    label="{{ filter.label }}"
-                                    removeLabel="{{ 'catalog.filters.chip_remove'|trans({'%filter%': filter.label}) }}"
-                                />
-                            </li>
-                        {% endfor %}
-                    </twig:Filter:ActiveBar>
-                {% endif %}
-
                 {% if metadata.total == 0 %}
                     <twig:EmptyState heading="catalog.empty.heading" help="catalog.empty.help" />
                 {% else %}
@@ -115,7 +101,7 @@
                 {% endif %}
             </section>
         </twig:block>
-        
+
         <twig:block name="end">
             <div class="flex flex-col gap-4">
                 <twig:Catalog:SidebarCard title="catalog.active.heading">
