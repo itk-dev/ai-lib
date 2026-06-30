@@ -115,9 +115,50 @@
                 {% endif %}
             </section>
         </twig:block>
+        
+        <twig:block name="end">
+            <div class="flex flex-col gap-4">
+                <twig:Catalog:SidebarCard title="catalog.active.heading">
+                    {% if criteria.isEmpty %}
+                        <p class="text-sm text-text-muted">{{ 'catalog.active.empty'|trans }}</p>
+                    {% else %}
+                        <ul role="list" class="flex flex-wrap gap-2">
+                            {% for filter in criteria.activeFilters %}
+                                <li>
+                                    <twig:Filter:Chip
+                                        href="{{ path('app_assistant_catalog', filter.removeQuery) }}"
+                                        label="{{ filter.label }}"
+                                        removeLabel="{{ 'catalog.filters.chip_remove'|trans({'%filter%': filter.label}) }}"
+                                    />
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </twig:Catalog:SidebarCard>
 
-        {# `end` slot intentionally empty — reserved for a future #}
-        {# context rail (related searches, recommendations) matching #}
-        {# the mocks' `.context-rail` column. #}
+                <twig:Catalog:SidebarCard title="catalog.recent.heading">
+                    {% if recentSearches is empty %}
+                        <p class="text-sm text-text-muted">{{ 'catalog.recent.empty'|trans }}</p>
+                    {% else %}
+                        <ul role="list" class="flex flex-col gap-1.5">
+                            {% for term in recentSearches %}
+                                <li>
+                                    <a href="{{ path('app_assistant_catalog', {q: term}) }}"
+                                       class="text-sm text-primary no-underline hover:underline">{{ term }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </twig:Catalog:SidebarCard>
+
+                {% if metadata.total > 0 %}
+                    <twig:Catalog:SidebarCard title="catalog.export.heading">
+                        <p class="text-sm leading-relaxed text-text-muted">
+                            {{ 'catalog.export.body'|trans({'%count%': metadata.total}) }}
+                        </p>
+                    </twig:Catalog:SidebarCard>
+                {% endif %}
+            </div>
+        </twig:block>
     </twig:Layout:ThreeColumn>
 {% endblock %}

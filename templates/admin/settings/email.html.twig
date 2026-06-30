@@ -37,6 +37,16 @@
                     />
                     <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.admin_recipient.help'|trans }}</p>
                 </twig:Form:Label>
+
+                <twig:Form:Label for="inputSenderAddress" text="{{ 'admin.settings.email.fields.sender_address.label'|trans }}">
+                    <twig:Form:TextInput
+                        id="inputSenderAddress"
+                        name="sender_address"
+                        value="{{ submitted.sender_address }}"
+                        autocomplete="off"
+                    />
+                    <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.sender_address.help'|trans }}</p>
+                </twig:Form:Label>
             </fieldset>
 
             <fieldset class="grid gap-4">
@@ -92,7 +102,7 @@
                 </twig:Form:Label>
             </fieldset>
 
-            <input type="hidden" name="_token" value="{{ csrf_token('admin-settings-email') }}">
+            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-settings-email') }}">
 
             <div class="flex items-center gap-4">
                 <twig:Form:Button type="submit">

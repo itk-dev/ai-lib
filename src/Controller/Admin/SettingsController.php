@@ -33,6 +33,7 @@ final class SettingsController extends AbstractController
             'brand_name' => $this->settingsManager->getBrandName(),
             'brand_tagline' => $this->settingsManager->getBrandTagline(),
             'brand_initials' => $this->settingsManager->getBrandInitials(),
+            'hero_text' => $this->settingsManager->getHeroText(),
         ];
 
         if ('POST' === $request->getMethod()) {
@@ -40,6 +41,7 @@ final class SettingsController extends AbstractController
                 'brand_name' => (string) $request->request->get('brand_name', ''),
                 'brand_tagline' => (string) $request->request->get('brand_tagline', ''),
                 'brand_initials' => (string) $request->request->get('brand_initials', ''),
+                'hero_text' => (string) $request->request->get('hero_text', ''),
             ];
 
             if (!$this->isCsrfTokenValid('admin-settings-site', (string) $request->request->get('_token'))) {
@@ -53,6 +55,7 @@ final class SettingsController extends AbstractController
                 $submitted['brand_name'],
                 $submitted['brand_tagline'],
                 $submitted['brand_initials'],
+                $submitted['hero_text'],
             );
             $this->addFlash('success', 'admin.settings.flash.saved');
 
@@ -70,6 +73,7 @@ final class SettingsController extends AbstractController
     {
         $submitted = [
             'admin_recipient' => $this->settingsManager->getAdminRecipient() ?? '',
+            'sender_address' => $this->settingsManager->getSenderAddress() ?? '',
             'admin_notification_subject' => $this->settingsManager->getAdminNotificationSubject(),
             'admin_notification_body' => $this->settingsManager->getAdminNotificationBody(),
             'registration_confirmation_subject' => $this->settingsManager->getRegistrationConfirmationSubject(),
@@ -79,6 +83,7 @@ final class SettingsController extends AbstractController
         if ('POST' === $request->getMethod()) {
             $submitted = [
                 'admin_recipient' => (string) $request->request->get('admin_recipient', ''),
+                'sender_address' => (string) $request->request->get('sender_address', ''),
                 'admin_notification_subject' => (string) $request->request->get('admin_notification_subject', ''),
                 'admin_notification_body' => (string) $request->request->get('admin_notification_body', ''),
                 'registration_confirmation_subject' => (string) $request->request->get('registration_confirmation_subject', ''),
@@ -92,12 +97,26 @@ final class SettingsController extends AbstractController
                 ], new Response('', Response::HTTP_FORBIDDEN));
             }
 
-            if (!$this->settingsManager->applyAdminRecipient($submitted['admin_recipient'])) {
+            $adminRecipient = $this->settingsManager->validateAdminRecipient($submitted['admin_recipient']);
+            if (false === $adminRecipient) {
                 return $this->render('admin/settings/email.html.twig', [
                     'submitted' => $submitted,
                     'error' => 'admin.settings.error.invalid_email',
                 ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
             }
+
+            $senderAddress = $this->settingsManager->validateSenderAddress($submitted['sender_address']);
+            if (false === $senderAddress) {
+                return $this->render('admin/settings/email.html.twig', [
+                    'submitted' => $submitted,
+                    'error' => 'admin.settings.error.invalid_sender',
+                ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
+            }
+
+            // All fields validate — persist them together so a later
+            // invalid field cannot leave an earlier one partially saved.
+            $this->settingsManager->setAdminRecipient($adminRecipient);
+            $this->settingsManager->setSenderAddress($senderAddress);
 
             $this->settingsManager->applyEmailContent(
                 $submitted['admin_notification_subject'],

@@ -6,7 +6,7 @@
     <twig:Layout:SingleColumn>
         <twig:Hero eyebrow="frontpage.hero.eyebrow">
             <twig:block name="heading">{{ 'frontpage.hero.heading_html'|trans|raw }}</twig:block>
-            <twig:block name="lead">{{ 'frontpage.hero.lead'|trans }}</twig:block>
+            <twig:block name="lead">{{ hero_text }}</twig:block>
 
             <twig:Stats:List>
                 <twig:Stats:Item label="frontpage.stats.assistants" value="{{ stats.assistants }}" />

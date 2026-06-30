@@ -45,7 +45,7 @@ tasks:
         vars:
           RESET: '{{.RESET}}'
       - task console -- doctrine:migrations:migrate --no-interaction
-      - task compose -- exec phpfpm bin/console tailwind:build
+      - task: assets-build
     silent: true
 
   db-reset:
@@ -84,6 +84,14 @@ tasks:
         else
           task compose-exec -- phpfpm bin/console {{.CLI_ARGS}}
         fi
+    silent: true
+
+  # ---- Assets -----------------------------------------------------------
+
+  assets-build:
+    desc: 'Compile the Tailwind CSS bundle. Pass `-- --watch` to rebuild on change or `-- --minify` for a minified build.'
+    cmds:
+      - task console -- tailwind:build {{.CLI_ARGS}}
     silent: true
 
   # ---- Site -------------------------------------------------------------

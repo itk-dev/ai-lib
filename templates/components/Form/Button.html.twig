@@ -21,8 +21,9 @@
 {% set sizes = {
     sm: 'px-3 py-1.5 text-sm font-medium',
     md: 'px-4 py-2 font-semibold',
+    lg: 'px-6 py-2.5 text-lg font-semibold',
 } %}
-{% set baseClass = 'inline-flex items-center transition-colors ' ~ shapes[shape] ~ ' ' ~ sizes[size] ~ ' ' ~ variants[variant] %}
+{% set baseClass = 'inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-colors ' ~ shapes[shape] ~ ' ' ~ sizes[size] ~ ' ' ~ variants[variant] %}
 {% set slot %}{% block content %}{% endblock %}{% endset %}
 {# `{{ attributes }}` spreads arbitrary call-site attributes (e.g. `data-*` #}
 {# Stimulus targets/actions, `aria-*` from the WAI-ARIA Menu Button pattern) #}
