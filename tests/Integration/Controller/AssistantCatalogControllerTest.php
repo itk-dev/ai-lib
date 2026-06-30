@@ -176,4 +176,133 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertArrayNotHasKey('tag', $params, 'chip removes the tag filter');
         self::assertSame('borgerservice', $params['q'] ?? null, 'chip preserves the search query');
     }
+
+    // Tests that the sort control renders with the newest-first default option preselected.
+    public function testSortControlRendersWithDefaultSelected(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        $selected = $crawler->filter('#catalog-sort option[selected]');
+        self::assertCount(1, $selected, 'exactly one sort option is preselected');
+        self::assertSame('newest', $selected->attr('value'), 'newest-first is the default selection');
+    }
+
+    // Ensures ?sort=name reorders the cards so the alphabetically-first title leads the listing.
+    public function testSortByNameReordersResults(): void
+    {
+        $crawler = $this->client->request('GET', '/search?sort=name');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('name', $crawler->filter('#catalog-sort option[selected]')->attr('value'));
+        self::assertStringContainsString(
+            'Borgerhenvendelse-svarudkast',
+            $crawler->filter('a[href^="/assistant/"]')->first()->text(),
+            'name-ascending puts the lowest title first',
+        );
+    }
+
+    // Ensures the sort form carries the active facet as a hidden input so changing the order preserves the filter.
+    public function testSortFormPreservesActiveFilters(): void
+    {
+        $crawler = $this->client->request('GET', '/search?language_model%5B%5D=gpt-4o');
+
+        self::assertResponseIsSuccessful();
+        $hidden = $crawler->filter('aside[aria-label="Sortering"] input[type="hidden"][name="language_model[]"]');
+        self::assertCount(1, $hidden, 'the sort form mirrors the active facet as a hidden input');
+        self::assertSame('gpt-4o', $hidden->attr('value'));
+    }
+
+    // Ensures the filter form carries the active sort as a hidden input so toggling a facet preserves the ordering.
+    public function testFilterFormCarriesActiveSort(): void
+    {
+        $crawler = $this->client->request('GET', '/search?sort=name');
+
+        self::assertResponseIsSuccessful();
+        $hidden = $crawler->filter('aside[aria-label="Filtre"] input[type="hidden"][name="sort"]');
+        self::assertCount(1, $hidden, 'the filter form mirrors the active sort as a hidden input');
+        self::assertSame('name', $hidden->attr('value'));
+    }
+
+    // Ensures the default ordering is not echoed as a hidden sort input, keeping the filter form URL clean.
+    public function testFilterFormOmitsDefaultSort(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(
+            0,
+            $crawler->filter('aside[aria-label="Filtre"] input[type="hidden"][name="sort"]'),
+            'the default sort is implicit and must not be emitted as a hidden input',
+        );
+    }
+
+    // Ensures the search box renders in the results column, not inside the filter rail.
+    public function testSearchBoxRendersInResultsColumn(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('section #catalog-search'), 'the search box sits in the results column');
+        self::assertCount(
+            0,
+            $crawler->filter('aside[aria-label="Filtre"] #catalog-search'),
+            'the search box no longer lives in the filter rail',
+        );
+    }
+
+    // Ensures the filter form carries the active search query so toggling a facet preserves it.
+    public function testFilterFormCarriesSearchQuery(): void
+    {
+        $crawler = $this->client->request('GET', '/search?q=borgerservice');
+
+        self::assertResponseIsSuccessful();
+        $hidden = $crawler->filter('aside[aria-label="Filtre"] input[type="hidden"][name="q"]');
+        self::assertCount(1, $hidden, 'the filter form mirrors the active search query as a hidden input');
+        self::assertSame('borgerservice', $hidden->attr('value'));
+    }
+
+    // Ensures the "Aktive filtre" sidebar box shows its empty state when no filter is applied.
+    public function testActiveFiltersBoxShowsEmptyStateWhenNoFilters(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('aside[aria-label="Aktive filtre"]', 'Ingen filtre aktive');
+    }
+
+    // Ensures the "Seneste søgninger" box shows its empty state before any search is run.
+    public function testRecentSearchesBoxStartsEmpty(): void
+    {
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('aside[aria-label="Seneste søgninger"]', 'Ingen søgninger endnu');
+    }
+
+    // Tests that a performed search is recorded and rendered as a re-runnable link in the recent-searches box.
+    public function testRecentSearchesBoxListsThePerformedSearch(): void
+    {
+        $crawler = $this->client->request('GET', '/search?q=borgerservice');
+
+        self::assertResponseIsSuccessful();
+        $link = $crawler->filter('aside[aria-label="Seneste søgninger"] a[href*="q=borgerservice"]');
+        self::assertCount(1, $link, 'the recent-searches box links back to the performed search');
+        self::assertSame('borgerservice', trim($link->text()));
+    }
+
+    // Verifies the "Klar til hjemtagning" box reports the current result count.
+    public function testReadyForExportBoxReportsResultCount(): void
+    {
+        $total = self::getContainer()->get(AssistantRepository::class)->frameworkFacetCounts()['openwebui'] ?? 0;
+        self::assertGreaterThan(0, $total, 'fixture baseline must seed assistants');
+
+        $crawler = $this->client->request('GET', '/search');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains(
+            'aside[aria-label="Klar til hjemtagning"]',
+            sprintf('Alle %d resultater', $total),
+        );
+    }
 }
