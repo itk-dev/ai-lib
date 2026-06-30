@@ -23,7 +23,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  */
 final class UserFixturesTest extends TestCase
 {
-    private const int EXPECTED_USER_COUNT = 7;
+    private const int EXPECTED_USER_COUNT = 8;
 
     // Tests that load() persists every Roles::* and every UserStatus case, hashing the shared fixture password.
     public function testLoadPersistsEveryRoleAndStatusCombination(): void
@@ -57,6 +57,12 @@ final class UserFixturesTest extends TestCase
         // The original cross-fixture lookup points are still here.
         self::assertArrayHasKey(UserFixtures::ALICE_EMAIL, $byEmail);
         self::assertArrayHasKey(UserFixtures::BOB_EMAIL, $byEmail);
+        // Same-domain plain user the fixture manager can act on —
+        // carries no elevated role (`getRoles()` always includes the
+        // implicit `ROLE_USER` floor regardless).
+        self::assertArrayHasKey(UserFixtures::COLLEAGUE_EMAIL, $byEmail);
+        self::assertNotContains(Roles::ADMIN, $byEmail[UserFixtures::COLLEAGUE_EMAIL]->getRoles());
+        self::assertNotContains(Roles::DOMAIN_MANAGER, $byEmail[UserFixtures::COLLEAGUE_EMAIL]->getRoles());
 
         // Every role is represented.
         self::assertContains(Roles::ADMIN, $byEmail[UserFixtures::ADMIN_EMAIL]->getRoles());

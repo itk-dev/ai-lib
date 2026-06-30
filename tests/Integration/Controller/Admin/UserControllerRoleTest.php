@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller\Admin;
 
+use App\DataFixtures\UserFixtures;
 use App\Repository\UserRepository;
 use App\Security\Roles;
-use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -17,7 +17,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * Each test drives the controller through its real CSRF check,
  * voter, and {@see \App\Security\UserRoles} service, then asserts on
  * both the HTTP response shape and the post-flush role state of the
- * target user.
+ * target user. Actors and targets come from `UserFixtures`; DAMA
+ * rolls back every mutation between tests so the baseline survives.
  */
 final class UserControllerRoleTest extends WebTestCase
 {
@@ -31,9 +32,8 @@ final class UserControllerRoleTest extends WebTestCase
     // Verifies an admin can promote any user to manager via the JSON endpoint.
     public function testAdminCanPromoteUserToManager(): void
     {
-        $admin = $this->createUser('admin@example.test', [Roles::ADMIN]);
-        $target = $this->createUser('target@example.test', []);
-        $this->client->loginUser($admin);
+        $target = $this->fixtureUser(UserFixtures::ALICE_EMAIL);
+        $this->loginAsFixture(UserFixtures::ADMIN_EMAIL);
 
         $this->postRole($target->getId(), 'manager');
 
@@ -50,9 +50,8 @@ final class UserControllerRoleTest extends WebTestCase
     // Tests that an admin can promote a user to admin.
     public function testAdminCanPromoteUserToAdmin(): void
     {
-        $admin = $this->createUser('admin@example.test', [Roles::ADMIN]);
-        $target = $this->createUser('target@example.test', []);
-        $this->client->loginUser($admin);
+        $target = $this->fixtureUser(UserFixtures::ALICE_EMAIL);
+        $this->loginAsFixture(UserFixtures::ADMIN_EMAIL);
 
         $this->postRole($target->getId(), 'admin');
 
@@ -66,9 +65,12 @@ final class UserControllerRoleTest extends WebTestCase
     // Tests that an admin can demote a manager via the 'none' transition.
     public function testAdminCanRemoveAllPermissions(): void
     {
-        $admin = $this->createUser('admin@example.test', [Roles::ADMIN]);
-        $target = $this->createUser('manager@example.test', [Roles::DOMAIN_MANAGER]);
-        $this->client->loginUser($admin);
+        // Demote the fixture manager — DAMA rolls back the role flip
+        // after the test, so the baseline manager is restored.
+        $target = $this->fixtureUser(UserFixtures::DOMAIN_MANAGER_EMAIL);
+        self::assertContains(Roles::DOMAIN_MANAGER, $target->getRoles());
+
+        $this->loginAsFixture(UserFixtures::ADMIN_EMAIL);
 
         $this->postRole($target->getId(), 'none');
 
@@ -80,12 +82,11 @@ final class UserControllerRoleTest extends WebTestCase
         self::assertNotContains(Roles::ADMIN, $reloaded->getRoles());
     }
 
-    // Verifies a manager-actor receives 403 when attempting to mint an admin.
+    // Verifies a manager-actor receives 403 when attempting to mint an admin. The target is the same-domain colleague, so any denial comes from the PROMOTE_TO_ADMIN admin-only rule rather than a domain mismatch.
     public function testManagerCannotPromoteToAdmin(): void
     {
-        $manager = $this->createUser('manager@example.test', [Roles::DOMAIN_MANAGER]);
-        $target = $this->createUser('target@example.test', []);
-        $this->client->loginUser($manager);
+        $target = $this->fixtureUser(UserFixtures::COLLEAGUE_EMAIL);
+        $this->loginAsFixture(UserFixtures::DOMAIN_MANAGER_EMAIL);
 
         $this->postRole($target->getId(), 'admin');
 
@@ -96,12 +97,11 @@ final class UserControllerRoleTest extends WebTestCase
         self::assertNotContains(Roles::ADMIN, $reloaded->getRoles());
     }
 
-    // Tests the headline rule: a manager cannot demote an admin even within their own domain.
+    // Tests the headline rule: a manager cannot demote an admin even within their own domain. Manager and admin both live in @aarhus.dk via UserFixtures.
     public function testManagerCannotDemoteAdminEvenInSameDomain(): void
     {
-        $manager = $this->createUser('manager@example.test', [Roles::DOMAIN_MANAGER]);
-        $adminInDomain = $this->createUser('inhouse-admin@example.test', [Roles::ADMIN]);
-        $this->client->loginUser($manager);
+        $adminInDomain = $this->fixtureUser(UserFixtures::ADMIN_EMAIL);
+        $this->loginAsFixture(UserFixtures::DOMAIN_MANAGER_EMAIL);
 
         $this->postRole($adminInDomain->getId(), 'none');
 
@@ -112,12 +112,11 @@ final class UserControllerRoleTest extends WebTestCase
         self::assertContains(Roles::ADMIN, $reloaded->getRoles(), 'Admin roles must survive a denied demotion attempt.');
     }
 
-    // Tests that a cross-domain manager-actor gets 403 even for a normal user.
+    // Tests that a cross-domain manager-actor gets 403 even for a normal user. Manager is @aarhus.dk, alice is @example.test.
     public function testManagerCannotActAcrossDomains(): void
     {
-        $manager = $this->createUser('manager@example.test', [Roles::DOMAIN_MANAGER]);
-        $target = $this->createUser('foreign@other.test', []);
-        $this->client->loginUser($manager);
+        $target = $this->fixtureUser(UserFixtures::ALICE_EMAIL);
+        $this->loginAsFixture(UserFixtures::DOMAIN_MANAGER_EMAIL);
 
         $this->postRole($target->getId(), 'manager');
 
@@ -127,9 +126,8 @@ final class UserControllerRoleTest extends WebTestCase
     // Tests that an invalid CSRF token returns 403 and leaves the role unchanged.
     public function testInvalidCsrfTokenIsRejected(): void
     {
-        $admin = $this->createUser('admin@example.test', [Roles::ADMIN]);
-        $target = $this->createUser('target@example.test', []);
-        $this->client->loginUser($admin);
+        $target = $this->fixtureUser(UserFixtures::ALICE_EMAIL);
+        $this->loginAsFixture(UserFixtures::ADMIN_EMAIL);
 
         $this->client->request(
             'POST',
@@ -147,9 +145,8 @@ final class UserControllerRoleTest extends WebTestCase
     // Tests that a malformed JSON payload returns 422.
     public function testMalformedPayloadReturns422(): void
     {
-        $admin = $this->createUser('admin@example.test', [Roles::ADMIN]);
-        $target = $this->createUser('target@example.test', []);
-        $this->client->loginUser($admin);
+        $target = $this->fixtureUser(UserFixtures::ALICE_EMAIL);
+        $this->loginAsFixture(UserFixtures::ADMIN_EMAIL);
 
         $this->postRole($target->getId(), 'garbage');
 
@@ -159,12 +156,11 @@ final class UserControllerRoleTest extends WebTestCase
         self::assertSame('invalid_role', $payload['error']);
     }
 
-    // Tests that an empty JSON body still hits the 422 branch.
-    public function testEmptyPayloadReturns422(): void
+    // Tests that an empty JSON body falls through to the CSRF rejection. The defence-in-depth ordering is CSRF before payload validation, so the response is 403 even though the payload is also malformed.
+    public function testEmptyPayloadHitsCsrfFirst(): void
     {
-        $admin = $this->createUser('admin@example.test', [Roles::ADMIN]);
-        $target = $this->createUser('target@example.test', []);
-        $this->client->loginUser($admin);
+        $target = $this->fixtureUser(UserFixtures::ALICE_EMAIL);
+        $this->loginAsFixture(UserFixtures::ADMIN_EMAIL);
 
         $this->client->request(
             'POST',
@@ -177,12 +173,11 @@ final class UserControllerRoleTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
-    // Verifies the last-admin guard surfaces as HTTP 409 with the expected error code.
+    // Verifies the last-admin guard surfaces as HTTP 409 with the expected error code. The fixture admin is the only ROLE_ADMIN row in the baseline, so demoting themselves trips the guard immediately.
     public function testLastAdminDemotionReturns409(): void
     {
-        $this->stripExistingAdmins();
-        $admin = $this->createUser('only-admin@example.test', [Roles::ADMIN]);
-        $this->client->loginUser($admin);
+        $admin = $this->fixtureUser(UserFixtures::ADMIN_EMAIL);
+        $this->loginAsFixture(UserFixtures::ADMIN_EMAIL);
 
         $this->postRole($admin->getId(), 'none');
 
@@ -201,8 +196,7 @@ final class UserControllerRoleTest extends WebTestCase
     // Tests that the role endpoint requires authentication (anonymous → 401).
     public function testAnonymousAccessReturns401(): void
     {
-        $admin = $this->createUser('admin@example.test', [Roles::ADMIN]);
-        $target = $this->createUser('target@example.test', []);
+        $target = $this->fixtureUser(UserFixtures::ALICE_EMAIL);
 
         $this->client->request(
             'POST',
@@ -216,9 +210,8 @@ final class UserControllerRoleTest extends WebTestCase
     // Tests that plain (non-manager) users get 403 from the class-level IsGranted gate.
     public function testPlainUserGets403(): void
     {
-        $plain = $this->createUser('plain@example.test', []);
-        $target = $this->createUser('target@example.test', []);
-        $this->client->loginUser($plain);
+        $target = $this->fixtureUser(UserFixtures::BOB_EMAIL);
+        $this->loginAsFixture(UserFixtures::ALICE_EMAIL);
 
         // The class-level `#[IsGranted(Roles::DOMAIN_MANAGER)]` gate
         // fires before the controller body, so we don't need a valid
@@ -266,32 +259,16 @@ final class UserControllerRoleTest extends WebTestCase
         return $decoded;
     }
 
-    /**
-     * @param list<string> $roles
-     */
-    private function createUser(string $email, array $roles): \App\Entity\User
+    private function fixtureUser(string $email): \App\Entity\User
     {
-        return self::getContainer()->get(UserManager::class)->createUser(
-            $email,
-            'Name',
-            'pw',
-            $roles,
-        );
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]);
+        \assert(null !== $user, 'UserFixtures must seed '.$email);
+
+        return $user;
     }
 
-    /**
-     * Demote every baseline-fixture admin so the test owns the
-     * "only admin in the world" state without fighting the bootstrap
-     * fixtures.
-     */
-    private function stripExistingAdmins(): void
+    private function loginAsFixture(string $email): void
     {
-        $repo = self::getContainer()->get(UserRepository::class);
-        foreach ($repo->findAll() as $user) {
-            if (\in_array(Roles::ADMIN, $user->getRoles(), true)) {
-                $user->setRoles([]);
-            }
-        }
-        self::getContainer()->get('doctrine')->getManager()->flush();
+        $this->client->loginUser($this->fixtureUser($email));
     }
 }
