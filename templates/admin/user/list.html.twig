@@ -13,6 +13,12 @@
             </twig:Alert>
         {% endfor %}
 
+        {% for flash in app.flashes('error') %}
+            <twig:Alert type="error" class="mb-4">
+                {{ flash|trans }}
+            </twig:Alert>
+        {% endfor %}
+
         {% if is_granted('ROLE_ADMIN') %}
             <p class="mb-6">
                 <twig:Form:Button href="{{ path('app_admin_user_new') }}">
@@ -49,25 +55,78 @@
                         <twig:Table:HeadCell>{{ 'admin.users.columns.name'|trans }}</twig:Table:HeadCell>
                         <twig:Table:HeadCell>{{ 'admin.users.columns.email'|trans }}</twig:Table:HeadCell>
                         <twig:Table:HeadCell>{{ 'admin.users.columns.status'|trans }}</twig:Table:HeadCell>
+                        <twig:Table:HeadCell>{{ 'admin.users.columns.role'|trans }}</twig:Table:HeadCell>
+                        <twig:Table:HeadCell>{{ 'admin.users.columns.role_change'|trans }}</twig:Table:HeadCell>
                         <twig:Table:HeadCell align="right">{{ 'admin.users.columns.actions'|trans }}</twig:Table:HeadCell>
                     </twig:Table:Row>
                 </twig:Table:Head>
                 <twig:Table:Body>
                     {% for u in users %}
                         {% set back_url = path('app_admin_users', status_filter ? {status: status_filter.value} : {}) %}
+                        {% set current_role = 'ROLE_ADMIN' in u.roles
+                            ? 'admin'
+                            : ('ROLE_DOMAIN_MANAGER' in u.roles ? 'manager' : 'none')
+                        %}
+                        {% set can_promote_manager = is_granted('PROMOTE_TO_MANAGER', u) %}
+                        {% set can_promote_admin = is_granted('PROMOTE_TO_ADMIN', u) %}
+                        {% set can_demote = is_granted('DEMOTE_USER', u) %}
+                        {% set can_change_role = can_promote_manager or can_promote_admin or can_demote %}
+                        {% set picker_id = 'role-picker-' ~ u.id %}
+                        {% set feedback_id = picker_id ~ '-feedback' %}
                         <twig:Table:Row>
                             <twig:Table:Cell>
                                 <span class="font-medium text-ink">{{ u.name }}</span>
                             </twig:Table:Cell>
                             <twig:Table:Cell>{{ u.email }}</twig:Table:Cell>
                             <twig:Table:Cell>
-                                <span class="rounded-full border border-line px-2 py-0.5 text-xs text-text">
+                                <span class="inline-block whitespace-nowrap rounded-full border border-line px-2 py-0.5 text-xs text-text">
                                     {{ ('admin.users.status.' ~ u.status.value)|trans }}
                                 </span>
                             </twig:Table:Cell>
+                            <twig:Table:Cell>
+                                {# Static label cell. The `data-role-picker-row-label` hook lets the #}
+                                {# Stimulus controller in the sibling cell update this text on success. #}
+                                <span data-role-picker-row-label class="text-sm text-text">
+                                    {{ ('admin.users.role.' ~ current_role)|trans }}
+                                </span>
+                            </twig:Table:Cell>
+                            <twig:Table:Cell>
+                                {% if can_change_role %}
+                                    <div data-controller="role-picker"
+                                         data-role-picker-url-value="{{ path('app_admin_user_role', {id: u.id}) }}"
+                                         data-role-picker-csrf-token-value="{{ csrf_token('admin-user-action') }}"
+                                         data-role-picker-success-message-value="{{ 'admin.users.role.flash.success'|trans }}"
+                                         class="grid gap-1">
+                                        <label for="{{ picker_id }}" class="sr-only">
+                                            {{ 'admin.users.role.label'|trans({'%name%': u.name}) }}
+                                        </label>
+                                        <select id="{{ picker_id }}"
+                                                data-role-picker-target="select"
+                                                data-action="change->role-picker#submit"
+                                                aria-describedby="{{ feedback_id }}"
+                                                class="rounded-lg border border-line bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">
+                                            <option value="">{{ 'admin.users.role.placeholder'|trans }}</option>
+                                            {% if can_promote_manager %}
+                                                <option value="manager">{{ 'admin.users.role.promote.manager'|trans }}</option>
+                                            {% endif %}
+                                            {% if can_promote_admin %}
+                                                <option value="admin">{{ 'admin.users.role.promote.admin'|trans }}</option>
+                                            {% endif %}
+                                            {% if can_demote %}
+                                                <option value="none">{{ 'admin.users.role.remove'|trans }}</option>
+                                            {% endif %}
+                                        </select>
+                                        <span id="{{ feedback_id }}"
+                                              data-role-picker-target="feedback"
+                                              role="status"
+                                              aria-live="polite"
+                                              class="text-xs text-text-muted"></span>
+                                    </div>
+                                {% endif %}
+                            </twig:Table:Cell>
                             <twig:Table:Cell align="right">
-                                <div class="inline-flex flex-wrap items-center gap-2">
-                                    {% if u.status.value != 'approved' %}
+                                <div class="inline-flex items-center gap-2 whitespace-nowrap">
+                                    {% if u.status.value != 'approved' and is_granted('APPROVE_USER', u) %}
                                         <form action="{{ path('app_admin_user_approve', {id: u.id}) }}" method="post" class="inline">
                                             <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-user-action') }}">
                                             <input type="hidden" name="back" value="{{ back_url }}">
@@ -77,7 +136,7 @@
                                         </form>
                                     {% endif %}
 
-                                    {% if u.status.value != 'blocked' %}
+                                    {% if u.status.value != 'blocked' and is_granted('BLOCK_USER', u) %}
                                         <form action="{{ path('app_admin_user_block', {id: u.id}) }}" method="post" class="inline">
                                             <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-user-action') }}">
                                             <input type="hidden" name="back" value="{{ back_url }}">

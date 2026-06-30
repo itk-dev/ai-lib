@@ -135,10 +135,185 @@ final class ManageUserVoterTest extends TestCase
         );
     }
 
+    // Verifies an admin can promote any user (any domain) to manager.
+    public function testAdminCanPromoteAcrossDomainsToManager(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER, Roles::ADMIN]);
+        $token = $this->tokenFor($this->userWithEmail('admin@aarhus.dk'));
+
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($token, $this->userWithEmail('alice@aalborg.dk'), [ManageUserVoter::PROMOTE_TO_MANAGER]),
+        );
+    }
+
+    // Verifies an admin can promote any user (any domain) to admin.
+    public function testAdminCanPromoteAcrossDomainsToAdmin(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER, Roles::ADMIN]);
+        $token = $this->tokenFor($this->userWithEmail('admin@aarhus.dk'));
+
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($token, $this->userWithEmail('alice@aalborg.dk'), [ManageUserVoter::PROMOTE_TO_ADMIN]),
+        );
+    }
+
+    // Ensures a manager may NOT promote anyone to admin, even within their own domain.
+    public function testManagerCannotPromoteToAdminEvenInSameDomain(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $this->userWithEmail('alice@aarhus.dk'), [ManageUserVoter::PROMOTE_TO_ADMIN]),
+        );
+    }
+
+    // Verifies a manager can promote a same-domain plain user to manager.
+    public function testManagerCanPromoteSameDomainUserToManager(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($token, $this->userWithEmail('alice@aarhus.dk'), [ManageUserVoter::PROMOTE_TO_MANAGER]),
+        );
+    }
+
+    // Tests the headline rule: a manager cannot touch an admin even within their own domain.
+    public function testManagerCannotPromoteAdminToManagerEvenInSameDomain(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+        $admin = $this->userWithRolesAndEmail([Roles::ADMIN], 'admin@aarhus.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $admin, [ManageUserVoter::PROMOTE_TO_MANAGER]),
+        );
+    }
+
+    // Reverse case of the headline rule: a manager cannot demote an admin even in their own domain.
+    public function testManagerCannotDemoteAdminEvenInSameDomain(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+        $admin = $this->userWithRolesAndEmail([Roles::ADMIN], 'admin@aarhus.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $admin, [ManageUserVoter::DEMOTE]),
+        );
+    }
+
+    // Ensures cross-domain managers cannot demote even ordinary users.
+    public function testManagerCannotDemoteAcrossDomains(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $this->userWithEmail('alice@aalborg.dk'), [ManageUserVoter::DEMOTE]),
+        );
+    }
+
+    // Verifies a manager can demote a same-domain plain user (clear elevated roles).
+    public function testManagerCanDemoteSameDomainUser(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($token, $this->userWithEmail('alice@aarhus.dk'), [ManageUserVoter::DEMOTE]),
+        );
+    }
+
+    // Verifies an admin can demote another admin (the last-admin invariant is a service-layer concern, not voter-layer).
+    public function testAdminCanDemoteAnotherAdmin(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER, Roles::ADMIN]);
+        $token = $this->tokenFor($this->userWithEmail('admin@aarhus.dk'));
+        $target = $this->userWithRolesAndEmail([Roles::ADMIN], 'other@aalborg.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($token, $target, [ManageUserVoter::DEMOTE]),
+        );
+    }
+
+    // Ensures a manager cannot block an admin even within their own domain — blocking would lock the admin out despite keeping the role list intact.
+    public function testManagerCannotBlockAdminEvenInSameDomain(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+        $admin = $this->userWithRolesAndEmail([Roles::ADMIN], 'admin@aarhus.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $admin, [ManageUserVoter::BLOCK]),
+        );
+    }
+
+    // Ensures a manager cannot approve an admin even within their own domain — same uniform "manager cannot touch admin" rule.
+    public function testManagerCannotApproveAdminEvenInSameDomain(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+        $admin = $this->userWithRolesAndEmail([Roles::ADMIN], 'admin@aarhus.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $admin, [ManageUserVoter::APPROVE]),
+        );
+    }
+
+    // Ensures the umbrella MANAGE attribute is also blocked when the actor is a manager and the target is an admin.
+    public function testManagerCannotUseUmbrellaManageOnAdminEvenInSameDomain(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER]);
+        $token = $this->tokenFor($this->userWithEmail('manager@aarhus.dk'));
+        $admin = $this->userWithRolesAndEmail([Roles::ADMIN], 'admin@aarhus.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($token, $admin, [ManageUserVoter::MANAGE]),
+        );
+    }
+
+    // Verifies an admin can still block another admin — the manager-cannot-touch-admin rule does not apply to admin actors.
+    public function testAdminCanBlockAnotherAdmin(): void
+    {
+        $voter = $this->voterWithRoles([Roles::DOMAIN_MANAGER, Roles::ADMIN]);
+        $token = $this->tokenFor($this->userWithEmail('admin@aarhus.dk'));
+        $target = $this->userWithRolesAndEmail([Roles::ADMIN], 'other@aalborg.dk');
+
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($token, $target, [ManageUserVoter::BLOCK]),
+        );
+    }
+
     private function userWithEmail(string $email): User
     {
         $user = new User();
         $user->setEmail($email);
+
+        return $user;
+    }
+
+    /**
+     * @param list<string> $roles
+     */
+    private function userWithRolesAndEmail(array $roles, string $email): User
+    {
+        $user = new User();
+        $user->setEmail($email);
+        $user->setRoles($roles);
 
         return $user;
     }

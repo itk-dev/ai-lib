@@ -50,6 +50,15 @@ final class UserFixtures extends Fixture
     public const string DOMAIN_MANAGER_EMAIL = 'manager@aarhus.dk';
 
     /**
+     * Plain `Approved` user sharing the manager's `aarhus.dk` domain.
+     * Lets tests exercise "manager acts on a same-domain non-admin"
+     * scenarios without inline `createUser` plumbing — the rest of
+     * the seeded `aarhus.dk` row is the admin, whom the manager can
+     * never touch.
+     */
+    public const string COLLEAGUE_EMAIL = 'colleague@aarhus.dk';
+
+    /**
      * Account awaiting moderator approval (default role,
      * status `Pending`).
      */
@@ -89,6 +98,7 @@ final class UserFixtures extends Fixture
         $this->userManager->createUser(self::BOB_EMAIL, 'Bob', 'password', status: UserStatus::Approved);
         $this->userManager->createUser(self::ADMIN_EMAIL, 'Admin', 'password', [Roles::ADMIN], UserStatus::Approved);
         $this->userManager->createUser(self::DOMAIN_MANAGER_EMAIL, 'Manager', 'password', [Roles::DOMAIN_MANAGER], UserStatus::Approved);
+        $this->userManager->createUser(self::COLLEAGUE_EMAIL, 'Colleague', 'password', status: UserStatus::Approved);
         $this->userManager->createUser(self::PENDING_EMAIL, 'Pending', 'password', status: UserStatus::Pending);
         $this->userManager->createUser(self::AWAITING_EMAIL, 'Awaiting', 'password', status: UserStatus::AwaitingEmailConfirmation);
         $this->userManager->createUser(self::BLOCKED_EMAIL, 'Blocked', 'password', status: UserStatus::Blocked);

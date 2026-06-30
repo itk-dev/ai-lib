@@ -37,6 +37,54 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
+     * Count the users currently holding {@see Roles::ADMIN}.
+     *
+     * Used by {@see \App\Security\UserRoles} to enforce the
+     * last-admin invariant on role mutation: the site must always
+     * keep at least one administrator, so demotion attempts on
+     * the only remaining admin are refused. Role storage is a
+     * JSON column; SQL `LIKE` on the quoted role name is the
+     * cheapest way to filter without loading every row into
+     * memory.
+     *
+     * @return int number of users whose role list contains `ROLE_ADMIN`
+     */
+    public function countAdmins(): int
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.roles LIKE :role')
+            ->setParameter('role', '%"'.Roles::ADMIN.'"%');
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Count the admins who can currently log in — that is, users
+     * who both hold `ROLE_ADMIN` and have `UserStatus::Approved`.
+     *
+     * Used by {@see \App\Security\UserApproval} to refuse blocking
+     * the only remaining active admin. A blocked or pending admin
+     * still holds the role, but cannot authenticate, so the
+     * effective administrator pool is smaller than {@see countAdmins()}.
+     * The block-guard cares about loggable admins specifically —
+     * leaving zero of them is the actual lockout scenario.
+     *
+     * @return int number of approved users whose role list contains `ROLE_ADMIN`
+     */
+    public function countActiveAdmins(): int
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.roles LIKE :role')
+            ->andWhere('u.status = :status')
+            ->setParameter('role', '%"'.Roles::ADMIN.'"%')
+            ->setParameter('status', UserStatus::Approved->value);
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
      * Find users visible to the acting user, optionally filtered by status.
      *
      * Decision flow mirrors {@see \App\Security\Voter\ManageUserVoter}:
