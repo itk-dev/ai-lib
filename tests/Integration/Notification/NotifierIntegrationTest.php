@@ -56,7 +56,11 @@ final class NotifierIntegrationTest extends KernelTestCase
     // Ensures the admin notifier skips the send when the recipient is unset (the registration flow stays alive).
     public function testAdminNotifierSkipsWhenRecipientIsUnset(): void
     {
-        // No setAdminRecipient — leave it null.
+        // `SettingFixtures` pre-seeds an admin recipient at suite boot;
+        // clear it explicitly here to exercise the "no recipient
+        // configured" branch.
+        $this->settings->setAdminRecipient(null);
+
         $this->adminNotifier->notifyOfNewRegistration($this->makeUser());
 
         self::assertEmailCount(0);

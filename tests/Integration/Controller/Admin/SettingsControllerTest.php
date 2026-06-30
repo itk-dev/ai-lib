@@ -137,6 +137,24 @@ final class SettingsControllerTest extends WebTestCase
         self::assertSame('NB', $settings->getBrandInitials());
     }
 
+    // Verifies the site form accepts a hero_text submission and the frontpage globals pick it up via SettingsManager::getHeroText().
+    public function testValidSiteSubmitPersistsHeroText(): void
+    {
+        $this->loginAsAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/settings/site');
+        $form = $crawler->filter('form[action$="/admin/settings/site"]')->form([
+            'hero_text' => 'Custom hero copy for the frontpage.',
+        ]);
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/admin/settings/site');
+        self::assertSame(
+            'Custom hero copy for the frontpage.',
+            self::getContainer()->get(SettingsManager::class)->getHeroText(),
+        );
+    }
+
     // Verifies submitting empty brand values clears the stored override so the env-var fallback wins again.
     public function testEmptySiteSubmitRevertsToEnvDefaults(): void
     {

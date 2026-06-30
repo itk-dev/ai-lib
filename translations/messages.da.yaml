@@ -168,6 +168,9 @@ admin:
                 brand_initials:
                     label: "Initialer"
                     help: "To bogstaver brugt som logo-glyf på små skærme."
+                hero_text:
+                    label: "Hero-tekst"
+                    help: "Den marketing-agtige tekst der vises under brandheadingen på forsiden. Lad feltet stå tomt for at falde tilbage til standardteksten."
         email:
             title: "E-mailindstillinger – %brand%"
             heading: "E-mail"

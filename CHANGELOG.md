@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New `hero_text` site setting and `SettingFixtures` class.
+  The frontpage hero's lead paragraph is now sourced through
+  `SettingsManager::getHeroText()` and exposed as the
+  `hero_text` Twig global by `BrandExtension`, falling back
+  to the `frontpage.hero.lead` translation when no row is
+  stored. The `/admin/settings/site` form gains a "Hero-tekst"
+  textarea below the existing brand fields. A new
+  `App\DataFixtures\SettingFixtures` writes a baseline value
+  for every key `SettingsManager` exposes today —
+  `admin_recipient`, the three brand fields, `hero_text`,
+  and the four email subject/body fields — through the typed
+  setters so the fixture stays in lock-step with the form
+  path
+  ([#127](https://github.com/itk-dev/ai-reolen/issues/127)).
 - The `/admin/settings/email` form now validates the
   `admin_recipient` and `sender_address` fields together before
   persisting either, so a submission that pairs a valid recipient
