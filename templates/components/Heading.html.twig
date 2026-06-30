@@ -9,13 +9,17 @@
 {# size's default font-weight ('normal', 'medium', 'semibold', 'bold') — #}
 {# e.g. 'normal' for a lighter box heading. `class` appends extras like #}
 {# `mb-4` or layout hooks without leaking design tokens to callers. #}
+{# Headings render in Inter (inherited via --font-sans); DM Serif Display #}
+{# is opt-in for editorial/hero only, so the size tokens carry no font. #}
 {% set sizeClasses = {
-    xl: 'font-display text-[clamp(2rem,3vw,2.6rem)] leading-tight tracking-tight text-ink',
-    lg: 'font-display text-[clamp(1.75rem,3vw,2.25rem)] leading-tight tracking-tight text-ink',
-    md: 'font-display text-2xl tracking-tight text-ink',
-    sm: 'font-display text-xl text-ink',
+    xl: 'text-[clamp(2rem,3vw,2.6rem)] leading-tight tracking-tight text-ink',
+    lg: 'text-[clamp(1.75rem,3vw,2.25rem)] leading-tight tracking-tight text-ink',
+    md: 'text-2xl tracking-tight text-ink',
+    sm: 'text-xl text-ink',
 } %}
-{% set defaultWeights = {xl: 'medium', lg: 'medium', md: 'medium', sm: 'semibold'} %}
+{# Inter needs more weight than the serif did to read as a heading, so the #}
+{# defaults sit a step heavier than the old Fraunces scale. #}
+{% set defaultWeights = {xl: 'bold', lg: 'bold', md: 'semibold', sm: 'semibold'} %}
 {% set weightClasses = {
     normal: 'font-normal',
     medium: 'font-medium',

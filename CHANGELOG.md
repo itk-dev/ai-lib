@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- OS2ai brand applied as design tokens: the colour palette is now the
+  OS2ai green (primary/accent), charcoal (text/neutrals), and sand
+  (surfaces/borders) scale, replacing the previous teal/gold. Admin
+  pages get a sand tint instead of pink.
+- OS2ai typography: Inter (self-hosted, variable) is the UI face for
+  body and all headings; DM Serif Display (self-hosted) is reserved as
+  an opt-in display face for editorial/hero. Fonts load via `@font-face`
+  from `assets/fonts/`, dropping the Google Fonts request, and the
+  favicon becomes an on-brand green mark.
 - Admin list pages (`/admin/users`, `/admin/organizations`) now
   fill the wide admin container instead of the narrow `max-w-4xl`
   column. The user list in particular has six columns after the
