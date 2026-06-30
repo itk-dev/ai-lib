@@ -198,6 +198,7 @@ admin:
                 recipient: "Modtager af besked om nye brugere"
                 admin_notification: "Admin: Ny bruger venter godkendelse"
                 registration_confirmation: "Bruger: Velkomst-mail"
+                email_confirmation: "Bruger: Bekræft e-mail-link"
             tokens_label: "Tilgængelige pladsholdere:"
             fields:
                 admin_recipient:
@@ -314,6 +315,19 @@ settings:
             før du kan logge ind.
 
             Du modtager besked, så snart kontoen er klar.
+    email_confirmation:
+        subject: "Bekræft din e-mail – %brand_name%"
+        body: |
+            Hej %name%,
+
+            Du modtager denne e-mail, fordi der er oprettet en bruger
+            med denne adresse hos %brand_name%. Klik på linket for at
+            bekræfte, at du ejer adressen. Først derefter kan en
+            administrator godkende din konto.
+
+            [Bekræft min e-mail](%confirmation_url%)
+
+            Linket virker i 24 timer og kan kun bruges én gang.
 
 profile:
     edit:
@@ -384,15 +398,6 @@ frontpage:
         "4":
             lead: "Tilpas lokalt"
             body: " – importér i din egen OpenWebUI, tilføj kommunens viden og tag den i brug."
-
-email:
-    confirmation:
-        subject: "Bekræft din e-mail – %brand%"
-        greeting: "Hej %name%,"
-        intro: "Du modtager denne e-mail, fordi der er oprettet en bruger med denne adresse hos %brand%. Klik på knappen for at bekræfte, at du er ejer af adressen. Først derefter kan en administrator godkende din konto."
-        cta: "Bekræft min e-mail"
-        fallback: "Hvis knappen ikke virker, kan du kopiere dette link ind i din browser:"
-        lifetime: "Linket virker i 24 timer og kan kun bruges én gang."
 
 auth:
     email_confirmation:

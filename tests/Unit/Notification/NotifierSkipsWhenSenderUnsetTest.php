@@ -19,7 +19,6 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Both registration notifiers must skip the send (not throw) when
@@ -87,13 +86,13 @@ final class NotifierSkipsWhenSenderUnsetTest extends TestCase
         $notifier = new EmailConfirmationNotifier(
             $mailer,
             $settings,
+            new EmailTemplateRenderer(new \League\CommonMark\CommonMarkConverter()),
             new EmailConfirmation(
                 $cache,
                 $this->createMock(EntityManagerInterface::class),
                 $this->createMock(UserRepository::class),
             ),
             $this->createMock(UrlGeneratorInterface::class),
-            $this->createMock(TranslatorInterface::class),
             new NullLogger(),
         );
 

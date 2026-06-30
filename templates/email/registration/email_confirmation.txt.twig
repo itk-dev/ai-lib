@@ -1,12 +1,3 @@
 {% extends 'email/_base.txt.twig' %}
 
-{% block content %}
-{{ 'email.confirmation.greeting'|trans({'%name%': name}) }}
-
-{{ 'email.confirmation.intro'|trans({'%brand%': brand_name}) }}
-
-{{ 'email.confirmation.cta'|trans }}:
-{{ confirmation_url }}
-
-{{ 'email.confirmation.lifetime'|trans }}
-{% endblock %}
+{% block content %}{{ bodyText }}{% endblock %}

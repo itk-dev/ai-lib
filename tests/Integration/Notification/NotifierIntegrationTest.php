@@ -85,9 +85,15 @@ final class NotifierIntegrationTest extends KernelTestCase
         self::assertStringContainsString('Tak for din oprettelse, Carol.', $email->getTextBody() ?? '');
     }
 
-    // Verifies the email-confirmation notifier sends to the registered user, includes a confirmation URL pointing at the public route, and renders the localised subject.
+    // Verifies the email-confirmation notifier sends to the registered user, renders the admin-editable subject + body, and substitutes the %confirmation_url% token with the absolute link.
     public function testEmailConfirmationNotifierSendsConfirmationLink(): void
     {
+        // Admin-editable templates: pinning the subject + body here
+        // proves the notifier goes through SettingsManager and
+        // EmailTemplateRenderer, not a hard-coded translation key.
+        $this->settings->setEmailConfirmationSubject('Bekræft %name%');
+        $this->settings->setEmailConfirmationBody('Klik %confirmation_url% for at bekræfte din e-mail %email%.');
+
         // Persist the user so the notifier's URL generation has a real
         // entity with an id to embed into the confirmation route.
         $user = self::getContainer()->get(UserManager::class)->createUser(
@@ -104,9 +110,10 @@ final class NotifierIntegrationTest extends KernelTestCase
         $email = self::getMailerMessage();
         self::assertNotNull($email);
         self::assertSame('mail-link@example.test', $email->getTo()[0]->getAddress());
-        self::assertStringContainsString('Bekræft din e-mail', $email->getSubject());
+        self::assertSame('Bekræft Mail Link', $email->getSubject());
         $text = (string) $email->getTextBody();
-        self::assertStringContainsString('/auth/confirm-email/', $text, 'Plain-text body must include the confirmation URL.');
+        self::assertStringContainsString('/auth/confirm-email/', $text, 'Plain-text body must include the substituted confirmation URL.');
+        self::assertStringContainsString('mail-link@example.test', $text, '%email% token must be substituted into the body.');
     }
 
     private function makeUser(): User

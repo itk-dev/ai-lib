@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notification;
 
 use App\Entity\User;
+use App\Mail\EmailTemplateRenderer;
 use App\Security\EmailConfirmation;
 use App\Settings\SettingsManager;
 use Psr\Log\LoggerInterface;
@@ -12,7 +13,6 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Sends the single-use email-confirmation link to a newly-registered
@@ -25,10 +25,16 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * by {@see EmailConfirmation::issueToken()} and embedded into the
  * `app_email_confirmation_check` route.
  *
- * Subject + body templates live under `templates/email/registration/`
- * and use translation keys (not the admin-editable Markdown surface
- * the other two notifiers consume) — the copy is a small, fixed
- * security message that admins shouldn't need to rephrase.
+ * Subject + body + sender all resolve through {@see SettingsManager}
+ * at send time, so admin edits at `/admin/settings/email` take
+ * effect immediately without a redeploy. Available `%token%`
+ * placeholders the admin can use in both subject and body:
+ *
+ * - `%name%`             — the user's display name
+ * - `%email%`            — the user's e-mail address
+ * - `%brand_name%`       — current brand identity
+ * - `%confirmation_url%` — the absolute URL to the single-use
+ *                          confirmation route the user must click
  *
  * When the sender is unset, logs a warning and returns without
  * sending so the registration flow itself stays alive.
@@ -37,18 +43,18 @@ class EmailConfirmationNotifier
 {
     /**
      * @param MailerInterface       $mailer            Symfony Mailer used to dispatch the message
-     * @param SettingsManager       $settings          typed accessor for the configured sender + brand identity
+     * @param SettingsManager       $settings          typed accessor for the admin-editable templates + sender
+     * @param EmailTemplateRenderer $renderer          resolves the Markdown template into subject + html + text
      * @param EmailConfirmation     $emailConfirmation issues the per-user confirmation token
      * @param UrlGeneratorInterface $urlGenerator      builds the absolute confirmation URL embedded in the email
-     * @param TranslatorInterface   $translator        resolves the localised subject line
      * @param LoggerInterface       $logger            receives a warning when the sender is unset
      */
     public function __construct(
         private readonly MailerInterface $mailer,
         private readonly SettingsManager $settings,
+        private readonly EmailTemplateRenderer $renderer,
         private readonly EmailConfirmation $emailConfirmation,
         private readonly UrlGeneratorInterface $urlGenerator,
-        private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -83,19 +89,24 @@ class EmailConfirmationNotifier
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
-        $brandName = $this->settings->getBrandName();
+        $rendered = $this->renderer->render(
+            $this->settings->getEmailConfirmationSubject(),
+            $this->settings->getEmailConfirmationBody(),
+            [
+                'name' => $user->getName(),
+                'email' => (string) $user->getEmail(),
+                'brand_name' => $this->settings->getBrandName(),
+                'confirmation_url' => $confirmationUrl,
+            ],
+        );
 
         $email = (new TemplatedEmail())
             ->from(Address::create($sender))
             ->to(Address::create((string) $user->getEmail()))
-            ->subject($this->translator->trans('email.confirmation.subject', ['%brand%' => $brandName]))
+            ->subject($rendered->subject)
             ->htmlTemplate('email/registration/email_confirmation.html.twig')
             ->textTemplate('email/registration/email_confirmation.txt.twig')
-            ->context([
-                'name' => $user->getName(),
-                'brand_name' => $brandName,
-                'confirmation_url' => $confirmationUrl,
-            ]);
+            ->context(['bodyHtml' => $rendered->bodyHtml, 'bodyText' => $rendered->bodyText]);
 
         $this->mailer->send($email);
     }

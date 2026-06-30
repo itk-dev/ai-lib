@@ -102,6 +102,33 @@
                 </twig:Form:Label>
             </fieldset>
 
+            <fieldset class="grid gap-4">
+                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.email_confirmation'|trans }}</legend>
+                <p class="text-sm text-text">
+                    {{ 'admin.settings.email.tokens_label'|trans }}
+                    <code class="rounded bg-surface-2 px-1">%name%</code>,
+                    <code class="rounded bg-surface-2 px-1">%email%</code>,
+                    <code class="rounded bg-surface-2 px-1">%brand_name%</code>,
+                    <code class="rounded bg-surface-2 px-1">%confirmation_url%</code>.
+                </p>
+
+                <twig:Form:Label for="inputEmailConfirmationSubject" text="{{ 'admin.settings.email.fields.subject.label'|trans }}">
+                    <twig:Form:TextInput
+                        id="inputEmailConfirmationSubject"
+                        name="email_confirmation_subject"
+                        value="{{ submitted.email_confirmation_subject }}"
+                    />
+                </twig:Form:Label>
+
+                <twig:Form:Label for="inputEmailConfirmationBody" text="{{ 'admin.settings.email.fields.body.label'|trans }}">
+                    <textarea id="inputEmailConfirmationBody"
+                              name="email_confirmation_body"
+                              rows="8"
+                              class="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.email_confirmation_body }}</textarea>
+                    <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.body.help'|trans }}</p>
+                </twig:Form:Label>
+            </fieldset>
+
             <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-settings-email') }}">
 
             <div class="flex items-center gap-4">

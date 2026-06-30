@@ -206,7 +206,7 @@ final class SettingsControllerTest extends WebTestCase
         self::assertSame('ops@example.test', $value);
     }
 
-    // Verifies the email form pre-fills the subject + body templates from SettingsManager defaults so admins see what they'll be editing.
+    // Verifies the email form pre-fills the subject + body templates for all three transactional emails from SettingsManager defaults so admins see what they'll be editing.
     public function testEmailFormPrefillsContentDefaults(): void
     {
         $this->loginAsAdmin();
@@ -228,9 +228,17 @@ final class SettingsControllerTest extends WebTestCase
         self::assertNotEmpty(
             $crawler->filter('textarea[name="registration_confirmation_body"]')->text(),
         );
+        self::assertNotEmpty(
+            $crawler->filter('input[name="email_confirmation_subject"]')->attr('value'),
+            'email-confirmation subject must be pre-filled with the default',
+        );
+        self::assertNotEmpty(
+            $crawler->filter('textarea[name="email_confirmation_body"]')->text(),
+            'email-confirmation body must be pre-filled with the default',
+        );
     }
 
-    // Tests that submitting custom subject + body values persists every email-content field through SettingsManager.
+    // Tests that submitting custom subject + body values persists every email-content field — including the confirmation-link templates — through SettingsManager.
     public function testValidEmailSubmitPersistsEmailContentFields(): void
     {
         $this->loginAsAdmin();
@@ -242,6 +250,8 @@ final class SettingsControllerTest extends WebTestCase
             'admin_notification_body' => 'Custom admin body for %name%',
             'registration_confirmation_subject' => 'Custom user subject',
             'registration_confirmation_body' => 'Custom user body for %name%',
+            'email_confirmation_subject' => 'Custom confirmation subject',
+            'email_confirmation_body' => 'Bekræft %name%: %confirmation_url%',
         ]);
         $this->client->submit($form);
 
@@ -251,6 +261,8 @@ final class SettingsControllerTest extends WebTestCase
         self::assertSame('Custom admin body for %name%', $settings->getAdminNotificationBody());
         self::assertSame('Custom user subject', $settings->getRegistrationConfirmationSubject());
         self::assertSame('Custom user body for %name%', $settings->getRegistrationConfirmationBody());
+        self::assertSame('Custom confirmation subject', $settings->getEmailConfirmationSubject());
+        self::assertSame('Bekræft %name%: %confirmation_url%', $settings->getEmailConfirmationBody());
     }
 
     // Tests that submitting a valid email persists the value and redirects back to the form.
