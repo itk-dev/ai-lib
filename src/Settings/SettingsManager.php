@@ -8,6 +8,7 @@ use App\Entity\Setting;
 use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Mime\Address;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -33,6 +34,14 @@ class SettingsManager
     public const string ADMIN_RECIPIENT = 'admin_recipient';
 
     /**
+     * Canonical key for the transactional-mail sender (`From:`) address.
+     *
+     * When unset, the manager falls back to the `MAILER_FROM` env var
+     * so a fresh install still has a working `From:`.
+     */
+    public const string SENDER_ADDRESS = 'sender_address';
+
+    /**
      * Canonical key for the public-facing brand name (full title).
      */
     public const string BRAND_NAME = 'brand_name';
@@ -46,6 +55,16 @@ class SettingsManager
      * Canonical key for the public-facing brand initials / logo glyph.
      */
     public const string BRAND_INITIALS = 'brand_initials';
+
+    /**
+     * Canonical key for the marketing-style "hero" copy rendered on
+     * the public frontpage under the brand heading.
+     *
+     * Falls back to the `frontpage.hero.lead` translation when the
+     * setting row is unset, so a fresh install renders the default
+     * Danish copy until an operator overrides it.
+     */
+    public const string HERO_TEXT = 'hero_text';
 
     /**
      * Canonical keys for the admin-notification email content.
@@ -69,6 +88,8 @@ class SettingsManager
         private readonly string $defaultBrandTagline,
         #[Autowire('%env(BRAND_INITIALS)%')]
         private readonly string $defaultBrandInitials,
+        #[Autowire('%env(MAILER_FROM)%')]
+        private readonly string $defaultSenderAddress,
     ) {
     }
 
@@ -101,6 +122,39 @@ class SettingsManager
     public function setAdminRecipient(?string $email): void
     {
         $this->setString(self::ADMIN_RECIPIENT, $email);
+    }
+
+    /**
+     * Read the configured transactional-mail sender (`From:`) address.
+     *
+     * Returns the admin-saved override when set, otherwise falls
+     * back to the deploy-time `MAILER_FROM` env var, or `null` when
+     * both are unset. Callers decide how to handle a `null` sender.
+     *
+     * The string may include a display-name component, e.g.
+     * `"AI Reolen <noreply@…>"`; `Address::create()` parses both
+     * shapes on the send side.
+     *
+     * @return string|null current sender address, or null when neither setting nor env are configured
+     */
+    public function getSenderAddress(): ?string
+    {
+        return $this->getString(self::SENDER_ADDRESS)
+            ?? ('' === $this->defaultSenderAddress ? null : $this->defaultSenderAddress);
+    }
+
+    /**
+     * Persist the transactional-mail sender address.
+     *
+     * Inserts a new `setting` row when the key is unset, otherwise
+     * updates the existing one. Pass `null` to revert to the
+     * `MAILER_FROM` env-var default.
+     *
+     * @param string|null $address sender address to store, or null to clear
+     */
+    public function setSenderAddress(?string $address): void
+    {
+        $this->setString(self::SENDER_ADDRESS, $address);
     }
 
     /**
@@ -188,6 +242,36 @@ class SettingsManager
     public function setBrandInitials(?string $initials): void
     {
         $this->setString(self::BRAND_INITIALS, $initials);
+    }
+
+    /**
+     * Read the configured hero copy rendered on the public frontpage.
+     *
+     * Returns the admin-saved override when set, otherwise the
+     * translated `frontpage.hero.lead` default so a fresh install
+     * keeps rendering the same Danish copy until an operator
+     * overrides it through `/admin/settings/site`.
+     *
+     * @return string current hero copy
+     */
+    public function getHeroText(): string
+    {
+        return $this->getString(self::HERO_TEXT)
+            ?? $this->translator->trans('frontpage.hero.lead');
+    }
+
+    /**
+     * Persist the frontpage hero copy.
+     *
+     * Inserts a new `setting` row when the key is unset, otherwise
+     * updates the existing one. Pass `null` to revert to the
+     * translation-based default.
+     *
+     * @param string|null $text hero copy to store, or null to clear
+     */
+    public function setHeroText(?string $text): void
+    {
+        $this->setString(self::HERO_TEXT, $text);
     }
 
     /**
@@ -317,31 +401,91 @@ class SettingsManager
     }
 
     /**
-     * Apply a raw brand-identity submission in one call.
+     * Apply a raw site-identity submission in one call.
      *
      * Each argument is trimmed and empty strings are treated as
      * `null`, so a form that submits empty fields reverts the
-     * override and lets the `BRAND_*` env-var defaults win again.
+     * override and lets the relevant default (env var for the
+     * brand fields, translation key for `hero_text`) win again.
      * Every key is persisted on the same flush.
      *
-     * @param string|null $name     submitted brand name, or null to leave alone the trimming branch
+     * @param string|null $name     submitted brand name
      * @param string|null $tagline  submitted brand tagline
      * @param string|null $initials submitted brand initials
+     * @param string|null $heroText submitted frontpage hero copy
      */
-    public function applyBrandIdentity(?string $name, ?string $tagline, ?string $initials): void
+    public function applyBrandIdentity(?string $name, ?string $tagline, ?string $initials, ?string $heroText): void
     {
         $this->setBrandName(self::emptyToNull($name));
         $this->setBrandTagline(self::emptyToNull($tagline));
         $this->setBrandInitials(self::emptyToNull($initials));
+        $this->setHeroText(self::emptyToNull($heroText));
     }
 
     /**
-     * Try to apply an admin notification recipient submission.
+     * Validate (and normalise) a submitted admin notification recipient.
      *
-     * Accepts the raw form value, trims it, and clears the
-     * setting when the result is empty. A non-empty value is
-     * validated against `FILTER_VALIDATE_EMAIL`; an invalid
-     * address is rejected and nothing is persisted.
+     * Trims the input. Returns the trimmed address when it parses
+     * as a valid e-mail (or `null` when the input was empty, meaning
+     * "clear the row"), or `false` when the input is non-empty but
+     * not a syntactically valid e-mail. Pure — does not touch the
+     * repository.
+     *
+     * Pair with {@see validateSenderAddress()} to validate an entire
+     * email-settings submission before persisting any field.
+     *
+     * @param string|null $address raw submitted recipient address
+     *
+     * @return string|false|null trimmed address (or null to clear) on accept, false on invalid
+     */
+    public function validateAdminRecipient(?string $address): string|false|null
+    {
+        $normalised = self::emptyToNull($address);
+        if (null !== $normalised && !filter_var($normalised, \FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        return $normalised;
+    }
+
+    /**
+     * Validate (and normalise) a submitted transactional-mail sender.
+     *
+     * Accepts either a bare e-mail (`noreply@…`) or a display-name
+     * form (`"AI Reolen <noreply@…>"`) — the same shape Symfony's
+     * {@see \Symfony\Component\Mime\Address::create()} parses on the
+     * send side. Returns the trimmed string on accept, `null` when
+     * the input was empty (clear the row), or `false` when the input
+     * is non-empty and unparseable. Pure — does not touch the
+     * repository.
+     *
+     * @param string|null $address raw submitted sender address
+     *
+     * @return string|false|null trimmed address (or null to clear) on accept, false on invalid
+     */
+    public function validateSenderAddress(?string $address): string|false|null
+    {
+        $normalised = self::emptyToNull($address);
+        if (null !== $normalised) {
+            try {
+                Address::create($normalised);
+            } catch (\Throwable) {
+                return false;
+            }
+        }
+
+        return $normalised;
+    }
+
+    /**
+     * Validate and persist an admin notification recipient submission in one call.
+     *
+     * Delegates validation to {@see validateAdminRecipient()} and
+     * persists via {@see setAdminRecipient()} on accept. Prefer the
+     * split form ({@see validateAdminRecipient()} +
+     * {@see setAdminRecipient()}) when multiple fields share a
+     * single form so the whole submission can be validated before
+     * any row is written.
      *
      * @param string|null $address raw submitted recipient address
      *
@@ -349,12 +493,36 @@ class SettingsManager
      */
     public function applyAdminRecipient(?string $address): bool
     {
-        $normalised = self::emptyToNull($address);
-        if (null !== $normalised && !filter_var($normalised, \FILTER_VALIDATE_EMAIL)) {
+        $result = $this->validateAdminRecipient($address);
+        if (false === $result) {
             return false;
         }
 
-        $this->setAdminRecipient($normalised);
+        $this->setAdminRecipient($result);
+
+        return true;
+    }
+
+    /**
+     * Validate and persist a transactional-mail sender submission in one call.
+     *
+     * Delegates validation to {@see validateSenderAddress()} and
+     * persists via {@see setSenderAddress()} on accept. Prefer the
+     * split form when multiple fields share a single form so the
+     * whole submission can be validated before any row is written.
+     *
+     * @param string|null $address raw submitted sender address
+     *
+     * @return bool true on accept (cleared or persisted), false on a syntactically invalid non-empty address
+     */
+    public function applySenderAddress(?string $address): bool
+    {
+        $result = $this->validateSenderAddress($address);
+        if (false === $result) {
+            return false;
+        }
+
+        $this->setSenderAddress($result);
 
         return true;
     }

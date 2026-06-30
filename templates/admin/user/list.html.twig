@@ -128,7 +128,7 @@
                                 <div class="inline-flex items-center gap-2 whitespace-nowrap">
                                     {% if u.status.value != 'approved' and is_granted('APPROVE_USER', u) %}
                                         <form action="{{ path('app_admin_user_approve', {id: u.id}) }}" method="post" class="inline">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('admin-user-action') }}">
+                                            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-user-action') }}">
                                             <input type="hidden" name="back" value="{{ back_url }}">
                                             <twig:Form:Button type="submit" size="sm">
                                                 {{ 'admin.users.action.approve'|trans }}
@@ -138,7 +138,7 @@
 
                                     {% if u.status.value != 'blocked' and is_granted('BLOCK_USER', u) %}
                                         <form action="{{ path('app_admin_user_block', {id: u.id}) }}" method="post" class="inline">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('admin-user-action') }}">
+                                            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-user-action') }}">
                                             <input type="hidden" name="back" value="{{ back_url }}">
                                             <twig:Form:Button type="submit" size="sm">
                                                 {{ 'admin.users.action.block'|trans }}

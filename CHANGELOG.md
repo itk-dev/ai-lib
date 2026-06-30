@@ -34,6 +34,113 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   label on success, and surfaces server errors via an
   `aria-live="polite"` feedback span next to the dropdown
   ([#148](https://github.com/itk-dev/ai-reolen/issues/148)).
+- Three reusable page layout components under
+  `templates/components/Layout/`. Site header, `<main>`, and
+  footer now share the wide container (`max-w-wide`, ≈ 1600px
+  from the mocks' `--container-wide`) so all three chrome edges
+  align — matching the prototype's `index.html`, which puts
+  `container-wide` on all three. `<twig:Layout:SingleColumn>`
+  renders a stacked flow inside that wide `<main>` (no extra
+  horizontal constraint of its own — inner components like
+  `<twig:Hero>` or `<twig:Box>` carry whatever narrower
+  max-width they need) and is adopted on the frontpage as the
+  reference consumer. `<twig:Layout:ThreeColumn>` (slots `start`,
+  `main`, `end`) and `<twig:Layout:ContentWithAsides>` (slots
+  `main`, `meta`, `actions` with sticky asides) cover the
+  catalogue and detail surfaces. The previous ad-hoc
+  `max-w-[1600px]` literals on the header, footer, and `<main>`
+  are replaced by the token-backed `max-w-wide` utility. The
+  narrow `--container-narrow` token (≈ 1180px) is defined in
+  `@theme` for future use but no current page applies it,
+  mirroring the prototype where `.container` is defined but
+  unused. Grid CSS lives in `assets/styles/app.css` under
+  `@layer components`. Three pages adopt the new layouts as
+  reference consumers: the frontpage (`SingleColumn`),
+  `/assistant/new` (`SingleColumn`), `/search` (`ThreeColumn`
+  with filters in the `start` slot and an empty `end` slot
+  reserved for a future context rail), and `/assistant/{id}`
+  (`ContentWithAsides` with the title + description in `main`,
+  runtime details in `meta`, and tags in `actions`)
+  ([#144](https://github.com/itk-dev/ai-reolen/issues/144)).
+- Unified CSRF protection on the stateless double-submit cookie
+  pattern. Every hand-rolled form intent —
+  `assistant-create`, `register`, `admin-organization-delete`,
+  `admin-user-action`, `admin-settings-site`, and
+  `admin-settings-email` — is now listed under
+  `framework.csrf_protection.stateless_token_ids`, so Symfony's
+  `SameOriginCsrfTokenManager` validates the token against the
+  `__Host-csrf` cookie instead of a session-bound token. The
+  matching `<input type="hidden" name="_token">` fields gain
+  `data-controller="csrf-protection"` so the bundled Stimulus
+  controller mirrors the cookie value into the field on submit.
+  Symfony Form-built submissions (`UserCreateType`,
+  `OrganizationType`, `ProfileType`, `AssistantType`) were
+  already stateless via the `submit` intent; this aligns the
+  hand-rolled paths with that approach, removing the
+  session-bound CSRF code path from the project entirely
+  ([#111](https://github.com/itk-dev/ai-reolen/issues/111)).
+- New `hero_text` site setting and `SettingFixtures` class.
+  The frontpage hero's lead paragraph is now sourced through
+  `SettingsManager::getHeroText()` and exposed as the
+  `hero_text` Twig global by `BrandExtension`, falling back
+  to the `frontpage.hero.lead` translation when no row is
+  stored. The `/admin/settings/site` form gains a "Hero-tekst"
+  textarea below the existing brand fields. A new
+  `App\DataFixtures\SettingFixtures` writes a baseline value
+  for every key `SettingsManager` exposes today —
+  `admin_recipient`, the three brand fields, `hero_text`,
+  and the four email subject/body fields — through the typed
+  setters so the fixture stays in lock-step with the form
+  path
+  ([#127](https://github.com/itk-dev/ai-reolen/issues/127)).
+- The `/admin/settings/email` form now validates the
+  `admin_recipient` and `sender_address` fields together before
+  persisting either, so a submission that pairs a valid recipient
+  with an invalid sender (or vice versa) is rejected as a whole
+  and neither row is written. `SettingsManager` grows pure
+  `validateAdminRecipient()` and `validateSenderAddress()` helpers
+  alongside the existing `apply*()` shortcuts so multi-field
+  callers can do validate-all-then-persist
+  ([#132](https://github.com/itk-dev/ai-reolen/issues/132)).
+- Transactional email sender (`From:`) is now admin-editable
+  at `/admin/settings/email` next to the existing
+  "Modtager" field. `SettingsManager::getSenderAddress()`
+  reads the new `sender_address` setting and falls back to
+  the `MAILER_FROM` env var when unset, mirroring the
+  `BRAND_NAME` pattern. Both
+  `App\Notification\AdminRegistrationNotifier` and
+  `App\Notification\RegistrationConfirmationNotifier`
+  resolve the sender at send time so admin edits take
+  effect immediately, and log + skip when both setting
+  and env are empty so a half-configured mailer doesn't
+  crash registrations. Accepts both bare e-mails
+  (`noreply@…`) and the display-name form (`"AI Reolen
+  <noreply@…>"`) — same shape Symfony's
+  `Address::create()` parses
+  ([#132](https://github.com/itk-dev/ai-reolen/issues/132)).
+- `assets-build` Taskfile target to compile the Tailwind CSS bundle
+  (supports `-- --watch` and `-- --minify`); `site-install` now reuses it.
+- Enlarged the catalogue search bar to match the design — it now uses a
+  larger input and button. Adds a `size` prop to the `Form:TextInput`
+  component and an `lg` size to `Form:Button`. The `Form:Button` no longer
+  shrinks or wraps its label below its content width when placed beside a
+  growing field, so the "Søg" label stays fully visible.
+- Made the catalogue right-hand sidebar box headings more pronounced by
+  rendering them in the dark ink colour instead of muted grey, matching the
+  design.
+- Tightened the spacing across the catalogue layout — the gap between the
+  three columns, between stacked sidebar boxes, and within the results
+  column — for a more compact arrangement matching the design.
+- Catalogue right-hand sidebar and one-per-row results. The `/search`
+  page becomes a three-column layout — facet rail, results, and a new
+  sidebar with an "Aktive filtre" box (active-filter chips, moved out of
+  the results column, with an empty state), a "Seneste søgninger" box
+  listing the user's recent searches as re-runnable links (per-session,
+  deduplicated, most-recent-first), and an informational "Klar til
+  hjemtagning" box. Result cards now render one per row, restructured
+  to lead with the title (large display serif), a language-model kicker,
+  the description, and the framework plus tags as pills
+  ([#19](https://github.com/itk-dev/ai-reolen/issues/19)).
 - Branded HTTP 401 and 403 pages for the firewall entry
   points. `App\Security\UnauthorizedEntryPoint` now renders
   `templates/security/unauthorized.html.twig` ("Log ind

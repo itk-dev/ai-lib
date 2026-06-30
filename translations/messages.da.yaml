@@ -170,6 +170,7 @@ admin:
         error:
             invalid_token: "Sessionen er udløbet. Indsend formularen igen."
             invalid_email: "Indtast en gyldig e-mailadresse."
+            invalid_sender: 'Indtast en gyldig afsenderadresse, fx noreply@example.dk eller "AI Reolen <noreply@example.dk>".'
         flash:
             saved: "Indstillingerne er gemt."
         site:
@@ -186,6 +187,9 @@ admin:
                 brand_initials:
                     label: "Initialer"
                     help: "To bogstaver brugt som logo-glyf på små skærme."
+                hero_text:
+                    label: "Hero-tekst"
+                    help: "Den marketing-agtige tekst der vises under brandheadingen på forsiden. Lad feltet stå tomt for at falde tilbage til standardteksten."
         email:
             title: "E-mailindstillinger – %brand%"
             heading: "E-mail"
@@ -199,6 +203,9 @@ admin:
                 admin_recipient:
                     label: "E-mailadresse"
                     help: "Modtager besked når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
+                sender_address:
+                    label: "Afsenderadresse"
+                    help: 'Afsender (From:) på systemmails. Accepterer `noreply@example.dk` eller `"AI Reolen <noreply@example.dk>"`. Lad feltet stå tomt for at falde tilbage til MAILER_FROM-miljøvariablen.'
                 subject:
                     label: "Emne"
                 body:
@@ -216,7 +223,6 @@ catalog:
         placeholder: "Søg …"
         submit: "Søg"
     sort:
-        eyebrow: "Sortér"
         heading: "Sortering"
         label: "Sortér efter"
         apply: "Sortér"
@@ -228,10 +234,18 @@ catalog:
     empty:
         heading: "Ingen assistenter matcher"
         help: "Prøv at slække på filtrene eller fjerne en facet."
+    active:
+        heading: "Aktive filtre"
+        empty: "Ingen filtre aktive."
+    recent:
+        heading: "Seneste søgninger"
+        empty: "Ingen søgninger endnu."
+    export:
+        heading: "Klar til hjemtagning"
+        body: "Alle %count% resultater kan eksporteres som OpenWebUI-JSON og køres lokalt."
     results:
         label: "Søgeresultater"
     filters:
-        eyebrow: "Filtrér"
         heading: "Filtre"
         active: "Aktive filtre"
         chip_remove: "Fjern filter: %filter%"

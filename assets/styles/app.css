@@ -42,6 +42,16 @@
     --font-mono:
         "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
         monospace;
+
+    /*
+     * Page-container widths. The `--container-*` namespace is Tailwind
+     * v4's hook for `max-w-*` utilities, so these tokens generate
+     * `max-w-narrow` (default `<main>` constraint) and `max-w-wide`
+     * (opt-in via `{% block main_max_width %}` on pages adopting the
+     * three-column or content-with-asides layout).
+     */
+    --container-narrow: 1180px;
+    --container-wide: 1600px;
 }
 
 /*
@@ -160,5 +170,70 @@
     }
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) {
         transform: translateY(-5.5px) rotate(-45deg);
+    }
+
+    /*
+     * Page layout grids. Three reusable shells consumed by the
+     * `<twig:Layout:SingleColumn>`, `<twig:Layout:ThreeColumn>`, and
+     * `<twig:Layout:ContentWithAsides>` components. Class names match
+     * the mocks' descriptive names where reasonable, but the public
+     * API is the Twig variant — author pages against the components,
+     * not these classes.
+     */
+
+    /*
+     * Three-column shell with a broad middle. Below 768px the grid
+     * collapses to a single stacked column. Between 768 and 1279 the
+     * end column wraps to a second row, matching the mocks' two-up
+     * fallback. From 1280 up, three columns sit side by side.
+     */
+    .layout-three-column {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+    @media (max-width: 767px) {
+        .layout-three-column {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+    @media (min-width: 1280px) {
+        .layout-three-column {
+            grid-template-columns: 260px minmax(0, 1fr) 280px;
+        }
+    }
+
+    /*
+     * Broad main + two right-side asides. Single column below 768px
+     * (asides drop their sticky behavior so they don't overlap each
+     * other on small viewports). Two columns by default. At 1280px
+     * the second aside breaks out into its own column.
+     */
+    .layout-content-with-asides {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 1.5rem;
+        align-items: start;
+    }
+    @media (max-width: 767px) {
+        .layout-content-with-asides {
+            grid-template-columns: minmax(0, 1fr);
+        }
+        .layout-content-with-asides .layout-aside-sticky {
+            position: static;
+        }
+    }
+    @media (min-width: 1280px) {
+        .layout-content-with-asides {
+            grid-template-columns: minmax(0, 1fr) 280px 240px;
+            gap: clamp(1.25rem, 3vw, 2.5rem);
+        }
+    }
+
+    /* Sticky aside helper for the content-with-asides layout. */
+    .layout-aside-sticky {
+        position: sticky;
+        top: 84px;
     }
 }

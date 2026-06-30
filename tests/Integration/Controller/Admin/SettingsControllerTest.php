@@ -137,6 +137,24 @@ final class SettingsControllerTest extends WebTestCase
         self::assertSame('NB', $settings->getBrandInitials());
     }
 
+    // Verifies the site form accepts a hero_text submission and the frontpage globals pick it up via SettingsManager::getHeroText().
+    public function testValidSiteSubmitPersistsHeroText(): void
+    {
+        $this->loginAsAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/settings/site');
+        $form = $crawler->filter('form[action$="/admin/settings/site"]')->form([
+            'hero_text' => 'Custom hero copy for the frontpage.',
+        ]);
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/admin/settings/site');
+        self::assertSame(
+            'Custom hero copy for the frontpage.',
+            self::getContainer()->get(SettingsManager::class)->getHeroText(),
+        );
+    }
+
     // Verifies submitting empty brand values clears the stored override so the env-var fallback wins again.
     public function testEmptySiteSubmitRevertsToEnvDefaults(): void
     {
@@ -285,6 +303,44 @@ final class SettingsControllerTest extends WebTestCase
         self::assertSame(
             'ops@example.test',
             self::getContainer()->get(SettingsManager::class)->getAdminRecipient(),
+            'invalid submit must not overwrite the stored value',
+        );
+    }
+
+    // Verifies a valid sender_address submission persists through SettingsManager.
+    public function testValidSenderAddressSubmitPersists(): void
+    {
+        $this->loginAsAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/settings/email');
+        $form = $crawler->filter('form[action$="/admin/settings/email"]')->form([
+            'sender_address' => 'AI Reolen <noreply@example.test>',
+        ]);
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/admin/settings/email');
+        self::assertSame(
+            'AI Reolen <noreply@example.test>',
+            self::getContainer()->get(SettingsManager::class)->getSenderAddress(),
+        );
+    }
+
+    // Ensures an invalid sender_address re-renders with 422 and leaves the stored value unchanged.
+    public function testInvalidSenderAddressRerendersFormWithoutPersisting(): void
+    {
+        $this->loginAsAdmin();
+        self::getContainer()->get(SettingsManager::class)->setSenderAddress('keep@example.test');
+
+        $crawler = $this->client->request('GET', '/admin/settings/email');
+        $form = $crawler->filter('form[action$="/admin/settings/email"]')->form([
+            'sender_address' => 'absolutely not an email address',
+        ]);
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(
+            'keep@example.test',
+            self::getContainer()->get(SettingsManager::class)->getSenderAddress(),
             'invalid submit must not overwrite the stored value',
         );
     }

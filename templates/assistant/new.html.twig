@@ -3,6 +3,7 @@
 {% block title %}{{ 'assistant.new.title'|trans({'%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
+    <twig:Layout:SingleColumn>
     <section class="max-w-2xl">
         <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.new.eyebrow'|trans }}</twig:Eyebrow>
         <h1 class="mb-6 font-display text-[clamp(2rem,3vw,2.6rem)] font-medium leading-tight tracking-tight text-ink">
@@ -104,7 +105,7 @@
                 </p>
             </div>
 
-            <input type="hidden" name="_token" value="{{ csrf_token('assistant-create') }}">
+            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('assistant-create') }}">
 
             <div class="flex items-center gap-4">
                 <twig:Form:Button type="submit">
@@ -116,4 +117,5 @@
             </div>
         </form>
     </section>
+    </twig:Layout:SingleColumn>
 {% endblock %}
