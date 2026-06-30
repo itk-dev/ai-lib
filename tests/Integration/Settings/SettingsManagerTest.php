@@ -14,16 +14,18 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  * End-to-end coverage of {@see SettingsManager} against the real
  * `setting` table.
  *
- * Mutations are rolled back per-test by
- * `dama/doctrine-test-bundle`, so each test starts from an empty
- * `setting` table.
+ * `tests/bootstrap_integration.php` loads {@see \App\DataFixtures\SettingFixtures}
+ * once at suite boot, so every key is pre-seeded with the fixture's
+ * baseline value. `dama/doctrine-test-bundle` rolls per-test mutations
+ * back to that seeded baseline.
  */
 final class SettingsManagerTest extends KernelTestCase
 {
-    // Verifies getAdminRecipient returns null when the row hasn't been written yet.
-    public function testGetAdminRecipientReturnsNullWhenUnset(): void
+    // Verifies getAdminRecipient returns null after the seeded row is explicitly cleared (the "intentionally unset" state).
+    public function testGetAdminRecipientReturnsNullAfterClear(): void
     {
         $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setAdminRecipient(null);
 
         self::assertNull($manager->getAdminRecipient());
     }
@@ -31,13 +33,22 @@ final class SettingsManagerTest extends KernelTestCase
     // Tests that setAdminRecipient inserts a new row when none exists and the value round-trips through the repository.
     public function testSetAdminRecipientInsertsNewRow(): void
     {
+        // SettingFixtures pre-seeded the row at suite boot. Delete it
+        // first so this test still exercises the "row doesn't exist
+        // yet → insert" branch of SettingsManager::setString().
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repository = self::getContainer()->get(SettingRepository::class);
+        $existing = $repository->findOneByName(SettingsManager::ADMIN_RECIPIENT);
+        \assert(null !== $existing, 'fixture must have seeded the row');
+        $em->remove($existing);
+        $em->flush();
+
         $manager = self::getContainer()->get(SettingsManager::class);
 
         $manager->setAdminRecipient('ops@example.test');
 
         self::assertSame('ops@example.test', $manager->getAdminRecipient());
 
-        $repository = self::getContainer()->get(SettingRepository::class);
         $row = $repository->findOneByName(SettingsManager::ADMIN_RECIPIENT);
         self::assertInstanceOf(Setting::class, $row);
         self::assertSame(SettingsManager::ADMIN_RECIPIENT, $row->getName());
@@ -81,5 +92,92 @@ final class SettingsManagerTest extends KernelTestCase
 
         self::assertTrue($manager->applyAdminRecipient(null));
         self::assertNull($manager->getAdminRecipient());
+    }
+
+    // Verifies applyAdminRecipient rejects garbage input without persisting it — parallels the same check on applySenderAddress.
+    public function testApplyAdminRecipientRejectsGarbage(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setAdminRecipient('keepme@example.test');
+
+        self::assertFalse($manager->applyAdminRecipient('not-an-email'));
+        self::assertSame('keepme@example.test', $manager->getAdminRecipient(), 'invalid submit must not overwrite stored value');
+    }
+
+    // Verifies the sender accessor falls back to the MAILER_FROM env baked into the test container.
+    public function testGetSenderAddressFallsBackToEnvWhenUnset(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+
+        $sender = $manager->getSenderAddress();
+        self::assertNotNull($sender, 'MAILER_FROM is set in .env.test so the fallback must resolve.');
+        self::assertStringContainsString('@', $sender);
+    }
+
+    // Verifies a stored sender value wins over the env-var fallback.
+    public function testGetSenderAddressReturnsStoredValueWhenSet(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setSenderAddress('admin@aarhus.dk');
+
+        self::assertSame('admin@aarhus.dk', $manager->getSenderAddress());
+    }
+
+    // Verifies applySenderAddress accepts a bare e-mail.
+    public function testApplySenderAddressAcceptsBareEmail(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+
+        self::assertTrue($manager->applySenderAddress('noreply@example.test'));
+        self::assertSame('noreply@example.test', $manager->getSenderAddress());
+    }
+
+    // Verifies applySenderAddress accepts the "Display Name <local@domain>" form.
+    public function testApplySenderAddressAcceptsDisplayNameForm(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+
+        self::assertTrue($manager->applySenderAddress('AI Reolen <noreply@example.test>'));
+        self::assertSame('AI Reolen <noreply@example.test>', $manager->getSenderAddress());
+    }
+
+    // Verifies applySenderAddress rejects garbage input without persisting it.
+    public function testApplySenderAddressRejectsGarbage(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setSenderAddress('keepme@example.test');
+
+        self::assertFalse($manager->applySenderAddress('not-an-email-and-no-brackets'));
+        self::assertSame('keepme@example.test', $manager->getSenderAddress(), 'invalid submit must not overwrite stored value');
+    }
+
+    // Verifies applySenderAddress clears the setting on empty input.
+    public function testApplySenderAddressClearsOnEmpty(): void
+    {
+        $manager = self::getContainer()->get(SettingsManager::class);
+        $manager->setSenderAddress('keepme@example.test');
+
+        self::assertTrue($manager->applySenderAddress(''));
+        // Cleared → falls back to env. The env value isn't 'keepme@example.test', so the override is gone.
+        self::assertNotSame('keepme@example.test', $manager->getSenderAddress());
+    }
+
+    // Verifies getSenderAddress returns null when both the setting and the MAILER_FROM env are empty.
+    public function testGetSenderAddressReturnsNullWhenSettingAndEnvAreBothEmpty(): void
+    {
+        $container = self::getContainer();
+        // Build a fresh manager whose env-var fallback is the empty
+        // string — mirrors a deploy that left MAILER_FROM unset.
+        $manager = new SettingsManager(
+            $container->get(SettingRepository::class),
+            $container->get(EntityManagerInterface::class),
+            $container->get(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            'irrelevant',
+            'irrelevant',
+            'irrelevant',
+            '',
+        );
+
+        self::assertNull($manager->getSenderAddress());
     }
 }
