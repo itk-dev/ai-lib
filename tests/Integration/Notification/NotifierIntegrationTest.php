@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Notification;
 
+use App\DataFixtures\UserFixtures;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Notification\AdminRegistrationNotifier;
 use App\Notification\EmailConfirmationNotifier;
 use App\Notification\RegistrationConfirmationNotifier;
 use App\Repository\UserRepository;
-use App\Security\UserManager;
 use App\Settings\SettingsManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
@@ -94,14 +94,12 @@ final class NotifierIntegrationTest extends KernelTestCase
         $this->settings->setEmailConfirmationSubject('Bekræft %name%');
         $this->settings->setEmailConfirmationBody('Klik %confirmation_url% for at bekræfte din e-mail %email%.');
 
-        // Persist the user so the notifier's URL generation has a real
-        // entity with an id to embed into the confirmation route.
-        $user = self::getContainer()->get(UserManager::class)->createUser(
-            'mail-link@example.test',
-            'Mail Link',
-            'pw',
-            status: UserStatus::AwaitingEmailConfirmation,
-        );
+        // UserFixtures seeds an AwaitingEmailConfirmation row at
+        // awaiting@aalborg.dk — re-use it here so the notifier has
+        // a persisted entity with an id for URL generation.
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => UserFixtures::AWAITING_EMAIL]);
+        \assert(null !== $user, 'UserFixtures must seed the AwaitingEmailConfirmation baseline.');
+        self::assertSame(UserStatus::AwaitingEmailConfirmation, $user->getStatus());
 
         $notifier = self::getContainer()->get(EmailConfirmationNotifier::class);
         $notifier->sendConfirmationLink($user);
@@ -109,11 +107,11 @@ final class NotifierIntegrationTest extends KernelTestCase
         self::assertEmailCount(1);
         $email = self::getMailerMessage();
         self::assertNotNull($email);
-        self::assertSame('mail-link@example.test', $email->getTo()[0]->getAddress());
-        self::assertSame('Bekræft Mail Link', $email->getSubject());
+        self::assertSame(UserFixtures::AWAITING_EMAIL, $email->getTo()[0]->getAddress());
+        self::assertSame('Bekræft Awaiting', $email->getSubject());
         $text = (string) $email->getTextBody();
         self::assertStringContainsString('/auth/confirm-email/', $text, 'Plain-text body must include the substituted confirmation URL.');
-        self::assertStringContainsString('mail-link@example.test', $text, '%email% token must be substituted into the body.');
+        self::assertStringContainsString(UserFixtures::AWAITING_EMAIL, $text, '%email% token must be substituted into the body.');
     }
 
     private function makeUser(): User

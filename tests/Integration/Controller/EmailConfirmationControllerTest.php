@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller;
 
+use App\DataFixtures\UserFixtures;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Security\EmailConfirmation;
-use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * End-to-end coverage of the public `/auth/confirm-email/{token}`
  * route.
+ *
+ * Uses {@see UserFixtures::AWAITING_EMAIL} as the
+ * `AwaitingEmailConfirmation` baseline; DAMA rolls back the
+ * status transition between tests.
  */
 final class EmailConfirmationControllerTest extends WebTestCase
 {
@@ -27,12 +31,7 @@ final class EmailConfirmationControllerTest extends WebTestCase
     // Tests the success path: a valid token flips the user's status and renders the confirmation page.
     public function testValidTokenRendersConfirmationAndTransitionsStatus(): void
     {
-        $user = self::getContainer()->get(UserManager::class)->createUser(
-            'click@example.test',
-            'Click',
-            'pw',
-            status: UserStatus::AwaitingEmailConfirmation,
-        );
+        $user = $this->awaitingFixtureUser();
         $token = self::getContainer()->get(EmailConfirmation::class)->issueToken($user);
 
         $crawler = $this->client->request('GET', '/auth/confirm-email/'.$token);
@@ -57,13 +56,7 @@ final class EmailConfirmationControllerTest extends WebTestCase
     // Tests that a second click on the same link returns 410 — the token is single-use.
     public function testSecondClickReturnsGone(): void
     {
-        $user = self::getContainer()->get(UserManager::class)->createUser(
-            'twice@example.test',
-            'Twice',
-            'pw',
-            status: UserStatus::AwaitingEmailConfirmation,
-        );
-        $token = self::getContainer()->get(EmailConfirmation::class)->issueToken($user);
+        $token = self::getContainer()->get(EmailConfirmation::class)->issueToken($this->awaitingFixtureUser());
 
         $this->client->request('GET', '/auth/confirm-email/'.$token);
         self::assertResponseIsSuccessful();
@@ -80,5 +73,14 @@ final class EmailConfirmationControllerTest extends WebTestCase
         $this->client->request('GET', '/auth/confirm-email/something-anonymous');
 
         self::assertResponseStatusCodeSame(410);
+    }
+
+    private function awaitingFixtureUser(): \App\Entity\User
+    {
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => UserFixtures::AWAITING_EMAIL]);
+        \assert(null !== $user, 'UserFixtures must seed the AwaitingEmailConfirmation baseline.');
+        self::assertSame(UserStatus::AwaitingEmailConfirmation, $user->getStatus());
+
+        return $user;
     }
 }
