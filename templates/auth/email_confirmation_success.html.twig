@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'auth.email_confirmation.success.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <section class="max-w-md">
+        <twig:Eyebrow as="p" class="mb-4">{{ 'auth.email_confirmation.success.eyebrow'|trans }}</twig:Eyebrow>
+        <h1 class="mb-6 font-display text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-tight tracking-tight text-ink">
+            {{ 'auth.email_confirmation.success.heading'|trans({'%name%': name}) }}
+        </h1>
+
+        <p class="text-sm text-text">{{ 'auth.email_confirmation.success.body'|trans }}</p>
+
+        <p class="mt-6">
+            <a class="text-primary underline hover:text-primary-hover" href="{{ path('app_frontpage') }}">
+                {{ 'auth.email_confirmation.success.frontpage_link'|trans }}
+            </a>
+        </p>
+    </section>
+{% endblock %}

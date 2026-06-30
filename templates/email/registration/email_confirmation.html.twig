@@ -1,0 +1,19 @@
+{% extends 'email/_base.html.twig' %}
+
+{% block subject %}{{ 'email.confirmation.subject'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block content %}
+    <p>{{ 'email.confirmation.greeting'|trans({'%name%': name}) }}</p>
+    <p>{{ 'email.confirmation.intro'|trans({'%brand%': brand_name}) }}</p>
+    <p style="margin: 24px 0;">
+        <a href="{{ confirmation_url }}"
+           style="display: inline-block; background-color: #0f766e; color: #ffffff; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+            {{ 'email.confirmation.cta'|trans }}
+        </a>
+    </p>
+    <p>{{ 'email.confirmation.fallback'|trans }}</p>
+    <p style="word-break: break-all; font-size: 13px;">
+        <a href="{{ confirmation_url }}">{{ confirmation_url }}</a>
+    </p>
+    <p>{{ 'email.confirmation.lifetime'|trans }}</p>
+{% endblock %}

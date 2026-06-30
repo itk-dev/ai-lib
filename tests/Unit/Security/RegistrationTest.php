@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Security;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Notification\AdminRegistrationNotifier;
+use App\Notification\EmailConfirmationNotifier;
 use App\Notification\RegistrationConfirmationNotifier;
 use App\Repository\UserRepository;
 use App\Security\AllowedEmailDomains;
@@ -102,6 +103,7 @@ final class RegistrationTest extends TestCase
             new AllowedEmailDomains('example.test'),
             $this->createMock(AdminRegistrationNotifier::class),
             $this->createMock(RegistrationConfirmationNotifier::class),
+            $this->createMock(EmailConfirmationNotifier::class),
             new NullLogger(),
             $this->openLimiter(),
             $this->openLimiter(),
@@ -112,8 +114,8 @@ final class RegistrationTest extends TestCase
         self::assertNull($result);
     }
 
-    // Tests the happy path: valid submission persists a Pending user with trimmed name and hashed password.
-    public function testPersistsPendingUserOnHappyPath(): void
+    // Tests the happy path: valid submission persists an AwaitingEmailConfirmation user with trimmed name and hashed password.
+    public function testPersistsAwaitingEmailConfirmationUserOnHappyPath(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);
         $repo = $this->createMock(UserRepository::class);
@@ -133,14 +135,17 @@ final class RegistrationTest extends TestCase
 
         $adminNotifier = $this->createMock(AdminRegistrationNotifier::class);
         $confirmationNotifier = $this->createMock(RegistrationConfirmationNotifier::class);
+        $emailLinkNotifier = $this->createMock(EmailConfirmationNotifier::class);
         $adminNotifier->expects(self::once())->method('notifyOfNewRegistration');
         $confirmationNotifier->expects(self::once())->method('confirmRegistration');
+        $emailLinkNotifier->expects(self::once())->method('sendConfirmationLink');
 
         $reg = new Registration(
             new UserManager($em, $repo, $hasher),
             new AllowedEmailDomains('example.test'),
             $adminNotifier,
             $confirmationNotifier,
+            $emailLinkNotifier,
             new NullLogger(),
             $this->openLimiter(),
             $this->openLimiter(),
@@ -152,11 +157,11 @@ final class RegistrationTest extends TestCase
         self::assertSame($user, $captured);
         self::assertSame('Carol@Example.test', $user->getEmail());
         self::assertSame('Carol', $user->getName(), 'Name is trimmed before persistence.');
-        self::assertSame(UserStatus::Pending, $user->getStatus());
+        self::assertSame(UserStatus::AwaitingEmailConfirmation, $user->getStatus());
         self::assertSame('hashed-secret', $user->getPassword());
     }
 
-    // Verifies a transport failure on either notifier is logged but doesn't undo the persisted user.
+    // Verifies a transport failure on any notifier is logged but doesn't undo the persisted user.
     public function testNotifierTransportFailureIsSwallowed(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);
@@ -171,19 +176,23 @@ final class RegistrationTest extends TestCase
         $confirmationNotifier = $this->createMock(RegistrationConfirmationNotifier::class);
         $confirmationNotifier->method('confirmRegistration')
             ->willThrowException(new TransportException('SMTP down'));
+        $emailLinkNotifier = $this->createMock(EmailConfirmationNotifier::class);
+        $emailLinkNotifier->method('sendConfirmationLink')
+            ->willThrowException(new TransportException('SMTP down'));
 
         $reg = new Registration(
             new UserManager($em, $repo, $hasher),
             new AllowedEmailDomains('example.test'),
             $adminNotifier,
             $confirmationNotifier,
+            $emailLinkNotifier,
             new NullLogger(),
             $this->openLimiter(),
             $this->openLimiter(),
         );
 
         // No exception leaks out — the persisted user comes back even though
-        // both transport sends failed.
+        // every transport send failed.
         $user = $reg->register(self::CLIENT_IP, 'carol@example.test', 'Carol', 'secret', 'secret');
         self::assertInstanceOf(User::class, $user);
     }
@@ -195,6 +204,7 @@ final class RegistrationTest extends TestCase
             new AllowedEmailDomains('example.test'),
             $this->createMock(AdminRegistrationNotifier::class),
             $this->createMock(RegistrationConfirmationNotifier::class),
+            $this->createMock(EmailConfirmationNotifier::class),
             new NullLogger(),
             $this->closedLimiter(),
             $this->openLimiter(),
@@ -214,6 +224,7 @@ final class RegistrationTest extends TestCase
             new AllowedEmailDomains('example.test'),
             $this->createMock(AdminRegistrationNotifier::class),
             $this->createMock(RegistrationConfirmationNotifier::class),
+            $this->createMock(EmailConfirmationNotifier::class),
             new NullLogger(),
             $this->openLimiter(),
             $this->closedLimiter(),
@@ -241,6 +252,7 @@ final class RegistrationTest extends TestCase
             new AllowedEmailDomains($allowList),
             $this->createMock(AdminRegistrationNotifier::class),
             $this->createMock(RegistrationConfirmationNotifier::class),
+            $this->createMock(EmailConfirmationNotifier::class),
             new NullLogger(),
             $this->openLimiter(),
             $this->openLimiter(),

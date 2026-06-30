@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Single-use email-confirmation link as the mechanism that
+  transitions a new user out of `UserStatus::AwaitingEmailConfirmation`.
+  Self-signup now lands the user as `AwaitingEmailConfirmation`
+  (no site access) instead of `Pending`, and a third
+  transactional email — alongside the existing admin moderator
+  notification and "thanks, awaiting approval" courtesy mail —
+  carries an absolute URL pointing at the new public route
+  `GET /auth/confirm-email/{token}`. Clicking the link consumes
+  the token (single-use, 24 h TTL), flips the user's status to
+  `Pending`, and renders a localised confirmation page; from
+  there a moderator must approve the user through `/admin/users`
+  before they gain site access. The token is a 32-byte base64url
+  random string stored in a dedicated `cache.email_confirmation`
+  pool, so token rows live independently of `cache.app`. A new
+  `App\Security\EmailConfirmation` service owns issue + consume
+  semantics (idempotency on stale status, defensive null on a
+  missing user row), `App\Notification\EmailConfirmationNotifier`
+  sends the link mail via the same `MAILER_FROM` resolution the
+  other two notifiers use, and a `App\Controller\EmailConfirmationController`
+  surfaces the public route with `410 Gone` on an unknown or
+  already-consumed token. The `account.awaiting_email_confirmation`
+  status message — previously unreachable from the live registration
+  flow — now drives the failed-login response for a user who
+  attempts to sign in before clicking the link
+  ([#119](https://github.com/itk-dev/ai-reolen/issues/119)).
 - Inline role promotion on `/admin/users`. The user list grows a
   **Rolle** column and a per-row dropdown that posts to a new
   `POST /admin/users/{id}/role` JSON endpoint. Three transitions

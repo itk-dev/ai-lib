@@ -7,7 +7,10 @@ namespace App\Tests\Integration\Notification;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Notification\AdminRegistrationNotifier;
+use App\Notification\EmailConfirmationNotifier;
 use App\Notification\RegistrationConfirmationNotifier;
+use App\Repository\UserRepository;
+use App\Security\UserManager;
 use App\Settings\SettingsManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
@@ -82,11 +85,35 @@ final class NotifierIntegrationTest extends KernelTestCase
         self::assertStringContainsString('Tak for din oprettelse, Carol.', $email->getTextBody() ?? '');
     }
 
+    // Verifies the email-confirmation notifier sends to the registered user, includes a confirmation URL pointing at the public route, and renders the localised subject.
+    public function testEmailConfirmationNotifierSendsConfirmationLink(): void
+    {
+        // Persist the user so the notifier's URL generation has a real
+        // entity with an id to embed into the confirmation route.
+        $user = self::getContainer()->get(UserManager::class)->createUser(
+            'mail-link@example.test',
+            'Mail Link',
+            'pw',
+            status: UserStatus::AwaitingEmailConfirmation,
+        );
+
+        $notifier = self::getContainer()->get(EmailConfirmationNotifier::class);
+        $notifier->sendConfirmationLink($user);
+
+        self::assertEmailCount(1);
+        $email = self::getMailerMessage();
+        self::assertNotNull($email);
+        self::assertSame('mail-link@example.test', $email->getTo()[0]->getAddress());
+        self::assertStringContainsString('Bekræft din e-mail', $email->getSubject());
+        $text = (string) $email->getTextBody();
+        self::assertStringContainsString('/auth/confirm-email/', $text, 'Plain-text body must include the confirmation URL.');
+    }
+
     private function makeUser(): User
     {
         return (new User())
             ->setEmail('carol@example.test')
             ->setName('Carol')
-            ->setStatus(UserStatus::Pending);
+            ->setStatus(UserStatus::AwaitingEmailConfirmation);
     }
 }
