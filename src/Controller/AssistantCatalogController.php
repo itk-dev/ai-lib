@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Catalog\CatalogCriteria;
 use App\Catalog\CatalogSort;
+use App\Catalog\RecentSearches;
 use App\Http\QueryStringList;
 use App\Pagination\PageMetadata;
 use App\Repository\AssistantRepository;
@@ -21,6 +22,7 @@ final class AssistantCatalogController extends AbstractController
     public function __construct(
         private readonly AssistantRepository $assistants,
         private readonly QueryStringList $queryStringList,
+        private readonly RecentSearches $recentSearches,
     ) {
     }
 
@@ -28,6 +30,9 @@ final class AssistantCatalogController extends AbstractController
     public function index(Request $request): Response
     {
         $criteria = CatalogCriteria::fromRequest($request, $this->queryStringList);
+        if (null !== $criteria->q) {
+            $this->recentSearches->record($criteria->q);
+        }
         $page = max(1, $request->query->getInt('page', 1));
 
         $paginator = $this->assistants->findPaginated($criteria, $page, self::PER_PAGE);
@@ -38,6 +43,7 @@ final class AssistantCatalogController extends AbstractController
             'criteria' => $criteria,
             'metadata' => $metadata,
             'sortOptions' => CatalogSort::cases(),
+            'recentSearches' => $this->recentSearches->all(),
             'facets' => [
                 'language_model' => $this->assistants->languageModelFacetCounts(),
                 'framework' => $this->assistants->frameworkFacetCounts(),

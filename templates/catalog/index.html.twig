@@ -3,8 +3,8 @@
 {% block title %}{{ 'catalog.title'|trans({'%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
-    <div class="grid gap-10 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <div class="flex flex-col gap-6">
+    <div class="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)_18rem]">
+        <div class="flex flex-col gap-4">
             <twig:Catalog:SortForm criteria="{{ criteria }}" options="{{ sortOptions }}" />
 
             <twig:Filter:Rail
@@ -58,7 +58,7 @@
             </twig:Filter:Rail>
         </div>
 
-        <section class="flex flex-col gap-8">
+        <section class="flex flex-col gap-6">
             {# Heading kept for the document outline / screen readers, hidden visually. #}
             <h1 class="sr-only">{{ 'catalog.heading'|trans }}</h1>
 
@@ -73,20 +73,6 @@
                     {% endif %}
                 </p>
             </div>
-
-            {% if not criteria.isEmpty %}
-                <twig:Filter:ActiveBar>
-                    {% for filter in criteria.activeFilters %}
-                        <li>
-                            <twig:Filter:Chip
-                                href="{{ path('app_assistant_catalog', filter.removeQuery) }}"
-                                label="{{ filter.label }}"
-                                removeLabel="{{ 'catalog.filters.chip_remove'|trans({'%filter%': filter.label}) }}"
-                            />
-                        </li>
-                    {% endfor %}
-                </twig:Filter:ActiveBar>
-            {% endif %}
 
             {% if metadata.total == 0 %}
                 <twig:EmptyState heading="catalog.empty.heading" help="catalog.empty.help" />
@@ -111,5 +97,48 @@
                 {% endif %}
             {% endif %}
         </section>
+
+        <div class="flex flex-col gap-4">
+            <twig:Catalog:SidebarCard title="catalog.active.heading">
+                {% if criteria.isEmpty %}
+                    <p class="text-sm text-text-muted">{{ 'catalog.active.empty'|trans }}</p>
+                {% else %}
+                    <ul role="list" class="flex flex-wrap gap-2">
+                        {% for filter in criteria.activeFilters %}
+                            <li>
+                                <twig:Filter:Chip
+                                    href="{{ path('app_assistant_catalog', filter.removeQuery) }}"
+                                    label="{{ filter.label }}"
+                                    removeLabel="{{ 'catalog.filters.chip_remove'|trans({'%filter%': filter.label}) }}"
+                                />
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </twig:Catalog:SidebarCard>
+
+            <twig:Catalog:SidebarCard title="catalog.recent.heading">
+                {% if recentSearches is empty %}
+                    <p class="text-sm text-text-muted">{{ 'catalog.recent.empty'|trans }}</p>
+                {% else %}
+                    <ul role="list" class="flex flex-col gap-1.5">
+                        {% for term in recentSearches %}
+                            <li>
+                                <a href="{{ path('app_assistant_catalog', {q: term}) }}"
+                                   class="text-sm text-primary no-underline hover:underline">{{ term }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </twig:Catalog:SidebarCard>
+
+            {% if metadata.total > 0 %}
+                <twig:Catalog:SidebarCard title="catalog.export.heading">
+                    <p class="text-sm leading-relaxed text-text-muted">
+                        {{ 'catalog.export.body'|trans({'%count%': metadata.total}) }}
+                    </p>
+                </twig:Catalog:SidebarCard>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}
