@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   controller calls `generateCsrfToken()` against it at submit
   time so the random token + matching `__Host-{intent}_{token}`
   cookie are paired correctly before the JSON body goes out.
+- Admin list pages (`/admin/users`, `/admin/organizations`) now
+  fill the wide admin container instead of the narrow `max-w-4xl`
+  column. The user list in particular has six columns after the
+  role-picker landed and needed the headroom; the organization
+  list matches for consistency. Detail / form pages keep their
+  existing widths.
 - Inline role promotion on `/admin/users`. The user list grows a
   **Rolle** column and a per-row dropdown that posts to a new
   `POST /admin/users/{id}/role` JSON endpoint. Three transitions
