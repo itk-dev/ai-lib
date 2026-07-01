@@ -5,11 +5,11 @@ import { Controller } from "@hotwired/stimulus";
  * create form.
  *
  * Mounted on the form (`data-controller="assistant-config-upload"`).
- * The file input is the `file` target and the editable JSON
- * textarea is the `config` target. Selecting a file is a
- * convenience that overwrites the textarea with the file's
- * contents; users can also paste or type JSON directly into the
- * textarea. Selecting a file kicks off:
+ * The dropzone (`dropzone` target) accepts either a file drop or
+ * a click that opens the hidden file input (`file` target); either
+ * path routes into `handleFile()`. The editable JSON textarea is
+ * the `config` target — users can also paste or type JSON
+ * directly. Selecting or dropping a file kicks off:
  *
  *   1. Read the file contents via FileReader.
  *   2. For each check in the `checks` value, POST the JSON to the
@@ -30,15 +30,54 @@ import { Controller } from "@hotwired/stimulus";
  * catches the same problem on submit.
  */
 export default class extends Controller {
-    static targets = ["file", "config", "progress", "status"];
+    static targets = ["file", "config", "progress", "status", "dropzone"];
     static values = { validateUrl: String, checks: Array };
+    static classes = ["dragging"];
+
+    openFilePicker(event) {
+        // Guard against click bubbling from inside the file input
+        // itself, which would cause an infinite click loop.
+        if (event.target === this.fileTarget) {
+            return;
+        }
+        event.preventDefault();
+        this.fileTarget.click();
+    }
+
+    dragOver(event) {
+        event.preventDefault();
+        if (this.hasDropzoneTarget && this.hasDraggingClass) {
+            this.dropzoneTarget.classList.add(...this.draggingClasses);
+        }
+    }
+
+    dragLeave() {
+        if (this.hasDropzoneTarget && this.hasDraggingClass) {
+            this.dropzoneTarget.classList.remove(...this.draggingClasses);
+        }
+    }
+
+    async drop(event) {
+        event.preventDefault();
+        if (this.hasDropzoneTarget && this.hasDraggingClass) {
+            this.dropzoneTarget.classList.remove(...this.draggingClasses);
+        }
+        const file = event.dataTransfer?.files?.[0];
+        if (!file) {
+            return;
+        }
+        await this.handleFile(file);
+    }
 
     async fileChanged() {
         const file = this.fileTarget.files?.[0];
         if (!file) {
             return;
         }
+        await this.handleFile(file);
+    }
 
+    async handleFile(file) {
         let content;
         try {
             content = await file.text();
