@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The assistant details page (`/assistant/{id}`) is redesigned
+  to match the ai-bibliotek mock. The `<twig:Layout:ContentWithAsides>`
+  layout hosts a five-tab main column plus a sticky **Detaljer**
+  meta aside and a **Handlinger** actions aside. Tabs
+  (`Beskrivelse` / `Modelkort` / `Readme` / `Viden` / `JSON`)
+  are anchor-based with the existing `<twig:Tabs>` component and
+  driven by a whitelisted `?tab=` query string, so every tab is
+  bookmarkable and SEO-friendly with no JavaScript required. The
+  new `/assistant/{id}/export.json` route serves the assistant's
+  OpenWebUI config as a downloadable JSON file
+  (`Content-Disposition: attachment; filename="assistant-<id>.json"`)
+  and drives the `JSON` tab's export button as well as the top-
+  level "Hjemtag" action. Fields the entity does not yet carry
+  (`tagline`, origin organisation, `dataSensitivity`,
+  `approvedFor`, `modelCard`, `readme`, `knowledgeRecipe`, AI-
+  tag flag, version count, favorites, collections) render as
+  muted italic placeholders with a tooltip explaining the
+  status, so the layout is stable when the schema catches up.
+  A new `App\Twig\TextExtension` exposes a `paragraphs` filter
+  that splits a text blob on blank-line boundaries so the
+  Beskrivelse tab renders each paragraph as its own `<p>` with
+  `white-space: pre-wrap`
+  ([#20](https://github.com/itk-dev/ai-reolen/issues/20),
+  [#21](https://github.com/itk-dev/ai-reolen/issues/21)).
+
 - `/assistant/new` is now a three-step wizard: **Indsæt JSON**
   → **Gennemgang** → **Kvittering**. The user pastes / uploads
   an OpenWebUI export on step 1, reviews auto-extracted metadata
