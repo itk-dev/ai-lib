@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Organization;
+use App\Framework\SupportedFrameworks;
+use App\Validator\SupportedFramework;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -33,6 +36,13 @@ final class OrganizationType extends AbstractType
     private const string ROW_CLASS = 'grid gap-1 text-sm';
 
     /**
+     * @param SupportedFrameworks $frameworks deploy-time list feeding the `defaultFramework` `<select>` choices + validator
+     */
+    public function __construct(private readonly SupportedFrameworks $frameworks)
+    {
+    }
+
+    /**
      * @param array<string, mixed> $options
      */
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -57,11 +67,14 @@ final class OrganizationType extends AbstractType
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
-            ->add('defaultFramework', TextType::class, [
+            ->add('defaultFramework', ChoiceType::class, [
                 'label' => 'admin.organization.form.default_framework_label',
+                'help' => 'admin.organization.form.default_framework_help',
+                'choices' => $this->frameworks->list(),
+                'placeholder' => false,
                 'required' => true,
-                'empty_data' => '',
-                'constraints' => [new NotBlank()],
+                'empty_data' => $this->frameworks->default(),
+                'constraints' => [new SupportedFramework()],
                 'attr' => ['class' => self::INPUT_CLASS],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],

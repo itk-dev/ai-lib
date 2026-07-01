@@ -45,7 +45,7 @@ final class OrganizationControllerTest extends WebTestCase
         self::assertStringContainsString('Odense Kommune', $body);
     }
 
-    // Tests that GET /admin/organization/new renders the create form with every expected field.
+    // Tests that GET /admin/organization/new renders the create form with every expected field, including the framework `<select>` populated from SUPPORTED_FRAMEWORKS.
     public function testNewFormRenders(): void
     {
         $crawler = $this->client->request('GET', '/admin/organization/new');
@@ -53,7 +53,9 @@ final class OrganizationControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('input[name="organization[name]"]');
         self::assertSelectorExists('textarea[name="organization[emailDomains]"]');
-        self::assertSelectorExists('input[name="organization[defaultFramework]"]');
+        self::assertSelectorExists('select[name="organization[defaultFramework]"]');
+        // The default env-var fallback exposes exactly Open WebUI.
+        self::assertSelectorExists('select[name="organization[defaultFramework]"] option[value="openwebui"]');
     }
 
     // Verifies that POSTing a valid new form persists an Organization with normalised email domains.
@@ -120,7 +122,26 @@ final class OrganizationControllerTest extends WebTestCase
         self::assertStringContainsString('aarhus.dk', $textarea);
     }
 
-    // Verifies a successful edit updates the entity in place and redirects to the index.
+    // Verifies a hand-crafted POST with a framework value outside SUPPORTED_FRAMEWORKS is rejected with 422 (the ChoiceType's server-side gate) — the browser can only submit values from the <select>, but a curl-crafted body must still be refused.
+    public function testCreateRejectsUnknownFrameworkWithTranslatedMessage(): void
+    {
+        $crawler = $this->client->request('GET', '/admin/organization/new');
+        $form = $crawler->filter('form')->form();
+        // Setting a value not on the choice list requires disabling the
+        // DOM crawler's whitelist enforcement — mimics a hand-crafted
+        // POST from outside the browser.
+        $form['organization[name]']->setValue('Vejle Kommune');
+        $form['organization[emailDomains]']->setValue('vejle.dk');
+        $form['organization[defaultFramework]']->disableValidation()->setValue('not-a-real-framework');
+        $crawler = $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+
+        $repository = self::getContainer()->get(OrganizationRepository::class);
+        self::assertNull($repository->findOneBy(['name' => 'Vejle Kommune']));
+    }
+
+    // Verifies a successful edit updates the entity in place and redirects to the index. `defaultFramework` is bound to the deploy-time list now, so we mutate the mutable free-text fields instead of the framework picker.
     public function testEditUpdatesEntity(): void
     {
         $organization = $this->fixtureNamed('Aalborg Kommune');
@@ -128,7 +149,7 @@ final class OrganizationControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/organization/'.$organization->getId().'/edit');
         $form = $crawler->filter('form')->form();
         $form['organization[name]'] = 'Aalborg Kommune (renamed)';
-        $form['organization[defaultFramework]'] = 'updated-framework';
+        $form['organization[emailDomains]'] = "aalborg.dk\nrenamed-aalborg.dk";
         $this->client->submit($form);
 
         self::assertResponseRedirects('/admin/organization');
@@ -137,7 +158,9 @@ final class OrganizationControllerTest extends WebTestCase
         $reloaded = $repository->find($organization->getId());
         self::assertNotNull($reloaded);
         self::assertSame('Aalborg Kommune (renamed)', $reloaded->getName());
-        self::assertSame('updated-framework', $reloaded->getDefaultFramework());
+        self::assertSame(['aalborg.dk', 'renamed-aalborg.dk'], $reloaded->getEmailDomains());
+        // Framework is preserved through the edit.
+        self::assertSame('openwebui', $reloaded->getDefaultFramework());
     }
 
     // Ensures POST to /delete with a valid CSRF token removes the entity.

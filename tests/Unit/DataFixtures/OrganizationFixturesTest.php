@@ -18,19 +18,19 @@ final class OrganizationFixturesTest extends TestCase
         self::assertSame([UserFixtures::class], (new OrganizationFixtures())->getDependencies());
     }
 
-    // Tests that load() persists the three baseline municipalities with the expected names and default framework.
-    public function testLoadPersistsThreeBaselineOrganizations(): void
+    // Tests that load() persists the four baseline organisations (three Danish municipalities + the test-friendly Eksempel row) with the expected names and default framework.
+    public function testLoadPersistsBaselineOrganizations(): void
     {
         $persisted = $this->captureLoad();
 
-        self::assertCount(3, $persisted);
+        self::assertCount(4, $persisted);
 
         $names = array_map(
             static fn (Organization $o) => $o->getName(),
             $persisted,
         );
         self::assertSame(
-            ['Aarhus Kommune', 'Aalborg Kommune', 'Odense Kommune'],
+            ['Aarhus Kommune', 'Aalborg Kommune', 'Odense Kommune', 'Eksempel Kommune'],
             $names,
         );
 
@@ -38,6 +38,12 @@ final class OrganizationFixturesTest extends TestCase
             self::assertSame('openwebui', $organization->getDefaultFramework());
             self::assertNotEmpty($organization->getEmailDomains(), 'every fixture organization has at least one email domain');
         }
+
+        // The Eksempel row owns the `example.test` domain so the
+        // integration suite + fixture users continue to register
+        // successfully once `AllowedEmailDomains` reads the DB.
+        $eksempel = $persisted[3];
+        self::assertContains('example.test', $eksempel->getEmailDomains());
     }
 
     // Ensures load() emits the same organizations on every run (no randomness).
