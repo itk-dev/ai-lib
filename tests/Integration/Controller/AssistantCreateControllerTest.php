@@ -159,6 +159,32 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertStringContainsString('/assistant/'.(string) $created->getId(), $body);
     }
 
+    // Ensures a fresh GET after completing the wizard drops the receipt-state session slot and re-renders step 1.
+    public function testGetAfterCompletionResetsToStepOne(): void
+    {
+        // Walk to the receipt (step 3) once.
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $stepOne[$textareaName] = json_encode([
+            'name' => 'Reset assistant',
+            'base_model_id' => 'gpt-4o',
+            'meta' => ['description' => 'Reset demo', 'tags' => ['x']],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $this->client->submit($stepTwo);
+
+        // Same session, fresh GET — should land on step 1 again.
+        $crawler = $this->client->request('GET', '/assistant/new');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('textarea[name$="[openwebuiConfig]"]');
+        self::assertSelectorNotExists('input[name$="[title]"]');
+        $body = $crawler->filter('body')->text();
+        self::assertStringNotContainsString('Assistenten er delt', $body);
+    }
+
     // Ensures a step 1 submit with malformed JSON returns 422 and does not persist an Assistant.
     public function testStepOneRejectsInvalidJson(): void
     {

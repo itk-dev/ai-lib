@@ -33,6 +33,21 @@ final class AssistantCreateController extends AbstractController
         $flow = $this->createForm(AssistantCreateFlowType::class, new AssistantDraft());
         \assert($flow instanceof FormFlowInterface);
 
+        // A fresh GET landing on the page after a completed run
+        // (session still holds a draft with a persisted id) should
+        // start over from step 1 rather than showing the previous
+        // receipt. The flow's `auto_reset` only fires when the user
+        // clicks Finish, so we reset explicitly for anyone who
+        // navigates away and comes back.
+        if ('GET' === $request->getMethod()) {
+            $stored = $flow->getData();
+            if ($stored instanceof AssistantDraft && null !== $stored->createdAssistantId) {
+                $flow->reset();
+                $flow = $this->createForm(AssistantCreateFlowType::class, new AssistantDraft());
+                \assert($flow instanceof FormFlowInterface);
+            }
+        }
+
         // handleRequest runs the current step's submit + validation.
         // getStepForm() then reads the cursor — if the submit was
         // valid it moves the cursor forward and returns a fresh
@@ -64,6 +79,12 @@ final class AssistantCreateController extends AbstractController
                 $draft->openwebuiConfig,
             );
             $draft->createdAssistantId = (string) $assistant->getId();
+
+            // The flow saves the DTO during handleRequest, before
+            // we set createdAssistantId. Persist the mutation
+            // ourselves so a subsequent GET can tell the wizard
+            // has finished and reset the session slot.
+            $stepForm->getConfig()->getDataStorage()->save($draft);
         }
 
         return $this->renderStep($stepForm);

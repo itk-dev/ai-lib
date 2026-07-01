@@ -12,6 +12,11 @@
         {name: 'receipt', label: 'assistant.new.step_receipt.rail_label', hint: 'assistant.new.step_receipt.rail_hint'},
     ] %}
 
+    <aside class="mx-auto mb-6 max-w-wide rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="note">
+        <p class="mb-2 font-medium text-ink">{{ 'assistant.new.responsibility.heading'|trans }}</p>
+        <p>{{ 'assistant.new.responsibility.body'|trans }}</p>
+    </aside>
+
     <twig:Layout:ThreeColumn>
         <twig:block name="start">
             <div class="grid gap-6">
@@ -56,13 +61,6 @@
 
                 {{ form_end(flow) }}
             </section>
-        </twig:block>
-
-        <twig:block name="end">
-            <aside class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="note">
-                <p class="mb-2 font-medium text-ink">{{ 'assistant.new.responsibility.heading'|trans }}</p>
-                <p>{{ 'assistant.new.responsibility.body'|trans }}</p>
-            </aside>
         </twig:block>
     </twig:Layout:ThreeColumn>
 {% endblock %}
