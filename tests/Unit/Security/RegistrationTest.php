@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Notification\AdminRegistrationNotifier;
 use App\Notification\RegistrationConfirmationNotifier;
+use App\Repository\OrganizationRepository;
 use App\Repository\UserRepository;
 use App\Security\AllowedEmailDomains;
 use App\Security\RateLimitedRegistrationException;
@@ -99,7 +100,7 @@ final class RegistrationTest extends TestCase
 
         $reg = new Registration(
             new UserManager($em, $repo, $hasher),
-            new AllowedEmailDomains('example.test'),
+            $this->allowedDomains(['example.test']),
             $this->createMock(AdminRegistrationNotifier::class),
             $this->createMock(RegistrationConfirmationNotifier::class),
             new NullLogger(),
@@ -138,7 +139,7 @@ final class RegistrationTest extends TestCase
 
         $reg = new Registration(
             new UserManager($em, $repo, $hasher),
-            new AllowedEmailDomains('example.test'),
+            $this->allowedDomains(['example.test']),
             $adminNotifier,
             $confirmationNotifier,
             new NullLogger(),
@@ -174,7 +175,7 @@ final class RegistrationTest extends TestCase
 
         $reg = new Registration(
             new UserManager($em, $repo, $hasher),
-            new AllowedEmailDomains('example.test'),
+            $this->allowedDomains(['example.test']),
             $adminNotifier,
             $confirmationNotifier,
             new NullLogger(),
@@ -192,7 +193,7 @@ final class RegistrationTest extends TestCase
     {
         $reg = new Registration(
             $this->buildUserManager(),
-            new AllowedEmailDomains('example.test'),
+            $this->allowedDomains(['example.test']),
             $this->createMock(AdminRegistrationNotifier::class),
             $this->createMock(RegistrationConfirmationNotifier::class),
             new NullLogger(),
@@ -211,7 +212,7 @@ final class RegistrationTest extends TestCase
     {
         $reg = new Registration(
             $this->buildUserManager(),
-            new AllowedEmailDomains('example.test'),
+            $this->allowedDomains(['example.test']),
             $this->createMock(AdminRegistrationNotifier::class),
             $this->createMock(RegistrationConfirmationNotifier::class),
             new NullLogger(),
@@ -238,13 +239,29 @@ final class RegistrationTest extends TestCase
 
         return new Registration(
             new UserManager($em, $repo, $hasher),
-            new AllowedEmailDomains($allowList),
+            $this->allowedDomains([$allowList]),
             $this->createMock(AdminRegistrationNotifier::class),
             $this->createMock(RegistrationConfirmationNotifier::class),
             new NullLogger(),
             $this->openLimiter(),
             $this->openLimiter(),
         );
+    }
+
+    /**
+     * Build an {@see AllowedEmailDomains} around a stubbed
+     * `OrganizationRepository` whose `collectAllowedEmailDomains()`
+     * returns the supplied list verbatim. Lets the unit test pick
+     * the allow-list without spinning up Doctrine.
+     *
+     * @param list<string> $domains the canned allow-list
+     */
+    private function allowedDomains(array $domains): AllowedEmailDomains
+    {
+        $repository = $this->createMock(OrganizationRepository::class);
+        $repository->method('collectAllowedEmailDomains')->willReturn($domains);
+
+        return new AllowedEmailDomains($repository);
     }
 
     /**
