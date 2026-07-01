@@ -196,7 +196,7 @@ admin:
             heading: "E-mail"
             lead: "Modtagere og indhold af systemmails. Lad et felt stå tomt for at gå tilbage til standardindholdet."
             section:
-                recipient: "Modtager af besked om nye brugere"
+                recipient: "E-mailkonti"
                 admin_notification: "Admin: Ny bruger venter godkendelse"
                 registration_confirmation: "Bruger: Velkomst-mail"
                 email_confirmation: "Bruger: Bekræft e-mail-link"
