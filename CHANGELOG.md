@@ -39,14 +39,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `App\Validator\ValidAssistantConfig` form constraint both gate on
   it. A `App\Assistant\OpenWebUiModelNormalizer` flattens the wrapper
   shapes, and `App\Assistant\OpenWebUiConfigSanitizer` strips
-  instance-specific data and PII (uploading `user`, `user_id`,
-  `access_grants`, `write_access`, timestamps, `is_active`, and
-  `meta.knowledge`) before the model is persisted — only the
-  cleaned functional model reaches the database. The assistant
-  detail page gains a **Download til OpenWebUI** button backed by
-  `GET /assistant/{id}/export`, which rebuilds the array-of-one
-  import payload from the stored model with the catalogue-editable
-  title, description, language model, and tags re-applied.
+  instance-specific data and PII (the source instance's model `id`,
+  the uploading `user`, `user_id`, `access_grants`, `write_access`,
+  timestamps, `is_active`, and `meta.knowledge`) before the model is
+  persisted — only the cleaned functional model reaches the database.
+  The assistant detail page gains a **Download til OpenWebUI** button
+  backed by `GET /assistant/{id}/export`, which rebuilds the
+  array-of-one import payload from the stored model with the
+  catalogue-editable title, description, language model, and tags
+  re-applied, and without the model `id` so the download imports as a
+  new model rather than overwriting the one it came from.
 - `/assistant/new` is now a three-step wizard: **Indsæt JSON**
   → **Gennemgang** → **Kvittering**. The user pastes / uploads
   an OpenWebUI export on step 1, reviews auto-extracted metadata

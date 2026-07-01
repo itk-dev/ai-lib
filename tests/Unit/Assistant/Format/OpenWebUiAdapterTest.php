@@ -71,7 +71,6 @@ final class OpenWebUiAdapterTest extends TestCase
         ]], \JSON_THROW_ON_ERROR);
 
         self::assertSame([
-            'id' => 'demo',
             'name' => 'Demo',
             'base_model_id' => 'gpt-4o',
             'params' => ['system' => 'prompt'],
@@ -126,7 +125,7 @@ final class OpenWebUiAdapterTest extends TestCase
         self::assertSame([], $canonical->conversationStarters);
     }
 
-    // Verifies canonicalToSource() overlays edits on the preserved source and serialize() wraps array-of-one.
+    // Verifies canonicalToSource() overlays edits on the preserved source, drops the instance id, and serialize() wraps array-of-one.
     public function testCanonicalToSourceAndSerialiseRoundTrip(): void
     {
         $stored = [
@@ -148,7 +147,6 @@ final class OpenWebUiAdapterTest extends TestCase
         $rebuilt = $adapter->canonicalToSource($edited);
 
         self::assertSame([
-            'id' => 'demo',
             'name' => 'Edited title',
             'base_model_id' => 'gpt-4o-mini',
             'params' => ['system' => 'System prompt'],

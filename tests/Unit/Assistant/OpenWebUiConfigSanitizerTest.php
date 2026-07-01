@@ -39,7 +39,6 @@ final class OpenWebUiConfigSanitizerTest extends TestCase
         ];
 
         self::assertSame([
-            'id' => 'demo',
             'name' => 'Demo',
             'base_model_id' => 'gpt-4o',
             'params' => ['system' => 'prompt'],

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Assistant;
 
 /**
- * Thrown by {@see AssistantCreator::create()} when the submitted
- * form data fails the OpenWebUI config validation pipeline.
+ * Thrown when submitted assistant input can't be accepted — the
+ * requested format id has no adapter, or the config fails the
+ * selected format's validation pipeline.
  *
- * Carries the localised error messages from the validator so the
- * controller can render them on the form.
+ * Carries the localised error messages so the controller can render
+ * them on the form.
  */
 final class InvalidAssistantInputException extends \DomainException
 {

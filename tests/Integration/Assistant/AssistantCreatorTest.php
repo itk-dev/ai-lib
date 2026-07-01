@@ -80,7 +80,6 @@ final class AssistantCreatorTest extends KernelTestCase
         $reloaded = $this->repository->find($assistant->getId());
         self::assertNotNull($reloaded);
         self::assertSame([
-            'id' => 'det-gode-stillingsopslag',
             'name' => 'Demo',
             'base_model_id' => 'gpt-4o',
             'params' => ['system' => 'Du er en assistent.'],
@@ -123,5 +122,18 @@ final class AssistantCreatorTest extends KernelTestCase
         }
 
         self::assertNull($this->repository->findOneBy(['title' => 'Rejected']));
+    }
+
+    // Ensures an unregistered framework id fails as a friendly InvalidAssistantInputException, not a raw 500.
+    public function testCreateRejectsUnknownFramework(): void
+    {
+        try {
+            $this->creator->create('Bad framework', 'd', 'm', 'no-such-format', [], '{"name":"demo"}');
+            self::fail('Expected InvalidAssistantInputException.');
+        } catch (InvalidAssistantInputException $e) {
+            self::assertSame(['Unknown format "no-such-format".'], $e->getErrors());
+        }
+
+        self::assertNull($this->repository->findOneBy(['title' => 'Bad framework']));
     }
 }

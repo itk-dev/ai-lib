@@ -51,7 +51,7 @@ final class AssistantCreator
      *
      * @return Assistant the persisted assistant with its id assigned
      *
-     * @throws InvalidAssistantInputException when the config fails validation
+     * @throws InvalidAssistantInputException when the framework has no adapter or the config fails validation
      */
     public function create(
         string $title,
@@ -61,6 +61,15 @@ final class AssistantCreator
         array $tags,
         string $rawConfig,
     ): Assistant {
+        // Guard the format id here rather than letting the registry
+        // throw a raw InvalidArgumentException: create() is a public
+        // service boundary, and a tampered/unknown framework should
+        // surface as the form-rendered InvalidAssistantInputException
+        // like every other rejected input, not a 500.
+        if (!$this->formats->has($framework)) {
+            throw new InvalidAssistantInputException([\sprintf('Unknown format "%s".', $framework)]);
+        }
+
         $source = $this->formats->get($framework)->parseToSource($rawConfig);
 
         $assistant = new Assistant(

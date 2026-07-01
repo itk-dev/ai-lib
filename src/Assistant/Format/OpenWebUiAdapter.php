@@ -133,13 +133,17 @@ final class OpenWebUiAdapter implements FormatAdapter
      * `sourceExtras`, empty for a cross-format or config-less source)
      * and overlays the editable fields — `name`, `base_model_id`,
      * `meta.description`, `meta.tags` — leaving everything else
-     * (params, capabilities, suggestion prompts, id) as stored.
+     * (params, capabilities, suggestion prompts) as stored. The
+     * instance-specific model `id` is dropped so a download imports as
+     * a new model; this also covers rows stored before the sanitiser
+     * began stripping `id`.
      *
      * @return array<string, mixed> the OWUI model dict
      */
     public function canonicalToSource(CanonicalModel $model): array
     {
         $source = $model->sourceExtras[self::ID] ?? [];
+        unset($source['id']);
 
         $source['name'] = $model->name;
         $source['base_model_id'] = $model->baseModel ?? '';

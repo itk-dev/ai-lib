@@ -9,12 +9,15 @@ namespace App\Assistant;
  * fields worth persisting and re-exporting.
  *
  * A raw export carries instance-specific bookkeeping and personal
- * data — the uploading `user` (with email), `user_id`,
- * `access_grants`, `write_access`, activity timestamps, and a
- * `meta.knowledge` block that embeds more emails and access-control
- * group IDs while referencing knowledge collections that won't exist
- * in any other instance. None of that belongs in the catalogue
- * database or in a file meant to import cleanly elsewhere.
+ * data — the model `id` (the source instance's primary key), the
+ * uploading `user` (with email), `user_id`, `access_grants`,
+ * `write_access`, activity timestamps, and a `meta.knowledge` block
+ * that embeds more emails and access-control group IDs while
+ * referencing knowledge collections that won't exist in any other
+ * instance. None of that belongs in the catalogue database or in a
+ * file meant to import cleanly elsewhere. Dropping `id` in particular
+ * means a downloaded config imports as a new model rather than
+ * colliding with or overwriting the model it originated from.
  *
  * This keeps an allowlist of functional fields and drops everything
  * else, so new keys added by future OpenWebUI versions are dropped
@@ -30,12 +33,12 @@ final class OpenWebUiConfigSanitizer
      * Reduce a flat model to its portable fields.
      *
      * Operates on the flat model shape produced by
-     * {@see OpenWebUiModelNormalizer}. Keeps `id`, `name`,
-     * `base_model_id`, `model`, `params.system`, and the
-     * `meta.description` / `meta.profile_image_url` /
-     * `meta.capabilities` / `meta.suggestion_prompts` / `meta.tags`
-     * subset of `meta`; drops everything else, including all of
-     * `meta.knowledge` and the top-level user / access / timestamp
+     * {@see OpenWebUiModelNormalizer}. Keeps `name`, `base_model_id`,
+     * `model`, `params.system`, and the `meta.description` /
+     * `meta.profile_image_url` / `meta.capabilities` /
+     * `meta.suggestion_prompts` / `meta.tags` subset of `meta`; drops
+     * everything else, including the instance-specific model `id`, all
+     * of `meta.knowledge`, and the top-level user / access / timestamp
      * fields.
      *
      * Keys absent from the source stay absent from the result (no
@@ -48,7 +51,7 @@ final class OpenWebUiConfigSanitizer
      */
     public function sanitize(array $model): array
     {
-        $clean = $this->pick($model, ['id', 'name', 'base_model_id', 'model']);
+        $clean = $this->pick($model, ['name', 'base_model_id', 'model']);
 
         if (\is_array($model['params'] ?? null)) {
             $params = $this->pick($model['params'], ['system']);

@@ -30,7 +30,7 @@ final class AssistantExporterTest extends TestCase
         return new AssistantExporter(new FormatAdapterRegistry([$adapter]));
     }
 
-    // Verifies export() renders the stored source with the entity's edits applied, plus response metadata.
+    // Verifies export() renders the stored source with the entity's edits applied, drops the instance id, plus response metadata.
     public function testExportAppliesEntityEditsToStoredSource(): void
     {
         $assistant = new Assistant('Title', 'Desc', 'gpt-4o-mini', 'openwebui', [new Tag('a'), new Tag('b')]);
@@ -49,7 +49,6 @@ final class AssistantExporterTest extends TestCase
 
         $payload = json_decode($exported->payload, associative: true, flags: \JSON_THROW_ON_ERROR);
         self::assertSame([[
-            'id' => 'demo',
             'name' => 'Title',
             'base_model_id' => 'gpt-4o-mini',
             'params' => ['system' => 'System prompt'],
