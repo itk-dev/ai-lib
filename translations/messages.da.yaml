@@ -86,6 +86,7 @@ admin:
             email_domains_label: "E-maildomæner"
             email_domains_help: 'Ét domæne per linje (fx "aarhus.dk").'
             default_framework_label: "Standard-framework"
+            default_framework_help: "Framework som nye assistenter i denne organisation som standard oprettes med."
         action:
             new: "Opret organisation"
             edit: "Redigér"

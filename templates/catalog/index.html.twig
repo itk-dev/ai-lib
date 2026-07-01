@@ -38,7 +38,7 @@
                             <twig:Filter:FacetItem
                                 name="framework[]"
                                 value="{{ value }}"
-                                label="{{ value }}"
+                                label="{{ value|framework_label }}"
                                 count="{{ count }}"
                                 checked="{{ value in criteria.frameworks }}"
                             />
