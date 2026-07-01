@@ -24,8 +24,8 @@
         {% endif %}
 
         <form action="{{ path('app_admin_settings_email') }}" method="post" class="grid gap-8">
-            <fieldset class="grid gap-4">
-                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.recipient'|trans }}</legend>
+            <fieldset class="grid gap-4 rounded-xl border border-line bg-surface p-6">
+                <legend class="px-2 font-medium text-ink">{{ 'admin.settings.email.section.recipient'|trans }}</legend>
 
                 <twig:Form:Label for="inputAdminRecipient" text="{{ 'admin.settings.email.fields.admin_recipient.label'|trans }}">
                     <twig:Form:TextInput
@@ -49,10 +49,10 @@
                 </twig:Form:Label>
             </fieldset>
 
-            <fieldset class="grid gap-4"
+            <fieldset class="grid gap-4 rounded-xl border border-line bg-surface p-6"
                       data-controller="email-preview"
                       data-email-preview-url-value="{{ path('app_admin_settings_email_preview') }}">
-                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.admin_notification'|trans }}</legend>
+                <legend class="px-2 font-medium text-ink">{{ 'admin.settings.email.section.admin_notification'|trans }}</legend>
                 <p class="text-sm text-text">
                     {{ 'admin.settings.email.tokens_label'|trans }}
                     <code class="rounded bg-surface-2 px-1">%name%</code>,
@@ -84,19 +84,24 @@
                            class="text-primary underline hover:text-primary-hover">
                             {{ 'admin.settings.email.fields.body.help_cheatsheet'|trans }}
                         </a>
+                        <span class="mx-1 text-text-muted" aria-hidden="true">·</span>
+                        <button type="button"
+                                data-action="click->email-preview#open"
+                                class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.actions.preview'|trans }}
+                        </button>
                     </p>
                 </twig:Form:Label>
 
                 {{ include('admin/settings/_email_preview_dialog.html.twig', {
                     id: 'previewAdminNotification',
-                    label: 'admin.settings.email.actions.preview',
                 }) }}
             </fieldset>
 
-            <fieldset class="grid gap-4"
+            <fieldset class="grid gap-4 rounded-xl border border-line bg-surface p-6"
                       data-controller="email-preview"
                       data-email-preview-url-value="{{ path('app_admin_settings_email_preview') }}">
-                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.registration_confirmation'|trans }}</legend>
+                <legend class="px-2 font-medium text-ink">{{ 'admin.settings.email.section.registration_confirmation'|trans }}</legend>
                 <p class="text-sm text-text">
                     {{ 'admin.settings.email.tokens_label'|trans }}
                     <code class="rounded bg-surface-2 px-1">%name%</code>,
@@ -127,19 +132,24 @@
                            class="text-primary underline hover:text-primary-hover">
                             {{ 'admin.settings.email.fields.body.help_cheatsheet'|trans }}
                         </a>
+                        <span class="mx-1 text-text-muted" aria-hidden="true">·</span>
+                        <button type="button"
+                                data-action="click->email-preview#open"
+                                class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.actions.preview'|trans }}
+                        </button>
                     </p>
                 </twig:Form:Label>
 
                 {{ include('admin/settings/_email_preview_dialog.html.twig', {
                     id: 'previewRegistrationConfirmation',
-                    label: 'admin.settings.email.actions.preview',
                 }) }}
             </fieldset>
 
-            <fieldset class="grid gap-4"
+            <fieldset class="grid gap-4 rounded-xl border border-line bg-surface p-6"
                       data-controller="email-preview"
                       data-email-preview-url-value="{{ path('app_admin_settings_email_preview') }}">
-                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.email_confirmation'|trans }}</legend>
+                <legend class="px-2 font-medium text-ink">{{ 'admin.settings.email.section.email_confirmation'|trans }}</legend>
                 <p class="text-sm text-text">
                     {{ 'admin.settings.email.tokens_label'|trans }}
                     <code class="rounded bg-surface-2 px-1">%name%</code>,
@@ -171,12 +181,17 @@
                            class="text-primary underline hover:text-primary-hover">
                             {{ 'admin.settings.email.fields.body.help_cheatsheet'|trans }}
                         </a>
+                        <span class="mx-1 text-text-muted" aria-hidden="true">·</span>
+                        <button type="button"
+                                data-action="click->email-preview#open"
+                                class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.actions.preview'|trans }}
+                        </button>
                     </p>
                 </twig:Form:Label>
 
                 {{ include('admin/settings/_email_preview_dialog.html.twig', {
                     id: 'previewEmailConfirmation',
-                    label: 'admin.settings.email.actions.preview',
                 }) }}
             </fieldset>
 

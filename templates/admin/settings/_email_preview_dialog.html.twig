@@ -2,10 +2,9 @@
     Preview modal for a single email-template body field.
 
     Rendered inside a `<div data-controller="email-preview">`
-    wrapper that also hosts the subject input and body textarea
-    (targets `subjectInput` / `bodyInput` on the Stimulus
-    controller). The preview link triggers a POST to the JSON
-    endpoint, the response payload is dropped into an
+    wrapper that also hosts the subject input, body textarea,
+    and the inline Preview trigger link (in the help paragraph).
+    The response payload lands in an
     `<iframe sandbox="allow-same-origin">` via `srcdoc` so the
     admin-typed HTML runs isolated from the admin origin.
 
@@ -17,22 +16,18 @@
     inside it and doesn't care whether the surrounding element
     is a `<form>` or not.
 
-    Include vars:
-    - `id`     — DOM-id suffix used for the dialog + labelledby id
-    - `label`  — translation key for the Preview link text
-#}
+    The dialog is centered via `fixed inset-0 m-auto` — the UA
+    stylesheet centers `<dialog>` by default, but the moment we
+    add utility classes that touch `position` or `margin` the
+    default centering is lost, so we set it explicitly.
 
-<div class="mt-2 flex flex-wrap items-center gap-3">
-    <button type="button"
-            data-action="click->email-preview#open"
-            class="text-sm font-medium text-primary underline hover:text-primary-hover">
-        {{ label|trans }}
-    </button>
-</div>
+    Include vars:
+    - `id` — DOM-id suffix used for the dialog + labelledby id
+#}
 
 <dialog data-email-preview-target="dialog"
         aria-labelledby="{{ id }}Title"
-        class="max-w-3xl w-full rounded-xl border border-line bg-surface p-0 shadow-xl backdrop:bg-ink/40">
+        class="fixed inset-0 m-auto max-h-[85vh] w-[min(92vw,48rem)] rounded-xl border border-line bg-surface p-0 shadow-xl backdrop:bg-ink/40">
     <div class="grid gap-4 p-6">
         <header class="flex items-start justify-between gap-4">
             <div class="grid gap-1">
@@ -47,7 +42,7 @@
             <button type="button"
                     data-action="click->email-preview#close"
                     aria-label="{{ 'admin.settings.email.preview.close'|trans }}"
-                    class="rounded-full border border-line px-3 py-1 text-sm text-text hover:bg-surface-2">
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-lg leading-none text-text hover:bg-surface-2">
                 ×
             </button>
         </header>
