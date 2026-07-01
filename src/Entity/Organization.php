@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\OrganizationRepository;
+use App\Validator\SupportedFramework;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ITKDev\EntityBundle\Audit\Attribute\Auditable;
@@ -24,6 +25,7 @@ class Organization extends AbstractEntity
     private array $emailDomains;
 
     #[ORM\Column(length: 255)]
+    #[SupportedFramework]
     private string $defaultFramework;
 
     /**

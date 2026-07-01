@@ -45,8 +45,8 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertSelectorExists('input[name="_token"]');
     }
 
-    // Verifies a valid submission creates a Pending user and redirects to the pending page.
-    public function testSuccessfulRegistrationCreatesPendingUserAndRedirects(): void
+    // Verifies a valid submission creates an AwaitingEmailConfirmation user and redirects to the pending page.
+    public function testSuccessfulRegistrationCreatesAwaitingUserAndRedirects(): void
     {
         $crawler = $this->client->request('GET', '/register');
         $form = $crawler->filter('form')->form();
@@ -59,16 +59,16 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertResponseRedirects('/register/pending');
         $crawler = $this->client->followRedirect();
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('venter på godkendelse', $crawler->filter('body')->text());
+        self::assertStringContainsString('bekræftelsesmail', $crawler->filter('body')->text());
 
         $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'eve@example.test']);
         self::assertNotNull($user);
         self::assertSame('Eve', $user->getName());
-        self::assertSame(UserStatus::Pending, $user->getStatus());
+        self::assertSame(UserStatus::AwaitingEmailConfirmation, $user->getStatus());
     }
 
-    // Ensures a successful self-signup fires the admin notification + the user-facing confirmation email.
-    public function testSuccessfulRegistrationFiresBothEmails(): void
+    // Ensures a successful self-signup fires three emails: admin notification, user-facing courtesy confirmation, and the one-time confirmation link.
+    public function testSuccessfulRegistrationFiresAllThreeEmails(): void
     {
         self::getContainer()->get(SettingsManager::class)->setAdminRecipient('ops@example.test');
 
@@ -81,7 +81,7 @@ final class RegistrationControllerTest extends WebTestCase
         $this->client->submit($form);
 
         self::assertResponseRedirects('/register/pending');
-        self::assertEmailCount(2);
+        self::assertEmailCount(3);
 
         $recipients = array_map(
             static fn (\Symfony\Component\Mime\RawMessage $message): string => method_exists($message, 'getTo')
@@ -90,11 +90,13 @@ final class RegistrationControllerTest extends WebTestCase
             self::getMailerMessages(),
         );
         sort($recipients);
-        self::assertSame(['grace@example.test', 'ops@example.test'], $recipients);
+        // Grace receives two messages — the courtesy confirmation and the
+        // single-use email-confirmation link — plus the admin moderator.
+        self::assertSame(['grace@example.test', 'grace@example.test', 'ops@example.test'], $recipients);
     }
 
-    // Verifies the hand-off through AccountStatusChecker: a freshly-registered user cannot log in.
-    public function testPendingUserCreatedByRegistrationCannotLogIn(): void
+    // Verifies the hand-off through AccountStatusChecker: a freshly-registered user cannot log in until their email is confirmed and a moderator approves.
+    public function testAwaitingEmailConfirmationUserCreatedByRegistrationCannotLogIn(): void
     {
         $crawler = $this->client->request('GET', '/register');
         $form = $crawler->filter('form')->form();
@@ -113,7 +115,9 @@ final class RegistrationControllerTest extends WebTestCase
 
         self::assertResponseRedirects('/login');
         $crawler = $this->client->followRedirect();
-        self::assertStringContainsString('venter på godkendelse', $crawler->filter('body')->text());
+        // The status checker throws account.awaiting_email_confirmation
+        // which surfaces the "bekræfte din e-mailadresse" message.
+        self::assertStringContainsString('bekræfte din e-mailadresse', $crawler->filter('body')->text());
         self::assertNull(
             $this->client->getContainer()->get('security.token_storage')->getToken(),
         );
@@ -217,6 +221,7 @@ final class RegistrationControllerTest extends WebTestCase
             $container->get(\App\Security\AllowedEmailDomains::class),
             $container->get(\App\Notification\AdminRegistrationNotifier::class),
             $container->get(\App\Notification\RegistrationConfirmationNotifier::class),
+            $container->get(\App\Notification\EmailConfirmationNotifier::class),
             new \Psr\Log\NullLogger(),
             ClosedLimiterFactory::create(),
             ClosedLimiterFactory::create(),

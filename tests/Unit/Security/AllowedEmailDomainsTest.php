@@ -4,60 +4,55 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Security;
 
+use App\Repository\OrganizationRepository;
 use App\Security\AllowedEmailDomains;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Unit-level cover of {@see AllowedEmailDomains}: with the source
+ * of truth now living in `Organization.emailDomains`, the class
+ * itself only normalises the candidate domain and delegates to
+ * {@see OrganizationRepository::collectAllowedEmailDomains()}.
+ * Parsing / dedup / blank-entry trimming are repository concerns
+ * exercised by `OrganizationRepositoryTest` against real rows.
+ */
 final class AllowedEmailDomainsTest extends TestCase
 {
-    // Tests that an empty env string yields an empty allow-list with no matches.
-    public function testEmptyEnvProducesEmptyList(): void
+    // Tests that an empty repository list yields an empty all() and no matches.
+    public function testEmptyRepositoryProducesEmptyList(): void
     {
-        $allow = new AllowedEmailDomains('');
+        $allow = $this->allowedDomains([]);
 
         self::assertSame([], $allow->all());
         self::assertFalse($allow->contains('aarhus.dk'));
     }
 
-    // Tests that a single allow-list entry matches the exact domain.
-    public function testSingleEntryIsMatched(): void
+    // Verifies all() returns the repository's list verbatim.
+    public function testAllDelegatesToRepository(): void
     {
-        $allow = new AllowedEmailDomains('aarhus.dk');
-
-        self::assertSame(['aarhus.dk'], $allow->all());
-        self::assertTrue($allow->contains('aarhus.dk'));
-    }
-
-    // Verifies multiple entries are kept in their original order and deduplicated.
-    public function testMultipleEntriesArePreservedInOrderAndDeduplicated(): void
-    {
-        $allow = new AllowedEmailDomains('aarhus.dk,kk.dk,aarhus.dk');
+        $allow = $this->allowedDomains(['aarhus.dk', 'kk.dk']);
 
         self::assertSame(['aarhus.dk', 'kk.dk'], $allow->all());
-    }
-
-    // Verifies entries are lowercased and trimmed during parsing.
-    public function testEntriesAreLowercasedAndTrimmed(): void
-    {
-        $allow = new AllowedEmailDomains('  Aarhus.DK , AARHUS.DK , kk.dk ');
-
-        self::assertSame(['aarhus.dk', 'kk.dk'], $allow->all());
-    }
-
-    // Ensures blank entries (e.g. leading/trailing commas) are silently dropped.
-    public function testBlankEntriesAreSilentlyDropped(): void
-    {
-        $allow = new AllowedEmailDomains(',,aarhus.dk,,');
-
-        self::assertSame(['aarhus.dk'], $allow->all());
     }
 
     // Verifies contains() is case-insensitive and tolerates surrounding whitespace.
     public function testContainsIsCaseInsensitiveAndWhitespaceTolerant(): void
     {
-        $allow = new AllowedEmailDomains('aarhus.dk');
+        $allow = $this->allowedDomains(['aarhus.dk']);
 
         self::assertTrue($allow->contains('AARHUS.DK'));
         self::assertTrue($allow->contains('  aarhus.dk  '));
         self::assertFalse($allow->contains('other.dk'));
+    }
+
+    /**
+     * @param list<string> $domains the canned repository response
+     */
+    private function allowedDomains(array $domains): AllowedEmailDomains
+    {
+        $repository = $this->createMock(OrganizationRepository::class);
+        $repository->method('collectAllowedEmailDomains')->willReturn($domains);
+
+        return new AllowedEmailDomains($repository);
     }
 }

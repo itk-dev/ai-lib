@@ -31,7 +31,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a new `<twig:StepRail>` component in the `start` slot
   and the responsibility notice in the `end` slot
   ([#20](https://github.com/itk-dev/ai-reolen/issues/20)).
-
+- Single-use email-confirmation link as the mechanism that
+  transitions a new user out of `UserStatus::AwaitingEmailConfirmation`.
+  Self-signup now lands the user as `AwaitingEmailConfirmation`
+  (no site access) instead of `Pending`, and a third
+  transactional email — alongside the existing admin moderator
+  notification and "thanks, awaiting approval" courtesy mail —
+  carries an absolute URL pointing at the new public route
+  `GET /auth/confirm-email/{token}`. Clicking the link consumes
+  the token (single-use, 24 h TTL), flips the user's status to
+  `Pending`, and renders a localised confirmation page; from
+  there a moderator must approve the user through `/admin/users`
+  before they gain site access. The token is a 32-byte base64url
+  random string stored in a dedicated `cache.email_confirmation`
+  pool, so token rows live independently of `cache.app`. A new
+  `App\Security\EmailConfirmation` service owns issue + consume
+  semantics (idempotency on stale status, defensive null on a
+  missing user row), `App\Notification\EmailConfirmationNotifier`
+  sends the link mail via the same `MAILER_FROM` resolution the
+  other two notifiers use, and a `App\Controller\EmailConfirmationController`
+  surfaces the public route with `410 Gone` on an unknown or
+  already-consumed token. The `account.awaiting_email_confirmation`
+  status message — previously unreachable from the live registration
+  flow — now drives the failed-login response for a user who
+  attempts to sign in before clicking the link
+  ([#119](https://github.com/itk-dev/ai-reolen/issues/119)).
+- Deploy-time list of supported assistant frameworks. A new
+  `SUPPORTED_FRAMEWORKS` env var (comma-separated
+  `Readable Name:machine_name` pairs, shipped in `.env` with the
+  single default `Open WebUI:openwebui`) drives a new
+  `App\Framework\SupportedFrameworks` service that hands the
+  list to the `defaultFramework` `ChoiceType` on
+  `/admin/organization/new` and `/admin/organizations/{id}/edit`.
+  The stored value is the machine name (unchanged shape on the
+  entity); the `<select>` shows the readable name. A new
+  `App\Validator\SupportedFramework` constraint on
+  `Organization::$defaultFramework` closes the entity-boundary
+  path so fixtures and console writes can't leak an unknown
+  framework in either. The catalogue "Frameworks" facet renders
+  labels through a new `framework_label` Twig filter, falling
+  back to the machine name for legacy rows whose framework has
+  been removed from the list. Malformed env-var entries
+  (missing colon, empty machine name, machine name outside
+  `[a-z0-9_-]`) fail-fast at boot rather than ship a half-broken
+  config. An unset / empty env var yields an empty framework
+  list — the `<select>` renders no options, effectively blocking
+  organisation creation until the operator restores the line;
+  no hidden hard-coded fallback
+  ([#154](https://github.com/itk-dev/ai-reolen/issues/154)).
+- Public-signup allow-list now sources its domains from the
+  `Organization.emailDomains` rows instead of the
+  `REGISTRATION_ALLOWED_EMAIL_DOMAINS` env var. Adding a
+  municipality through `/admin/organization` (or removing one)
+  takes effect immediately — no redeploy, no config edit.
+  `App\Security\AllowedEmailDomains` keeps its
+  `contains()`/`all()` surface and now delegates to a new
+  `App\Repository\OrganizationRepository::collectAllowedEmailDomains()`
+  query that flattens, lowercases, dedupes, and drops blank
+  entries. `OrganizationFixtures` grows an `Eksempel Kommune`
+  row that owns `example.test` so the existing fixture users
+  and the integration test suite continue to register
+  successfully. The `REGISTRATION_ALLOWED_EMAIL_DOMAINS` env
+  var is no longer read and can be removed from `.env`/`.env.test`
+  ([#161](https://github.com/itk-dev/ai-reolen/issues/161)).
 - The inline role-picker on `/admin/users` now mints its CSRF
   token at submit time through the bundled `csrf-protection`
   Stimulus helper, matching the project's stateless double-submit

@@ -37,6 +37,18 @@ final class OrganizationFixtures extends Fixture implements DependentFixtureInte
                 emailDomains: ['odense.dk'],
                 defaultFramework: 'openwebui',
             ),
+            // Stand-in organisation that owns the `example.test`
+            // domain shared by the `alice@example.test` /
+            // `bob@example.test` fixture users and the integration
+            // test suite. `AllowedEmailDomains` now sources its
+            // allow-list from these rows, so the test domain has
+            // to live here for self-signup with `@example.test`
+            // to pass.
+            new Organization(
+                name: 'Eksempel Kommune',
+                emailDomains: ['example.test'],
+                defaultFramework: 'openwebui',
+            ),
         ];
 
         // The two fixture users own the organizations round-robin; resolved

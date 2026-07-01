@@ -78,6 +78,14 @@ class SettingsManager
     public const string REGISTRATION_CONFIRMATION_SUBJECT = 'registration_confirmation_subject';
     public const string REGISTRATION_CONFIRMATION_BODY = 'registration_confirmation_body';
 
+    /**
+     * Canonical keys for the email-confirmation link email content
+     * (the third transactional message — the single-use link the
+     * user clicks to leave `UserStatus::AwaitingEmailConfirmation`).
+     */
+    public const string EMAIL_CONFIRMATION_SUBJECT = 'email_confirmation_subject';
+    public const string EMAIL_CONFIRMATION_BODY = 'email_confirmation_body';
+
     public function __construct(
         private readonly SettingRepository $repository,
         private readonly EntityManagerInterface $em,
@@ -377,7 +385,55 @@ class SettingsManager
     }
 
     /**
-     * Apply the email-content submission (subjects + bodies for both transactional emails) in one call.
+     * Read the configured subject template for the email-confirmation link email.
+     *
+     * Falls back to the `settings.email_confirmation.subject`
+     * translation when the row is unset.
+     *
+     * @return string current subject template
+     */
+    public function getEmailConfirmationSubject(): string
+    {
+        return $this->getString(self::EMAIL_CONFIRMATION_SUBJECT)
+            ?? $this->translator->trans('settings.email_confirmation.subject');
+    }
+
+    /**
+     * Persist the email-confirmation subject template, or clear it to revert to the default.
+     *
+     * @param string|null $subject subject template to store, or null to clear
+     */
+    public function setEmailConfirmationSubject(?string $subject): void
+    {
+        $this->setString(self::EMAIL_CONFIRMATION_SUBJECT, $subject);
+    }
+
+    /**
+     * Read the configured Markdown body template for the email-confirmation link email.
+     *
+     * Falls back to the `settings.email_confirmation.body`
+     * translation when the row is unset.
+     *
+     * @return string current Markdown body template
+     */
+    public function getEmailConfirmationBody(): string
+    {
+        return $this->getString(self::EMAIL_CONFIRMATION_BODY)
+            ?? $this->translator->trans('settings.email_confirmation.body');
+    }
+
+    /**
+     * Persist the email-confirmation body template, or clear it to revert to the default.
+     *
+     * @param string|null $body Markdown body template to store, or null to clear
+     */
+    public function setEmailConfirmationBody(?string $body): void
+    {
+        $this->setString(self::EMAIL_CONFIRMATION_BODY, $body);
+    }
+
+    /**
+     * Apply the email-content submission (subjects + bodies for all three transactional emails) in one call.
      *
      * Each argument is trimmed and empty strings collapse to
      * `null`, so clearing a field reverts that template to the
@@ -387,17 +443,23 @@ class SettingsManager
      * @param string|null $adminNotificationBody           submitted Markdown body for the admin notification email
      * @param string|null $registrationConfirmationSubject submitted subject for the signup-confirmation email
      * @param string|null $registrationConfirmationBody    submitted Markdown body for the signup-confirmation email
+     * @param string|null $emailConfirmationSubject        submitted subject for the confirmation-link email
+     * @param string|null $emailConfirmationBody           submitted Markdown body for the confirmation-link email
      */
     public function applyEmailContent(
         ?string $adminNotificationSubject,
         ?string $adminNotificationBody,
         ?string $registrationConfirmationSubject,
         ?string $registrationConfirmationBody,
+        ?string $emailConfirmationSubject = null,
+        ?string $emailConfirmationBody = null,
     ): void {
         $this->setAdminNotificationSubject(self::emptyToNull($adminNotificationSubject));
         $this->setAdminNotificationBody(self::emptyToNull($adminNotificationBody));
         $this->setRegistrationConfirmationSubject(self::emptyToNull($registrationConfirmationSubject));
         $this->setRegistrationConfirmationBody(self::emptyToNull($registrationConfirmationBody));
+        $this->setEmailConfirmationSubject(self::emptyToNull($emailConfirmationSubject));
+        $this->setEmailConfirmationBody(self::emptyToNull($emailConfirmationBody));
     }
 
     /**
