@@ -357,7 +357,6 @@ assistant:
             beskrivelse: "Beskrivelse"
             modelkort: "Modelkort"
             readme: "Readme"
-            viden: "Viden"
             json: "JSON"
         meta_heading: "Detaljer"
         meta_origin: "Oprindelseskommune"
@@ -369,15 +368,12 @@ assistant:
         meta_updated_at: "Dato opdateret"
         actions_heading: "Handlinger"
         action:
-            export: "Hjemtag (eksportér JSON)"
+            export: "Hjemtag JSON"
         modelkort:
             heading: "Modelkort"
             lead: "Sprogmodel %model% og hensyn ved brug af assistenten."
         readme:
             heading: "Readme"
-        viden:
-            heading: "Vidensopskrift"
-            lead: "Selve videns- og datafilerne kan ikke deles mellem kommuner. Hver kommune leverer sit eget grundlag efter denne opskrift."
         json:
             heading: "Eksportér konfiguration"
             lead: "Eksportér assistentens OpenWebUI-JSON og importér filen i din egen OpenWebUI."

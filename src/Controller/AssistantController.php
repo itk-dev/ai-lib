@@ -20,7 +20,7 @@ final class AssistantController extends AbstractController
      * parameter is validated against this list; anything else falls
      * back to {@see self::DEFAULT_TAB} silently.
      */
-    private const array DETAIL_TABS = ['beskrivelse', 'modelkort', 'readme', 'viden', 'json'];
+    private const array DETAIL_TABS = ['beskrivelse', 'modelkort', 'readme', 'json'];
     private const string DEFAULT_TAB = 'beskrivelse';
 
     #[Route(path: '/assistant/{id}', name: 'app_assistant_show', requirements: ['id' => Requirement::ULID], methods: ['GET'])]
