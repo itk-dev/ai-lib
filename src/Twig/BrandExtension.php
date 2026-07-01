@@ -34,7 +34,7 @@ final class BrandExtension extends AbstractExtension implements GlobalsInterface
     /**
      * Divider / hairline colour. Mirrors `--color-line` in `assets/styles/app.css`.
      */
-    public const string PALETTE_LINE = '#ebdcc4';
+    public const string PALETTE_LINE = '#e9e9e9';
 
     /**
      * Muted secondary text colour. Mirrors `--color-text-muted` in `assets/styles/app.css`.
