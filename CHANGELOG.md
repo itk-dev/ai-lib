@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `/assistant/new` is now a three-step wizard: **Indsæt JSON**
+  → **Gennemgang** → **Kvittering**. The user pastes / uploads
+  an OpenWebUI export on step 1, reviews auto-extracted metadata
+  (title, description, language model, tags) on step 2, and
+  lands on step 3 with a permalink to the freshly-persisted
+  assistant. Metadata suggestions come from a new
+  `App\Assistant\OpenWebUiMetadataExtractor` that pulls values
+  from `parsed.name`, `parsed.meta.description` /
+  `parsed.params.system`, `parsed.base_model_id` /
+  `parsed.model`, and `parsed.meta.tags` — user edits on step 2
+  are preserved on Back-then-edit-then-Next round trips (empty
+  fields refill, non-empty stay). The wizard uses Symfony's
+  built-in `AbstractFlowType` + `SessionDataStorage` so state
+  carries between steps without any hand-rolled session
+  plumbing; the Previous / Next / Finish navigator buttons come
+  from `NavigatorFlowType` and self-hide via their `include_if`
+  callbacks. On step 3, the Finish button doubles as "Del en
+  til" — clicking it resets the flow and lands the user on a
+  fresh step 1. Layout switches to `<twig:Layout:ThreeColumn>`
+  with a new `<twig:StepRail>` component in the `start` slot
+  and the responsibility notice in the `end` slot
+  ([#20](https://github.com/itk-dev/ai-reolen/issues/20)).
 - Single-use email-confirmation link as the mechanism that
   transitions a new user out of `UserStatus::AwaitingEmailConfirmation`.
   Self-signup now lands the user as `AwaitingEmailConfirmation`
@@ -72,7 +94,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   successfully. The `REGISTRATION_ALLOWED_EMAIL_DOMAINS` env
   var is no longer read and can be removed from `.env`/`.env.test`
   ([#161](https://github.com/itk-dev/ai-reolen/issues/161)).
-
 - The inline role-picker on `/admin/users` now mints its CSRF
   token at submit time through the bundled `csrf-protection`
   Stimulus helper, matching the project's stateless double-submit

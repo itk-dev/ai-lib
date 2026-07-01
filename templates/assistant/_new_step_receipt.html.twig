@@ -1,0 +1,37 @@
+{#
+    Step 3 body — the "assistant delt" receipt.
+
+    The controller has already persisted the assistant and stashed
+    its id on `draft.createdAssistantId` by the time this renders.
+    We show a confirmation heading + permalink to the fresh row.
+    "Del en til" is not a link here — it's the flow's Finish
+    button (rendered outside this partial), which correctly resets
+    the session state before landing on a fresh step 1.
+#}
+<div class="grid gap-6">
+    <div class="grid gap-2">
+        <twig:Heading level="2" size="md" class="text-primary">
+            {{ 'assistant.new.step_receipt.heading'|trans }}
+        </twig:Heading>
+        <p class="text-sm text-text">{{ 'assistant.new.step_receipt.body'|trans({'%title%': draft.title}) }}</p>
+    </div>
+
+    {% if draft.createdAssistantId %}
+        {% set permalink = url('app_assistant_show', {id: draft.createdAssistantId}) %}
+        <div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm">
+            <p class="mb-1 text-text-muted">{{ 'assistant.new.step_receipt.permalink_label'|trans }}</p>
+            <a class="text-primary underline break-all hover:text-primary-hover" href="{{ permalink }}">
+                {{ permalink }}
+            </a>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <twig:Form:Button href="{{ path('app_assistant_show', {id: draft.createdAssistantId}) }}">
+                {{ 'assistant.new.step_receipt.go_to_assistant'|trans }}
+            </twig:Form:Button>
+            <a class="text-sm text-text underline hover:text-primary" href="{{ path('app_assistant_catalog') }}">
+                {{ 'assistant.new.step_receipt.back_to_catalog'|trans }}
+            </a>
+        </div>
+    {% endif %}
+</div>
