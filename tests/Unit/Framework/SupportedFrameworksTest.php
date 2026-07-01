@@ -12,13 +12,30 @@ use PHPUnit\Framework\TestCase;
  */
 final class SupportedFrameworksTest extends TestCase
 {
-    // Tests that an empty env string falls back to the hard-coded Open WebUI default.
-    public function testEmptyEnvFallsBackToHardCodedDefault(): void
+    // Verifies an empty env string yields an empty list with an empty default — the project ships the env var populated, so this only fires when it's cleared or unset.
+    public function testEmptyEnvYieldsEmptyList(): void
     {
         $frameworks = new SupportedFrameworks('');
 
-        self::assertSame(['Open WebUI' => 'openwebui'], $frameworks->list());
-        self::assertSame('openwebui', $frameworks->default());
+        self::assertSame([], $frameworks->list());
+        self::assertSame('', $frameworks->default());
+    }
+
+    // Same as above but for the null case Symfony's env-var default:: syntax can produce when the var isn't defined.
+    public function testNullEnvYieldsEmptyList(): void
+    {
+        $frameworks = new SupportedFrameworks(null);
+
+        self::assertSame([], $frameworks->list());
+        self::assertSame('', $frameworks->default());
+    }
+
+    // Ensures isSupported() returns false for anything when the list is empty.
+    public function testIsSupportedIsFalseWhenListIsEmpty(): void
+    {
+        $frameworks = new SupportedFrameworks('');
+
+        self::assertFalse($frameworks->isSupported('openwebui'));
     }
 
     // Verifies a single-entry env produces a single-key list preserving the readable name.

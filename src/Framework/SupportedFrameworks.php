@@ -27,9 +27,12 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  *   `"Kind: One"`, machine `"kind_one"`).
  * - Fail-fast at boot on any malformed entry (no `:`, empty
  *   machine name, machine name that doesn't match the regex).
- * - When the env var is empty / unset, fall back to the single
- *   hard-coded default `Open WebUI:openwebui` so a fresh install
- *   boots without extra setup.
+ * - When the env var is empty / unset, the list is empty. The
+ *   project ships with the env var populated in `.env`; a fresh
+ *   install with no value simply shows an empty framework
+ *   `<select>` on `/admin/organizations/new` (which effectively
+ *   blocks organisation creation until the operator restores the
+ *   env-var line).
  *
  * The first entry doubles as the install-wide default new
  * organisations pre-select in `/admin/organizations/new`.
@@ -50,7 +53,7 @@ final class SupportedFrameworks
     private readonly array $entries;
 
     /**
-     * @param string|null $rawSupportedFrameworks the env-var payload; empty / null falls back to the hard-coded default
+     * @param string|null $rawSupportedFrameworks the env-var payload; empty / null yields an empty framework list
      *
      * @throws \InvalidArgumentException when any entry is malformed (no colon, empty machine name, or machine name outside `[a-z0-9_-]+`)
      */
@@ -58,12 +61,7 @@ final class SupportedFrameworks
         #[Autowire('%env(default::SUPPORTED_FRAMEWORKS)%')]
         ?string $rawSupportedFrameworks,
     ) {
-        $entries = self::parse((string) $rawSupportedFrameworks);
-        if ([] === $entries) {
-            $entries = ['Open WebUI' => 'openwebui'];
-        }
-
-        $this->entries = $entries;
+        $this->entries = self::parse((string) $rawSupportedFrameworks);
     }
 
     /**
@@ -94,12 +92,19 @@ final class SupportedFrameworks
      * name — for pre-selecting a value on the "new organisation"
      * form or seeding a fresh row.
      *
-     * @return string the first supported machine name
+     * Returns an empty string when the list is empty (env var
+     * unset / cleared). Callers that use the return value as a
+     * form's `empty_data` will get an empty selection, which
+     * matches the also-empty `<select>` options.
+     *
+     * @return string the first supported machine name, or `''` when the list is empty
      */
     public function default(): string
     {
-        /** @var string $firstKey — parse() / the hard-coded fallback guarantee at least one entry */
         $firstKey = array_key_first($this->entries);
+        if (null === $firstKey) {
+            return '';
+        }
 
         return $this->entries[$firstKey];
     }

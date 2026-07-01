@@ -11,22 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Deploy-time list of supported assistant frameworks. A new
   `SUPPORTED_FRAMEWORKS` env var (comma-separated
-  `Readable Name:machine_name` pairs, default `Open WebUI:openwebui`
-  when unset) drives a new `App\Framework\SupportedFrameworks`
-  service that hands the list to the `defaultFramework`
-  `ChoiceType` on `/admin/organization/new` and
-  `/admin/organizations/{id}/edit`. The stored value is the
-  machine name (unchanged shape on the entity); the `<select>`
-  shows the readable name. A new `App\Validator\SupportedFramework`
-  constraint on `Organization::$defaultFramework` closes the
-  entity-boundary path so fixtures and console writes can't leak
-  an unknown framework in either. The catalogue "Frameworks"
-  facet renders labels through a new `framework_label` Twig
-  filter, falling back to the machine name for legacy rows
-  whose framework has been removed from the list. Malformed
-  env-var entries (missing colon, empty machine name, machine
-  name outside `[a-z0-9_-]`) fail-fast at boot rather than ship
-  a half-broken config
+  `Readable Name:machine_name` pairs, shipped in `.env` with the
+  single default `Open WebUI:openwebui`) drives a new
+  `App\Framework\SupportedFrameworks` service that hands the
+  list to the `defaultFramework` `ChoiceType` on
+  `/admin/organization/new` and `/admin/organizations/{id}/edit`.
+  The stored value is the machine name (unchanged shape on the
+  entity); the `<select>` shows the readable name. A new
+  `App\Validator\SupportedFramework` constraint on
+  `Organization::$defaultFramework` closes the entity-boundary
+  path so fixtures and console writes can't leak an unknown
+  framework in either. The catalogue "Frameworks" facet renders
+  labels through a new `framework_label` Twig filter, falling
+  back to the machine name for legacy rows whose framework has
+  been removed from the list. Malformed env-var entries
+  (missing colon, empty machine name, machine name outside
+  `[a-z0-9_-]`) fail-fast at boot rather than ship a half-broken
+  config. An unset / empty env var yields an empty framework
+  list — the `<select>` renders no options, effectively blocking
+  organisation creation until the operator restores the line;
+  no hidden hard-coded fallback
   ([#154](https://github.com/itk-dev/ai-reolen/issues/154)).
 
 - The inline role-picker on `/admin/users` now mints its CSRF
