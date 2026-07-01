@@ -213,6 +213,14 @@ admin:
                 body:
                     label: "Indhold (Markdown)"
                     help: "Skrives som Markdown. Brug pladsholdere fra listen ovenfor."
+                    help_cheatsheet: "Markdown-oversigt"
+            actions:
+                preview: "Forhåndsvis"
+            preview:
+                modal_title: "Forhåndsvisning af e-mail"
+                subject_prefix: "Emne:"
+                close: "Luk"
+                error: "Forhåndsvisningen kunne ikke hentes. Prøv igen."
 
 catalog:
     title: "Katalog – %brand%"

@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Editor-experience upgrades on `/admin/settings/email`: every
+  Markdown body field grows a **Markdown-oversigt** cheat-sheet
+  link (opens
+  <https://www.markdownguide.org/cheat-sheet/> in a new tab,
+  `rel="noopener noreferrer"`) and a **Forhåndsvis** button that
+  opens a modal showing the rendered email for the current
+  subject + body. The modal reuses
+  `App\Mail\EmailTemplateRenderer` — same pipeline the mailer
+  runs through — so the preview is by construction what the
+  recipient would see. Token substitution uses the acting
+  admin's own `name` + `email` for the greeting slot, the
+  current brand name for `%brand_name%`, and a synthetic
+  `%approval_url%` / `%confirmation_url%` pointing at
+  `/admin/users` and the frontpage respectively so URL tokens
+  render as real links. The rendered HTML lives inside an
+  `<iframe sandbox="allow-same-origin">` driven by `srcdoc` so
+  admin-typed HTML can't script the admin UI or reach out over
+  the network. A new POST endpoint
+  `/admin/settings/email/preview` backs the modal: JSON in
+  (`subject`, `body`, `_token`), JSON out (`subject`, `html`),
+  admin-gated by the class-level `IsGranted` attribute and
+  CSRF-protected against a dedicated
+  `admin-settings-email-preview` intent so a stale carrier
+  token can't invalidate an in-flight main-form submit. The
+  new `email-preview` Stimulus controller mints tokens through
+  the same shared `csrf-protection` helper the role-picker
+  uses, so the double-submit-cookie handshake stays consistent
+  ([#149](https://github.com/itk-dev/ai-reolen/issues/149)).
 - `/assistant/new` is now a three-step wizard: **Indsæt JSON**
   → **Gennemgang** → **Kvittering**. The user pastes / uploads
   an OpenWebUI export on step 1, reviews auto-extracted metadata
