@@ -84,11 +84,6 @@
                             {{ assistant.updatedAt|format_date(locale: 'da') }}
                         </twig:DescriptionList:Item>
                     {% endif %}
-                    <twig:DescriptionList:Item label="assistant.detail.meta_version_count">
-                        <span class="italic text-text-muted" title="{{ 'assistant.detail.placeholder_hint'|trans }}">
-                            {{ 'assistant.detail.placeholder_version_count'|trans }}
-                        </span>
-                    </twig:DescriptionList:Item>
                 </twig:DescriptionList:List>
             </twig:Box>
         </twig:block>
@@ -99,22 +94,7 @@
                     <twig:Form:Button href="{{ path('app_assistant_export', {id: assistant.id}) }}">
                         {{ 'assistant.detail.action.export'|trans }}
                     </twig:Form:Button>
-                    <button type="button"
-                            class="inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2 font-semibold text-text-muted"
-                            disabled
-                            title="{{ 'assistant.detail.placeholder_hint'|trans }}">
-                        {{ 'assistant.detail.action.favorite'|trans }}
-                    </button>
-                    <button type="button"
-                            class="inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2 font-semibold text-text-muted"
-                            disabled
-                            title="{{ 'assistant.detail.placeholder_hint'|trans }}">
-                        {{ 'assistant.detail.action.add_to_collection'|trans }}
-                    </button>
                 </div>
-                <p class="mt-4 text-xs text-text-muted italic">
-                    {{ 'assistant.detail.placeholder_actions_note'|trans }}
-                </p>
             </twig:Box>
         </twig:block>
     </twig:Layout:ContentWithAsides>

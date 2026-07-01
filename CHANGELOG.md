@@ -24,9 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   level "Hjemtag" action. Fields the entity does not yet carry
   (`tagline`, origin organisation, `dataSensitivity`,
   `approvedFor`, `modelCard`, `readme`, `knowledgeRecipe`, AI-
-  tag flag, version count, favorites, collections) render as
-  muted italic placeholders with a tooltip explaining the
-  status, so the layout is stable when the schema catches up.
+  tag flag) render as muted italic placeholders with a tooltip
+  explaining the status, so the layout is stable when the
+  schema catches up. Version count, favourites, and collections
+  are held back entirely — the meta row and action buttons only
+  appear once the underlying feature ships.
   A new `App\Twig\TextExtension` exposes a `paragraphs` filter
   that splits a text blob on blank-line boundaries so the
   Beskrivelse tab renders each paragraph as its own `<p>` with
