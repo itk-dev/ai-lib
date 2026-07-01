@@ -1,0 +1,39 @@
+{#
+    Step 1 body — JSON upload + textarea.
+
+    Wrapped by the assistant-config-upload Stimulus controller so
+    a file drop or paste enhances the textarea with live-validate
+    feedback. The server-side form is a plain textarea binding to
+    the DTO's `openwebuiConfig`; the file input is client-side
+    enhancement that fills the textarea and then submits.
+#}
+<div class="grid gap-4"
+     data-controller="assistant-config-upload"
+     data-assistant-config-upload-validate-url-value="{{ path('app_assistant_new_validate_config') }}"
+     data-assistant-config-upload-checks-value="{{ checks|json_encode }}">
+    <twig:Form:Label for="inputConfigFile" text="{{ 'assistant.new.step_json.file_label'|trans }}">
+        <input id="inputConfigFile"
+               type="file"
+               accept="application/json,.json"
+               data-assistant-config-upload-target="file"
+               data-action="change->assistant-config-upload#fileChanged"
+               class="rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-ink hover:file:bg-primary-hover">
+    </twig:Form:Label>
+
+    {{ form_row(flow.json.openwebuiConfig, {attr: {'data-assistant-config-upload-target': 'config'}}) }}
+
+    <progress data-assistant-config-upload-target="progress"
+              value="0"
+              max="100"
+              class="hidden h-2 w-full overflow-hidden rounded-full [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-surface-2 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary">
+    </progress>
+
+    <p data-assistant-config-upload-target="status"
+       data-validating-text="{{ 'assistant.new.step_json.config_validating'|trans }}"
+       data-valid-text="{{ 'assistant.new.step_json.config_valid'|trans }}"
+       data-invalid-text="{{ 'assistant.new.step_json.config_invalid'|trans }}"
+       class="text-sm text-text-muted"
+       role="status">
+        {{ 'assistant.new.step_json.config_help'|trans }}
+    </p>
+</div>

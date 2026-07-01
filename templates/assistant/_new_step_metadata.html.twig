@@ -1,0 +1,12 @@
+{#
+    Step 2 body — metadata fields the user reviews and edits.
+    Every input is pre-filled from the DTO the flow's step-1
+    listener populated via OpenWebUiMetadataExtractor.
+#}
+<div class="grid gap-4">
+    {{ form_row(flow.metadata.title) }}
+    {{ form_row(flow.metadata.description) }}
+    {{ form_row(flow.metadata.languageModel) }}
+    {{ form_row(flow.metadata.framework) }}
+    {{ form_row(flow.metadata.tags) }}
+</div>

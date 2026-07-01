@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Assistant\AssistantCreator;
-use App\Assistant\InvalidAssistantInputException;
+use App\Assistant\AssistantDraft;
+use App\Form\AssistantCreateFlowType;
 use App\Validator\OpenWebUiConfigValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\Flow\FormFlowInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,35 +26,47 @@ final class AssistantCreateController extends AbstractController
     #[Route(path: '/assistant/new', name: 'app_assistant_new', methods: ['GET', 'POST'])]
     public function new(Request $request): Response
     {
-        $submitted = $this->emptySubmitted();
-        $errors = [];
-        $status = Response::HTTP_OK;
+        // Seed the flow with a fresh draft — SessionDataStorage
+        // replaces it with the persisted DTO on subsequent requests,
+        // but the initial construction always needs an object to
+        // read the `step` property off.
+        $flow = $this->createForm(AssistantCreateFlowType::class, new AssistantDraft());
+        \assert($flow instanceof FormFlowInterface);
 
-        if ('POST' === $request->getMethod()) {
-            $submitted = $this->readSubmitted($request);
+        // handleRequest runs the current step's submit + validation.
+        // getStepForm() then reads the cursor — if the submit was
+        // valid it moves the cursor forward and returns a fresh
+        // form for the next step, otherwise it returns the same
+        // step's form for re-rendering with errors.
+        $flow->handleRequest($request);
+        $stepForm = $flow->getStepForm();
+        \assert($stepForm instanceof FormFlowInterface);
 
-            if (!$this->isCsrfTokenValid('assistant-create', (string) $request->request->get('_token'))) {
-                return $this->renderForm($submitted, ['assistant.new.error.invalid_token'], Response::HTTP_FORBIDDEN);
-            }
-
-            try {
-                $assistant = $this->creator->create(
-                    $submitted['title'],
-                    $submitted['description'],
-                    $submitted['language_model'],
-                    $submitted['framework'],
-                    $submitted['tags'],
-                    $submitted['openwebui_config'],
-                );
-
-                return $this->redirectToRoute('app_assistant_show', ['id' => (string) $assistant->getId()]);
-            } catch (InvalidAssistantInputException $e) {
-                $errors = $e->getErrors();
-                $status = Response::HTTP_UNPROCESSABLE_ENTITY;
-            }
+        // The transition from `metadata` → `receipt` is the commit
+        // moment: persist the assistant and stash its id on the
+        // DTO. Guarded on `createdAssistantId` so a page refresh
+        // in step 3 doesn't re-persist. Step 1's `Assert\Json` and
+        // the metadata step's `NotBlank` constraints cover every
+        // rejection the deeper `AssistantCreator::create()` would
+        // otherwise catch, so no `InvalidAssistantInputException`
+        // catch is needed here.
+        $draft = $stepForm->getData();
+        if ($draft instanceof AssistantDraft
+            && 'receipt' === $draft->step
+            && null === $draft->createdAssistantId
+        ) {
+            $assistant = $this->creator->create(
+                $draft->title,
+                $draft->description,
+                $draft->languageModel,
+                $draft->framework,
+                $draft->tags,
+                $draft->openwebuiConfig,
+            );
+            $draft->createdAssistantId = (string) $assistant->getId();
         }
 
-        return $this->renderForm($submitted, $errors, $status);
+        return $this->renderStep($stepForm);
     }
 
     #[Route(path: '/assistant/new/validate-config', name: 'app_assistant_new_validate_config', methods: ['POST'])]
@@ -78,49 +92,17 @@ final class AssistantCreateController extends AbstractController
         ]);
     }
 
-    /**
-     * @param array{title: string, description: string, language_model: string, framework: string, tags: list<string>, openwebui_config: string} $submitted
-     * @param list<string>                                                                                                                       $errors
-     */
-    private function renderForm(array $submitted, array $errors, int $status): Response
+    private function renderStep(FormFlowInterface $stepForm): Response
     {
+        $status = Response::HTTP_OK;
+        if ($stepForm->isSubmitted() && !$stepForm->isValid()) {
+            $status = Response::HTTP_UNPROCESSABLE_ENTITY;
+        }
+
         return $this->render('assistant/new.html.twig', [
-            'submitted' => $submitted,
-            'errors' => $errors,
+            'flow' => $stepForm->createView(),
+            'draft' => $stepForm->getData(),
             'checks' => $this->validator->getChecks(),
         ], new Response('', $status));
-    }
-
-    /**
-     * @return array{title: string, description: string, language_model: string, framework: string, tags: list<string>, openwebui_config: string}
-     */
-    private function emptySubmitted(): array
-    {
-        return [
-            'title' => '',
-            'description' => '',
-            'language_model' => '',
-            'framework' => '',
-            'tags' => [],
-            'openwebui_config' => '',
-        ];
-    }
-
-    /**
-     * @return array{title: string, description: string, language_model: string, framework: string, tags: list<string>, openwebui_config: string}
-     */
-    private function readSubmitted(Request $request): array
-    {
-        $tagsRaw = (string) $request->request->get('tags', '');
-        $tags = array_values(array_filter(array_map('trim', explode(',', $tagsRaw)), static fn (string $t): bool => '' !== $t));
-
-        return [
-            'title' => (string) $request->request->get('title', ''),
-            'description' => (string) $request->request->get('description', ''),
-            'language_model' => (string) $request->request->get('language_model', ''),
-            'framework' => (string) $request->request->get('framework', ''),
-            'tags' => $tags,
-            'openwebui_config' => (string) $request->request->get('openwebui_config', ''),
-        ];
     }
 }
