@@ -77,6 +77,15 @@
         monospace;
 
     /*
+     * Fluid display size for hero headlines: 40px on small screens up
+     * to 72px on large desktops, scaling with the viewport in between.
+     * The unitless line-height stays proportional at every size, unlike
+     * a fixed value. Generates a `text-hero` utility that sets both.
+     */
+    --text-hero: clamp(2.5rem, 6vw, 4.5rem);
+    --text-hero--line-height: 1.05;
+
+    /*
      * Page-container widths. The `--container-*` namespace is Tailwind
      * v4's hook for `max-w-*` utilities, so these tokens generate
      * `max-w-narrow` (default `<main>` constraint) and `max-w-wide`

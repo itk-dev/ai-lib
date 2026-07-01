@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The site header shows the brand name as a wordmark (the first word in
   the primary green), replacing the icon tile and tagline. Front-page
   stat figures sit in subtle sand cards.
+- The hero headline renders in the DM Serif Display face at a fluid
+  `text-hero` display size (a new `@theme` token) that scales smoothly
+  with the viewport, added as a `hero` size on the shared `Heading`
+  component.
 - Fixed the hero heading rendering empty: the `Hero` component now
   forwards the caller's `heading`/`lead` block content into the nested
   `Heading` component instead of dropping it.
