@@ -9,16 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Pluggable import/export **format abstraction** so a second
+  assistant-config format can be added later as "write an adapter +
+  register it," with no changes to the wizard, creator, or export
+  controller. A `App\Assistant\Format\FormatAdapter` interface
+  (validate, detect, parse-to-source, and canonical ↔ source
+  conversions) is discovered through the `app.format_adapter` tag by
+  `App\Assistant\Format\FormatAdapterRegistry`, which is now the
+  single source of truth for the framework taxonomy — the admin
+  organisation `<select>`, the catalogue framework facet, and the
+  `framework_label` Twig filter all read from it, replacing the
+  retired env-driven `SupportedFrameworks` service. Formats convert
+  through a neutral `App\Assistant\Format\CanonicalModel`, and export
+  gains a `?format=` seam (`AssistantExporter`) for future
+  cross-format downloads. OpenWebUI is the sole implementation
+  (`App\Assistant\Format\OpenWebUiAdapter`); the source config is
+  stored format-agnostically in the `source_config` column, and the
+  wizard sets an assistant's framework from the format detected on
+  step 1 (`App\Assistant\AssistantDraftPrefiller`) rather than a
+  step-2 choice.
+- JSON Schema validation, PII-stripping, and re-importable export
+  for OpenWebUI uploads. A shipped schema
+  (`config/schema/openwebui-model.json`, draft 2020-12, validated
+  with `opis/json-schema`) accepts the three shapes an export
+  arrives in — a one-element array, a flat model object, or an
+  `info`-wrapped object — and rejects arrays that don't hold
+  exactly one model. It is wired into the existing check pipeline
+  (`syntax` + `schema`) so the step-1 upload UI and a server-side
+  `App\Validator\ValidAssistantConfig` form constraint both gate on
+  it. A `App\Assistant\OpenWebUiModelNormalizer` flattens the wrapper
+  shapes, and `App\Assistant\OpenWebUiConfigSanitizer` strips
+  instance-specific data and PII (uploading `user`, `user_id`,
+  `access_grants`, `write_access`, timestamps, `is_active`, and
+  `meta.knowledge`) before the model is persisted — only the
+  cleaned functional model reaches the database. The assistant
+  detail page gains a **Download til OpenWebUI** button backed by
+  `GET /assistant/{id}/export`, which rebuilds the array-of-one
+  import payload from the stored model with the catalogue-editable
+  title, description, language model, and tags re-applied.
 - `/assistant/new` is now a three-step wizard: **Indsæt JSON**
   → **Gennemgang** → **Kvittering**. The user pastes / uploads
   an OpenWebUI export on step 1, reviews auto-extracted metadata
   (title, description, language model, tags) on step 2, and
   lands on step 3 with a permalink to the freshly-persisted
-  assistant. Metadata suggestions come from a new
-  `App\Assistant\OpenWebUiMetadataExtractor` that pulls values
-  from `parsed.name`, `parsed.meta.description` /
-  `parsed.params.system`, `parsed.base_model_id` /
-  `parsed.model`, and `parsed.meta.tags` — user edits on step 2
+  assistant. Metadata suggestions come from
+  `App\Assistant\AssistantDraftPrefiller`, which detects the format
+  and pulls values from the canonical model's name, description /
+  system-prompt, base model, and tags — user edits on step 2
   are preserved on Back-then-edit-then-Next round trips (empty
   fields refill, non-empty stay). The wizard uses Symfony's
   built-in `AbstractFlowType` + `SessionDataStorage` so state
@@ -56,28 +93,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   flow — now drives the failed-login response for a user who
   attempts to sign in before clicking the link
   ([#119](https://github.com/itk-dev/ai-reolen/issues/119)).
-- Deploy-time list of supported assistant frameworks. A new
-  `SUPPORTED_FRAMEWORKS` env var (comma-separated
-  `Readable Name:machine_name` pairs, shipped in `.env` with the
-  single default `Open WebUI:openwebui`) drives a new
-  `App\Framework\SupportedFrameworks` service that hands the
-  list to the `defaultFramework` `ChoiceType` on
-  `/admin/organization/new` and `/admin/organizations/{id}/edit`.
-  The stored value is the machine name (unchanged shape on the
-  entity); the `<select>` shows the readable name. A new
-  `App\Validator\SupportedFramework` constraint on
-  `Organization::$defaultFramework` closes the entity-boundary
-  path so fixtures and console writes can't leak an unknown
-  framework in either. The catalogue "Frameworks" facet renders
-  labels through a new `framework_label` Twig filter, falling
-  back to the machine name for legacy rows whose framework has
-  been removed from the list. Malformed env-var entries
-  (missing colon, empty machine name, machine name outside
-  `[a-z0-9_-]`) fail-fast at boot rather than ship a half-broken
-  config. An unset / empty env var yields an empty framework
-  list — the `<select>` renders no options, effectively blocking
-  organisation creation until the operator restores the line;
-  no hidden hard-coded fallback
+- Supported assistant frameworks are sourced from the registered
+  format adapters (see the format-abstraction entry above). The
+  `defaultFramework` `ChoiceType` on `/admin/organization/new` and
+  `/admin/organizations/{id}/edit` lists the adapter labels; the
+  stored value is the format id. A `App\Validator\SupportedFramework`
+  constraint on `Organization::$defaultFramework` closes the
+  entity-boundary path so fixtures and console writes can't leak an
+  unregistered framework. The catalogue "Frameworks" facet renders
+  labels through a `framework_label` Twig filter, falling back to the
+  id for legacy rows whose format is no longer registered
   ([#154](https://github.com/itk-dev/ai-reolen/issues/154)).
 - Public-signup allow-list now sources its domains from the
   `Organization.emailDomains` rows instead of the
@@ -373,8 +398,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   indentation the user typed (file upload, paste, hand-edit)
   collapses to minified JSON on disk
   ([#101](https://github.com/itk-dev/ai-reolen/issues/14)).
-- `Assistant.openwebui_config` JSON column for storing the
-  uploaded OpenWebUI export verbatim, plus a create form at
+- `Assistant.source_config` JSON column for storing the
+  uploaded assistant config (reduced to its format's cleaned
+  model; see the entries above), plus a create form at
   `/assistant/new` with a file-upload field that AJAX-validates
   the JSON before submit and writes the result into an editable
   textarea (users can also paste/type JSON directly). A shared

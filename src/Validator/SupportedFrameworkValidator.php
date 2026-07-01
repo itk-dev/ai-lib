@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace App\Validator;
 
-use App\Framework\SupportedFrameworks;
+use App\Assistant\Format\FormatAdapterRegistry;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
 
 /**
- * Delegates {@see SupportedFramework}'s check to the deploy-time
- * {@see SupportedFrameworks} service so the validator inherits any
- * change to the env-var list automatically.
+ * Delegates {@see SupportedFramework}'s check to the
+ * {@see FormatAdapterRegistry} so the accepted framework ids track
+ * the set of registered format adapters automatically.
  */
 final class SupportedFrameworkValidator extends ConstraintValidator
 {
     /**
-     * @param SupportedFrameworks $frameworks the deploy-time list of framework machine names to accept
+     * @param FormatAdapterRegistry $formats the registry whose adapter ids are the accepted frameworks
      */
-    public function __construct(private readonly SupportedFrameworks $frameworks)
+    public function __construct(private readonly FormatAdapterRegistry $formats)
     {
     }
 
@@ -51,7 +51,7 @@ final class SupportedFrameworkValidator extends ConstraintValidator
             throw new UnexpectedValueException($value, 'string');
         }
 
-        if ($this->frameworks->isSupported($value)) {
+        if ($this->formats->has($value)) {
             return;
         }
 

@@ -80,4 +80,74 @@ final class AssistantControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(404);
     }
+
+    // Tests that the detail page offers a download link to the OpenWebUI export route.
+    public function testDetailPageLinksToExport(): void
+    {
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $assistant = $repository->findOneBy(['title' => 'Borgerservice-vejviser']);
+        self::assertNotNull($assistant);
+
+        $this->client->request('GET', '/assistant/'.$assistant->getId());
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/assistant/'.$assistant->getId().'/export"][download]');
+    }
+
+    // Tests that GET /assistant/{id}/export returns a downloadable array-of-one OpenWebUI model reflecting the entity.
+    public function testExportReturnsDownloadableArrayOfOneModel(): void
+    {
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $assistant = $repository->findOneBy(['title' => 'Borgerservice-vejviser']);
+        self::assertNotNull($assistant);
+
+        $this->client->request('GET', '/assistant/'.$assistant->getId().'/export');
+
+        self::assertResponseIsSuccessful();
+        self::assertResponseHeaderSame('Content-Type', 'application/json');
+        self::assertStringContainsString(
+            'attachment',
+            (string) $this->client->getResponse()->headers->get('Content-Disposition'),
+        );
+
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), associative: true);
+        self::assertIsArray($payload);
+        self::assertCount(1, $payload);
+        self::assertSame('Borgerservice-vejviser', $payload[0]['name']);
+        self::assertSame($assistant->getLanguageModel(), $payload[0]['base_model_id']);
+        self::assertSame($assistant->getDescription(), $payload[0]['meta']['description']);
+    }
+
+    // Verifies a non-existent assistant id returns 404 for the export route as well.
+    public function testExportUnknownAssistantReturns404(): void
+    {
+        $this->client->request('GET', '/assistant/999999/export');
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    // Verifies an explicit ?format= for a registered format exports successfully.
+    public function testExportAcceptsRegisteredFormatQueryParam(): void
+    {
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $assistant = $repository->findOneBy(['title' => 'Borgerservice-vejviser']);
+        self::assertNotNull($assistant);
+
+        $this->client->request('GET', '/assistant/'.$assistant->getId().'/export?format=openwebui');
+
+        self::assertResponseIsSuccessful();
+        self::assertResponseHeaderSame('Content-Type', 'application/json');
+    }
+
+    // Verifies an unknown ?format= returns 404.
+    public function testExportUnknownFormatReturns404(): void
+    {
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $assistant = $repository->findOneBy(['title' => 'Borgerservice-vejviser']);
+        self::assertNotNull($assistant);
+
+        $this->client->request('GET', '/assistant/'.$assistant->getId().'/export?format=bogus');
+
+        self::assertResponseStatusCodeSame(404);
+    }
 }

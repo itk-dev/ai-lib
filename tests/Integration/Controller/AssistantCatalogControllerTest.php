@@ -42,7 +42,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Find en assistent');
         self::assertGreaterThanOrEqual(
             1,
-            $crawler->filter('a[href^="/assistant/"]')->count(),
+            $crawler->filter('[data-testid="assistant-card"]')->count(),
             'catalogue must surface at least one fixture entry on the first page',
         );
     }
@@ -58,7 +58,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(
             $expected,
-            $crawler->filter('a[href^="/assistant/"]')->count(),
+            $crawler->filter('[data-testid="assistant-card"]')->count(),
             'card count must match the gpt-4o fixture facet count',
         );
         self::assertSelectorTextContains('[aria-label="Aktive filtre"]', 'gpt-4o');
@@ -71,7 +71,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Ingen assistenter matcher');
-        self::assertCount(0, $crawler->filter('a[href^="/assistant/"]'));
+        self::assertCount(0, $crawler->filter('[data-testid="assistant-card"]'));
     }
 
     // Verifies pagination renders a current-page badge and a working next link when results span multiple pages.
@@ -123,7 +123,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertCount(
             1,
-            $crawler->filter('a[href^="/assistant/"]'),
+            $crawler->filter('[data-testid="assistant-card"]'),
             'the query matches exactly one fixture title',
         );
         self::assertSelectorTextContains('[aria-label="Aktive filtre"]', '"journaliseringsassistent"');
@@ -140,7 +140,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(
             $expected,
-            $crawler->filter('a[href^="/assistant/"]')->count(),
+            $crawler->filter('[data-testid="assistant-card"]')->count(),
             'card count must match the jura fixture tag-facet count',
         );
         self::assertSelectorTextContains('[aria-label="Aktive filtre"]', 'jura');
@@ -154,8 +154,8 @@ final class AssistantCatalogControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/search?q=borgerservice&tag%5B%5D=jura');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('a[href^="/assistant/"]'));
-        self::assertSelectorTextContains('a[href^="/assistant/"]', 'Borgerservice-vejviser');
+        self::assertCount(1, $crawler->filter('[data-testid="assistant-card"]'));
+        self::assertSelectorTextContains('[data-testid="assistant-card"]', 'Borgerservice-vejviser');
     }
 
     // Ensures a tag chip's href drops only its tag while preserving the search query.
@@ -197,7 +197,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertSame('name', $crawler->filter('#catalog-sort option[selected]')->attr('value'));
         self::assertStringContainsString(
             'Borgerhenvendelse-svarudkast',
-            $crawler->filter('a[href^="/assistant/"]')->first()->text(),
+            $crawler->filter('[data-testid="assistant-card"]')->first()->text(),
             'name-ascending puts the lowest title first',
         );
     }

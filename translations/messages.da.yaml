@@ -350,6 +350,7 @@ assistant:
         framework_label: "Framework"
         language_model_label: "Sprogmodel"
         tags_heading: "Tags"
+        export: "Download til OpenWebUI"
     new:
         title: "Del assistent – %brand%"
         eyebrow: "Del assistent"
@@ -365,7 +366,7 @@ assistant:
             textarea_label: "…eller indsæt JSON direkte"
             textarea_help: "Indholdet af assistentens OpenWebUI-export. Vi analyserer det og foreslår metadata i næste trin."
             required: "Indsæt eller upload en OpenWebUI-JSON."
-            invalid: "Indholdet er ikke gyldig JSON."
+            invalid_config: "Filen er ikke en gyldig assistent-konfiguration. {{ errors }}"
             config_help: "Slip en JSON-fil på feltet, eller indsæt JSON direkte i tekstfeltet."
             config_validating: "Validerer konfiguration…"
             config_valid: "Konfigurationen er gyldig."
@@ -379,9 +380,6 @@ assistant:
             description_required: "Angiv en beskrivelse."
             language_model_label: "Sprogmodel"
             language_model_required: "Angiv en sprogmodel."
-            framework_label: "Framework"
-            framework_help: "Framework assistenten er bygget til."
-            framework_required: "Angiv et framework."
             tags_label: "Tags"
             tags_help: "Komma-separeret. Fx borgerservice, jura."
         step_receipt:

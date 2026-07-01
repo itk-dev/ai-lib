@@ -1,5 +1,6 @@
 {% props assistant, href %}
-<a class="group flex h-full flex-col gap-3 rounded-xl border border-line bg-surface p-6 no-underline shadow-sm transition-transform hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
+<a data-testid="assistant-card"
+   class="group flex h-full flex-col gap-3 rounded-xl border border-line bg-surface p-6 no-underline shadow-sm transition-transform hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
    href="{{ href }}">
     <h3 class="font-display text-2xl text-ink group-hover:text-primary">
         {{ assistant.title }}
