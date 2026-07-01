@@ -1,8 +1,11 @@
-{% props href, initials = brand_initials, name = brand_name, tagline = brand_tagline %}
-<a class="flex items-center gap-3 no-underline" href="{{ href }}" aria-label="{{ 'layout.brand_aria_label'|trans }}">
-    <span class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-ink text-base font-semibold text-primary-ink" aria-hidden="true">{{ initials }}</span>
-    <span class="flex flex-col leading-tight">
-        <span class="text-base font-semibold text-ink">{{ name }}</span>
-        <span class="text-[0.78rem] uppercase tracking-[0.16em] text-text-muted">{{ tagline|raw }}</span>
+{% props href, name = brand_name %}
+{# Wordmark only — the icon tile and tagline were dropped in favour of a #}
+{# larger name that aligns with the nav row. The first word renders in #}
+{# the primary (green) accent and extra bold; the rest stays in ink. #}
+{% set firstWord = name|split(' ', 2)|first %}
+{% set rest = name|split(' ', 2)|slice(1)|join(' ') %}
+<a class="flex items-center no-underline" href="{{ href }}" aria-label="{{ 'layout.brand_aria_label'|trans }}">
+    <span class="text-xl tracking-tight">
+        <span class="font-extrabold text-primary">{{ firstWord }}</span>{% if rest %} <span class="font-semibold text-ink">{{ rest }}</span>{% endif %}
     </span>
 </a>

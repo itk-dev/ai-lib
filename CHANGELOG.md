@@ -10,14 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - OS2ai brand applied as design tokens: the colour palette is now the
-  OS2ai green (primary/accent), charcoal (text/neutrals), and sand
-  (surfaces/borders) scale, replacing the previous teal/gold. Admin
-  pages get a sand tint instead of pink.
+  OS2ai green (primary/accent), charcoal (text/neutrals and borders),
+  and sand (surfaces) scale, replacing the previous teal/gold. Borders
+  stay neutral charcoal so the sand tint reads only on surfaces and
+  badges; admin pages get a light sand tint instead of pink.
 - OS2ai typography: Inter (self-hosted, variable) is the UI face for
   body and all headings; DM Serif Display (self-hosted) is reserved as
   an opt-in display face for editorial/hero. Fonts load via `@font-face`
   from `assets/fonts/`, dropping the Google Fonts request, and the
   favicon becomes an on-brand green mark.
+- The site header shows the brand name as a wordmark (the first word in
+  the primary green), replacing the icon tile and tagline. Front-page
+  stat figures sit in subtle sand cards.
+- Fixed the hero heading rendering empty: the `Hero` component now
+  forwards the caller's `heading`/`lead` block content into the nested
+  `Heading` component instead of dropping it.
 - Admin list pages (`/admin/users`, `/admin/organizations`) now
   fill the wide admin container instead of the narrow `max-w-4xl`
   column. The user list in particular has six columns after the

@@ -44,15 +44,17 @@
     --color-bg: #ffffff;
     --color-surface: #ffffff;
     --color-surface-2: #fdf8f1; /* sand-100 */
-    /* Sand tint applied to every /admin/** page body so operators see */
-    /* at a glance that they're in the back office (sand-200). */
-    --color-admin-bg: #f6edde;
+    /* Light sand tint applied to every /admin/** page body so operators */
+    /* see at a glance that they're in the back office (sand-100). */
+    --color-admin-bg: #fdf8f1;
     /* Alternating row background for the shared Table component. */
     /* Sand-200 so zebra striping reads clearly against white rows.  */
     --color-row-alt: #f6edde;
-    --color-border: #ebdcc4; /* sand-300 */
-    --color-border-strong: #ddc7a4; /* sand-400 */
-    --color-line: #ebdcc4; /* sand-300 */
+    /* Borders and dividers stay neutral charcoal so the sand tint reads */
+    /* only on surfaces and badges, not as a warm cast over every edge.  */
+    --color-border: #e9e9e9; /* charcoal-100 */
+    --color-border-strong: #cfcfcf; /* charcoal-200 */
+    --color-line: #e9e9e9; /* charcoal-100 */
     --color-ink: #1a1a1a; /* charcoal-800 — headings */
     --color-text: #2c2c2c; /* charcoal-700 — body */
     --color-text-muted: #585858; /* charcoal-500 */
