@@ -18,7 +18,11 @@ namespace App\Assistant;
  *
  * This keeps an allowlist of functional fields and drops everything
  * else, so new keys added by future OpenWebUI versions are dropped
- * by default rather than leaking through.
+ * by default rather than leaking through. `meta.profile_image_url`
+ * is additionally dropped unless it is a portable reference — an
+ * absolute `http(s)` URL or a self-contained `data:` URI — so a
+ * source-instance-relative path (e.g. `/user.png`) never lands in
+ * the catalogue or an export where it can't resolve.
  */
 final class OpenWebUiConfigSanitizer
 {
@@ -58,12 +62,33 @@ final class OpenWebUiConfigSanitizer
                 $model['meta'],
                 ['description', 'profile_image_url', 'capabilities', 'suggestion_prompts', 'tags'],
             );
+            // A non-null avatar that isn't an absolute URL or data: URI
+            // is a source-instance-relative path — useless elsewhere, so
+            // drop it. A null (no avatar) is portable and kept.
+            if (isset($meta['profile_image_url']) && !$this->isPortableImageRef($meta['profile_image_url'])) {
+                unset($meta['profile_image_url']);
+            }
             if ([] !== $meta) {
                 $clean['meta'] = $meta;
             }
         }
 
         return $clean;
+    }
+
+    /**
+     * Whether an avatar reference resolves outside the source instance.
+     *
+     * True only for an absolute `http(s)` URL or a self-contained
+     * `data:` URI; a relative path (or any non-string) is not portable.
+     *
+     * @param mixed $value the `meta.profile_image_url` value
+     *
+     * @return bool true when the reference is safe to keep and re-export
+     */
+    private function isPortableImageRef(mixed $value): bool
+    {
+        return \is_string($value) && 1 === preg_match('#^(https?://|data:)#i', $value);
     }
 
     /**

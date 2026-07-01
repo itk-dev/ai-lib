@@ -82,4 +82,42 @@ final class OpenWebUiConfigSanitizerTest extends TestCase
 
         self::assertSame(['name' => 'Demo'], (new OpenWebUiConfigSanitizer())->sanitize($model));
     }
+
+    // Verifies an absolute URL and a data: URI avatar are kept.
+    public function testKeepsPortableProfileImage(): void
+    {
+        $https = (new OpenWebUiConfigSanitizer())->sanitize([
+            'name' => 'Demo',
+            'meta' => ['profile_image_url' => 'https://cdn.example/av.png'],
+        ]);
+        self::assertSame('https://cdn.example/av.png', $https['meta']['profile_image_url']);
+
+        $data = (new OpenWebUiConfigSanitizer())->sanitize([
+            'name' => 'Demo',
+            'meta' => ['profile_image_url' => 'data:image/png;base64,AAAA'],
+        ]);
+        self::assertSame('data:image/png;base64,AAAA', $data['meta']['profile_image_url']);
+    }
+
+    // Verifies a source-instance-relative avatar path is dropped (unresolvable elsewhere).
+    public function testDropsRelativeProfileImage(): void
+    {
+        $clean = (new OpenWebUiConfigSanitizer())->sanitize([
+            'name' => 'Demo',
+            'meta' => ['description' => 'd', 'profile_image_url' => '/user.png'],
+        ]);
+
+        self::assertSame(['description' => 'd'], $clean['meta']);
+    }
+
+    // Verifies dropping a lone relative avatar removes the now-empty meta entirely.
+    public function testRelativeProfileImageAloneDropsMeta(): void
+    {
+        $clean = (new OpenWebUiConfigSanitizer())->sanitize([
+            'name' => 'Demo',
+            'meta' => ['profile_image_url' => '/user.png'],
+        ]);
+
+        self::assertArrayNotHasKey('meta', $clean);
+    }
 }
