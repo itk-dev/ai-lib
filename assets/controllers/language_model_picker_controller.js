@@ -62,8 +62,12 @@ export default class extends Controller {
     };
 
     connect() {
+        // eslint-disable-next-line no-console
+        console.log("[language-model-picker] connect (build 26f98e9)");
         const select = this.element.querySelector("select");
         if (!select) {
+            // eslint-disable-next-line no-console
+            console.warn("[language-model-picker] no <select> found");
             return;
         }
         this.select = select;
@@ -117,11 +121,21 @@ export default class extends Controller {
 
     onSearch(event) {
         const query = String(event.detail?.value ?? "").trim();
+        // eslint-disable-next-line no-console
+        console.log("[language-model-picker] onSearch", {
+            query,
+            currentValue: this.currentValue(),
+        });
         this.render(query);
     }
 
     onChoice(event) {
         const props = event.detail?.choice?.customProperties;
+        // eslint-disable-next-line no-console
+        console.log("[language-model-picker] onChoice", {
+            value: event.detail?.choice?.value,
+            injected: Boolean(props?.injected),
+        });
         if (!props || !props.injected) {
             return;
         }
@@ -182,6 +196,12 @@ export default class extends Controller {
             });
         }
 
+        // eslint-disable-next-line no-console
+        console.log("[language-model-picker] render → setChoices", {
+            query,
+            currentValue,
+            listValues: list.map((c) => c.value),
+        });
         this.choices.setChoices(list, "value", "label", true);
     }
 
