@@ -11,14 +11,14 @@ import Choices from "choices.js";
  * ∪ previously-persisted-values shortlist as options. When the
  * typed value matches nothing in the shortlist, an ad-hoc
  * "+ Tilføj: '…'" choice is injected via the `search` event and
- * a click on it commits the typed value as a real option.
+ * a click on it commits the typed value as a new known option.
  *
  * Choices.js's text-input mode ignores the constructor `choices`
  * option — that's why the picker uses `<select>` here rather
  * than the more obvious `<input type="text">`. Server-side
  * stays a plain `TextType` because the `<select>` on the form
  * carries the full form-field name, so a submitted `<option>`
- * value (whether from the shortlist or the "+ Tilføj" injection)
+ * value (whether from the shortlist or a promoted free-tag)
  * round-trips through the form as a plain string.
  *
  * Filtering strategy
@@ -37,16 +37,19 @@ import Choices from "choices.js";
  *    Choices.js's fuse.js scores partial-string matches on the
  *    injected row's label.
  *
- * Wiring
- * ------
- * - The wrapper `<div>` carries
- *   `data-controller="language-model-picker"`.
- * - `data-language-model-picker-existing-value` is a JSON array
- *   of known option strings — the server-side union built by
- *   `App\Model\SupportedLanguageModels::list()`.
- * - The other `data-...-value` attributes hand the controller
- *   the localised copy so the JS bundle stays
- *   language-agnostic.
+ * Promoting a free-tag pick
+ * -------------------------
+ * When the user clicks "+ Tilføj: '…'", Choices.js commits it as
+ * the current item and writes its underlying `<option>` into the
+ * `<select>` with the `+ Tilføj: '…'` label + a
+ * `data-custom-properties="{injected: true}"` marker. Neither
+ * `setChoices(replaceChoices: true)` nor `removeActiveItemsByValue`
+ * fully strips that residual `<option>` — the select's selected
+ * option survives every rebuild by design (Choices.js protects
+ * the current value). We work around that by destroying Choices.js,
+ * rewriting the `<select>`'s option list to the clean known set
+ * with the promoted value pre-selected, and re-initialising
+ * Choices.js on the fresh DOM. Nuclear but reliable.
  */
 export default class extends Controller {
     static values = {
@@ -79,7 +82,47 @@ export default class extends Controller {
         this.knownOriginals = known.slice();
         this.knownLower = new Set(known.map((v) => String(v).toLowerCase()));
 
-        this.choices = new Choices(select, {
+        this.onSearch = this.onSearch.bind(this);
+        this.onChoice = this.onChoice.bind(this);
+        this.initChoices();
+    }
+
+    disconnect() {
+        this.teardownChoices();
+    }
+
+    /**
+     * Instantiate Choices.js against the current `<select>` and
+     * wire the `search` + `choice` event handlers.
+     */
+    initChoices() {
+        this.choices = new Choices(this.select, this.choicesConfig());
+        this.select.addEventListener("search", this.onSearch);
+        this.select.addEventListener("choice", this.onChoice);
+    }
+
+    /**
+     * Destroy the Choices.js instance and detach its event
+     * handlers. Leaves the `<select>` in whatever state it
+     * currently has (the caller reassigns its options before
+     * re-init).
+     */
+    teardownChoices() {
+        if (this.select) {
+            this.select.removeEventListener("search", this.onSearch);
+            this.select.removeEventListener("choice", this.onChoice);
+        }
+        if (this.choices) {
+            this.choices.destroy();
+            this.choices = null;
+        }
+    }
+
+    /**
+     * @returns {import("choices.js").Options}
+     */
+    choicesConfig() {
+        return {
             allowHTML: false,
             searchEnabled: true,
             // Do the filtering ourselves — see the class docblock.
@@ -93,23 +136,7 @@ export default class extends Controller {
             noResultsText: this.noResultsTextValue,
             noChoicesText: this.noChoicesTextValue,
             itemSelectText: this.itemSelectTextValue,
-        });
-
-        this.onSearch = this.onSearch.bind(this);
-        this.onChoice = this.onChoice.bind(this);
-        select.addEventListener("search", this.onSearch);
-        select.addEventListener("choice", this.onChoice);
-    }
-
-    disconnect() {
-        if (this.select) {
-            this.select.removeEventListener("search", this.onSearch);
-            this.select.removeEventListener("choice", this.onChoice);
-        }
-        if (this.choices) {
-            this.choices.destroy();
-            this.choices = null;
-        }
+        };
     }
 
     onSearch(event) {
@@ -122,28 +149,39 @@ export default class extends Controller {
         if (!props || !props.injected) {
             return;
         }
-        // The user picked the "+ Tilføj" virtual option. Promote
-        // the typed value to a regular known option so the pill
-        // renders as the raw value (not "+ Tilføj: '…'") and the
-        // dropdown stops offering to re-add it.
+        // Promote the typed value to a regular known option.
         const value = event.detail.choice.value;
         const valueLower = value.toLowerCase();
         if (!this.knownLower.has(valueLower)) {
             this.knownOriginals.push(value);
             this.knownLower.add(valueLower);
         }
-        // Choices.js's `setChoices(replaceChoices: true)` replaces
-        // the choice list but *preserves* the currently-selected
-        // item — so the underlying `<option>` from the injected
-        // pick (with its `+ Tilføj: '…'` label + `data-custom-
-        // properties="{injected:true}"` marker) survives the
-        // rebuild. Remove that item first, rebuild the choice
-        // list with the promoted value included, then re-select
-        // the value from the clean list so its option is a plain
-        // one.
-        this.choices.removeActiveItemsByValue(value);
-        this.render("");
-        this.choices.setChoiceByValue(value);
+        // Defer to the next tick so Choices.js has finished
+        // committing the injected pick (writing its residual
+        // `<option>`) before we tear it down.
+        setTimeout(() => this.rebuildWithSelection(value), 0);
+    }
+
+    /**
+     * Rebuild the `<select>` from scratch with the clean known
+     * option set and the given value pre-selected, then
+     * re-instantiate Choices.js on top of it.
+     *
+     * @param {string} selectedValue
+     */
+    rebuildWithSelection(selectedValue) {
+        this.teardownChoices();
+        this.select.innerHTML = "";
+        for (const value of this.knownOriginals) {
+            const opt = document.createElement("option");
+            opt.value = value;
+            opt.textContent = value;
+            if (value === selectedValue) {
+                opt.selected = true;
+            }
+            this.select.appendChild(opt);
+        }
+        this.initChoices();
     }
 
     /**
