@@ -1,0 +1,33 @@
+{#
+    JSON tab — pretty-printed OpenWebUI config + download link.
+
+    The mock's version dropdown is a placeholder — the entity has
+    exactly one config today. Once an `AssistantVersion` entity
+    lands, the `<select>` slots in below the heading and the export
+    URL takes a version id.
+#}
+<div class="grid gap-4">
+    <h2 class="text-lg font-semibold text-ink">
+        {{ 'assistant.detail.json.heading'|trans }}
+    </h2>
+    <p class="text-sm text-text-muted">
+        {{ 'assistant.detail.json.lead'|trans }}
+    </p>
+
+    <div class="flex flex-wrap items-center gap-3">
+        <twig:Form:Button href="{{ path('app_assistant_export', {id: assistant.id}) }}" size="sm">
+            {{ 'assistant.detail.action.export'|trans }}
+        </twig:Form:Button>
+        <span class="text-xs text-text-muted italic" title="{{ 'assistant.detail.placeholder_hint'|trans }}">
+            {{ 'assistant.detail.placeholder_versions'|trans }}
+        </span>
+    </div>
+
+    {% if assistant.openwebuiConfig %}
+        <pre class="max-h-[420px] overflow-auto whitespace-pre rounded-lg border border-line bg-surface-2 p-4 text-xs text-ink">{{ assistant.openwebuiConfig|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE')) }}</pre>
+    {% else %}
+        <p class="text-sm text-text-muted italic">
+            {{ 'assistant.detail.json.empty'|trans }}
+        </p>
+    {% endif %}
+</div>
