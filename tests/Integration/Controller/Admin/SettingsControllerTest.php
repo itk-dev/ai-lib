@@ -376,6 +376,137 @@ final class SettingsControllerTest extends WebTestCase
         );
     }
 
+    // Verifies GET /admin/settings/email renders both the cheat-sheet link and a Preview button per body field.
+    public function testEmailFormRendersCheatSheetAndPreviewLinks(): void
+    {
+        $this->loginAsAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/settings/email');
+
+        self::assertResponseIsSuccessful();
+        // One cheat-sheet link per body field; three fieldsets on the page.
+        $cheatSheetLinks = $crawler->filter('a[href="https://www.markdownguide.org/cheat-sheet/"]');
+        self::assertCount(3, $cheatSheetLinks);
+        self::assertSame('_blank', $cheatSheetLinks->first()->attr('target'));
+        self::assertSame('noopener noreferrer', $cheatSheetLinks->first()->attr('rel'));
+
+        // One Preview button per body field.
+        $previewButtons = $crawler->filter('button[data-action*="email-preview#open"]');
+        self::assertCount(3, $previewButtons);
+    }
+
+    // Verifies POST /admin/settings/email/preview returns the substituted subject + rendered HTML for the acting admin.
+    public function testPreviewEndpointReturnsRenderedHtml(): void
+    {
+        $this->loginAsAdmin();
+        $token = $this->grabPreviewCsrfToken();
+
+        $this->client->request(
+            'POST',
+            '/admin/settings/email/preview',
+            content: json_encode([
+                'subject' => 'Velkommen %name%',
+                'body' => "Hej **%name%**!\n\nDin e-mail: %email%",
+                '_token' => $token,
+            ], JSON_THROW_ON_ERROR),
+            server: ['CONTENT_TYPE' => 'application/json'],
+        );
+
+        self::assertResponseIsSuccessful();
+        $payload = $this->decodeJsonResponse();
+        self::assertSame('Velkommen Admin', $payload['subject']);
+        self::assertStringContainsString('<strong>Admin</strong>', $payload['html']);
+        self::assertStringContainsString('admin@example.test', $payload['html']);
+    }
+
+    // Ensures the preview endpoint substitutes the synthetic approval_url token so admins can preview link output.
+    public function testPreviewEndpointSubstitutesApprovalUrl(): void
+    {
+        $this->loginAsAdmin();
+        $token = $this->grabPreviewCsrfToken();
+
+        $this->client->request(
+            'POST',
+            '/admin/settings/email/preview',
+            content: json_encode([
+                'subject' => 'ignored',
+                'body' => 'Approve: %approval_url%',
+                '_token' => $token,
+            ], JSON_THROW_ON_ERROR),
+            server: ['CONTENT_TYPE' => 'application/json'],
+        );
+
+        self::assertResponseIsSuccessful();
+        $payload = $this->decodeJsonResponse();
+        self::assertStringContainsString('/admin/users', $payload['html']);
+    }
+
+    // Ensures the preview endpoint rejects with 403 when the CSRF token is missing / invalid.
+    public function testPreviewEndpointRejectsMissingCsrfToken(): void
+    {
+        $this->loginAsAdmin();
+
+        $this->client->request(
+            'POST',
+            '/admin/settings/email/preview',
+            content: json_encode([
+                'subject' => 'x',
+                'body' => 'y',
+                '_token' => 'not-a-real-token',
+            ], JSON_THROW_ON_ERROR),
+            server: ['CONTENT_TYPE' => 'application/json'],
+        );
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    // Ensures a plain (non-admin) user cannot hit the preview endpoint — the class-level IsGranted gate fires first.
+    public function testPreviewEndpointRejectsNonAdmin(): void
+    {
+        $this->loginAsApproved('alice@example.test');
+
+        $this->client->request(
+            'POST',
+            '/admin/settings/email/preview',
+            content: json_encode([
+                'subject' => 'x',
+                'body' => 'y',
+                '_token' => 'irrelevant',
+            ], JSON_THROW_ON_ERROR),
+            server: ['CONTENT_TYPE' => 'application/json'],
+        );
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    /**
+     * Fetch a valid `admin-settings-email-preview` CSRF token by
+     * scraping the hidden carrier `<input>` rendered on the email
+     * settings page. Loading the page also establishes the session
+     * the token manager needs.
+     */
+    private function grabPreviewCsrfToken(): string
+    {
+        $crawler = $this->client->request('GET', '/admin/settings/email');
+
+        return (string) $crawler
+            ->filter('div[data-email-preview-target="csrfForm"] input[name="_token"]')
+            ->first()
+            ->attr('value');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodeJsonResponse(): array
+    {
+        $content = (string) $this->client->getResponse()->getContent();
+        $decoded = json_decode($content, true);
+        \assert(\is_array($decoded));
+
+        return $decoded;
+    }
+
     private function loginAsAdmin(): void
     {
         $um = self::getContainer()->get(UserManager::class);

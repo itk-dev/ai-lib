@@ -24,8 +24,8 @@
         {% endif %}
 
         <form action="{{ path('app_admin_settings_email') }}" method="post" class="grid gap-8">
-            <fieldset class="grid gap-4">
-                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.recipient'|trans }}</legend>
+            <fieldset class="grid gap-4 rounded-xl border border-line bg-surface p-6">
+                <legend class="px-2 font-medium text-ink">{{ 'admin.settings.email.section.recipient'|trans }}</legend>
 
                 <twig:Form:Label for="inputAdminRecipient" text="{{ 'admin.settings.email.fields.admin_recipient.label'|trans }}">
                     <twig:Form:TextInput
@@ -49,8 +49,10 @@
                 </twig:Form:Label>
             </fieldset>
 
-            <fieldset class="grid gap-4">
-                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.admin_notification'|trans }}</legend>
+            <fieldset class="grid gap-4 rounded-xl border border-line bg-surface p-6"
+                      data-controller="email-preview"
+                      data-email-preview-url-value="{{ path('app_admin_settings_email_preview') }}">
+                <legend class="px-2 font-medium text-ink">{{ 'admin.settings.email.section.admin_notification'|trans }}</legend>
                 <p class="text-sm text-text">
                     {{ 'admin.settings.email.tokens_label'|trans }}
                     <code class="rounded bg-surface-2 px-1">%name%</code>,
@@ -64,6 +66,7 @@
                         id="inputAdminNotificationSubject"
                         name="admin_notification_subject"
                         value="{{ submitted.admin_notification_subject }}"
+                        data-email-preview-target="subjectInput"
                     />
                 </twig:Form:Label>
 
@@ -71,13 +74,34 @@
                     <textarea id="inputAdminNotificationBody"
                               name="admin_notification_body"
                               rows="8"
+                              data-email-preview-target="bodyInput"
                               class="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.admin_notification_body }}</textarea>
-                    <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.body.help'|trans }}</p>
+                    <p class="mt-1 text-sm text-text">
+                        {{ 'admin.settings.email.fields.body.help'|trans }}
+                        <a href="https://www.markdownguide.org/cheat-sheet/"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.fields.body.help_cheatsheet'|trans }}
+                        </a>
+                        <span class="mx-1 text-text-muted" aria-hidden="true">·</span>
+                        <button type="button"
+                                data-action="click->email-preview#open"
+                                class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.actions.preview'|trans }}
+                        </button>
+                    </p>
                 </twig:Form:Label>
+
+                {{ include('admin/settings/_email_preview_dialog.html.twig', {
+                    id: 'previewAdminNotification',
+                }) }}
             </fieldset>
 
-            <fieldset class="grid gap-4">
-                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.registration_confirmation'|trans }}</legend>
+            <fieldset class="grid gap-4 rounded-xl border border-line bg-surface p-6"
+                      data-controller="email-preview"
+                      data-email-preview-url-value="{{ path('app_admin_settings_email_preview') }}">
+                <legend class="px-2 font-medium text-ink">{{ 'admin.settings.email.section.registration_confirmation'|trans }}</legend>
                 <p class="text-sm text-text">
                     {{ 'admin.settings.email.tokens_label'|trans }}
                     <code class="rounded bg-surface-2 px-1">%name%</code>,
@@ -90,6 +114,7 @@
                         id="inputRegistrationConfirmationSubject"
                         name="registration_confirmation_subject"
                         value="{{ submitted.registration_confirmation_subject }}"
+                        data-email-preview-target="subjectInput"
                     />
                 </twig:Form:Label>
 
@@ -97,13 +122,34 @@
                     <textarea id="inputRegistrationConfirmationBody"
                               name="registration_confirmation_body"
                               rows="8"
+                              data-email-preview-target="bodyInput"
                               class="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.registration_confirmation_body }}</textarea>
-                    <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.body.help'|trans }}</p>
+                    <p class="mt-1 text-sm text-text">
+                        {{ 'admin.settings.email.fields.body.help'|trans }}
+                        <a href="https://www.markdownguide.org/cheat-sheet/"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.fields.body.help_cheatsheet'|trans }}
+                        </a>
+                        <span class="mx-1 text-text-muted" aria-hidden="true">·</span>
+                        <button type="button"
+                                data-action="click->email-preview#open"
+                                class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.actions.preview'|trans }}
+                        </button>
+                    </p>
                 </twig:Form:Label>
+
+                {{ include('admin/settings/_email_preview_dialog.html.twig', {
+                    id: 'previewRegistrationConfirmation',
+                }) }}
             </fieldset>
 
-            <fieldset class="grid gap-4">
-                <legend class="font-medium text-ink">{{ 'admin.settings.email.section.email_confirmation'|trans }}</legend>
+            <fieldset class="grid gap-4 rounded-xl border border-line bg-surface p-6"
+                      data-controller="email-preview"
+                      data-email-preview-url-value="{{ path('app_admin_settings_email_preview') }}">
+                <legend class="px-2 font-medium text-ink">{{ 'admin.settings.email.section.email_confirmation'|trans }}</legend>
                 <p class="text-sm text-text">
                     {{ 'admin.settings.email.tokens_label'|trans }}
                     <code class="rounded bg-surface-2 px-1">%name%</code>,
@@ -117,6 +163,7 @@
                         id="inputEmailConfirmationSubject"
                         name="email_confirmation_subject"
                         value="{{ submitted.email_confirmation_subject }}"
+                        data-email-preview-target="subjectInput"
                     />
                 </twig:Form:Label>
 
@@ -124,9 +171,28 @@
                     <textarea id="inputEmailConfirmationBody"
                               name="email_confirmation_body"
                               rows="8"
+                              data-email-preview-target="bodyInput"
                               class="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.email_confirmation_body }}</textarea>
-                    <p class="mt-1 text-sm text-text">{{ 'admin.settings.email.fields.body.help'|trans }}</p>
+                    <p class="mt-1 text-sm text-text">
+                        {{ 'admin.settings.email.fields.body.help'|trans }}
+                        <a href="https://www.markdownguide.org/cheat-sheet/"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.fields.body.help_cheatsheet'|trans }}
+                        </a>
+                        <span class="mx-1 text-text-muted" aria-hidden="true">·</span>
+                        <button type="button"
+                                data-action="click->email-preview#open"
+                                class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.actions.preview'|trans }}
+                        </button>
+                    </p>
                 </twig:Form:Label>
+
+                {{ include('admin/settings/_email_preview_dialog.html.twig', {
+                    id: 'previewEmailConfirmation',
+                }) }}
             </fieldset>
 
             <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-settings-email') }}">
