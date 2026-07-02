@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Primary site nav now carries only working destinations. **Del
+  assistent** points at `/assistant/new`. **Mine assistenter**
+  is a new page at `/mine/assistenter` (route
+  `app_user_assistants`, gated to any authenticated user) that
+  lists every assistant the current user is the `createdBy`
+  blame for, ordered newest-first, rendered as a full-width
+  responsive card grid (1/2/3/4 columns at sm/md/lg/xl). The
+  page reuses the catalog's `<twig:Catalog:AssistantCard>` so
+  the visual language of a card matches the catalogue. Empty
+  state points the user at "Del assistent". Backed by a new
+  `AssistantRepository::findCreatedBy(User)` query that binds
+  the FK via `IDENTITY(a.createdBy) = :userId` with the ULID
+  type, sidestepping DQL's entity-comparison ambiguity when
+  the mapping uses `resolve_target_entities` on
+  `UserInterface::class`. The **Favoritter** and **Samlinger**
+  nav entries are dropped for now — they were placeholders
+  pointing at `#` and come back with their features. `<twig:Nav:Link>`
+  grows an `active` prop that emits `aria-current="page"` and
+  a bolder ink treatment on the current route, so the active
+  page is visible in the header at a glance
+  ([#160](https://github.com/itk-dev/ai-reolen/issues/160)).
 - The assistant details page (`/assistant/{id}`) is redesigned
   to match the ai-bibliotek mock. The `<twig:Layout:ContentWithAsides>`
   layout hosts a five-tab main column plus a sticky **Detaljer**
