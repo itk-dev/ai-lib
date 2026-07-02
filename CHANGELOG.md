@@ -238,6 +238,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   controller calls `generateCsrfToken()` against it at submit
   time so the random token + matching `__Host-{intent}_{token}`
   cookie are paired correctly before the JSON body goes out.
+- Dark footer with the OS2ai logo.
 - Admin list pages (`/admin/users`, `/admin/organizations`) now
   fill the wide admin container instead of the narrow `max-w-4xl`
   column. The user list in particular has six columns after the
