@@ -159,7 +159,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertStringContainsString('/assistant/'.(string) $created->getId(), $body);
     }
 
-    // Verifies step 2's language-model picker exposes the shortlist to the Stimulus controller and a free-typed value round-trips through to persistence.
+    // Verifies step 2's language-model picker exposes the known-models shortlist as clickable help-text pills and a free-typed value round-trips through to persistence.
     public function testLanguageModelPickerExposesShortlistAndPersistsFreeTypedValue(): void
     {
         // Advance to step 2.
@@ -175,25 +175,19 @@ final class AssistantCreateControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
 
-        // Choices.js seeds its dropdown suggestions from the JSON
-        // payload the wrapper carries on the
-        // `data-language-model-picker-known-options-value` attribute.
-        $known = json_decode(
-            (string) $crawler
-                ->filter('[data-controller="language-model-picker"]')
-                ->attr('data-language-model-picker-known-options-value'),
-            true,
-        );
-        self::assertIsArray($known);
-        self::assertContains('Mistral 24b', $known);
-        self::assertContains('GPT-OSS-120B', $known);
-        self::assertContains('Gemma 4', $known);
-        self::assertContains('Qwen3.5-122b', $known);
+        // The template surfaces the SUPPORTED_LANGUAGE_MODELS
+        // ∪ persisted-values shortlist as clickable
+        // help-text pills below the input.
+        $suggestions = $crawler
+            ->filter('[data-controller="language-model-picker"] button[data-action*="language-model-picker#pick"]')
+            ->each(static fn ($node) => (string) $node->attr('data-value'));
+        self::assertContains('Mistral 24b', $suggestions);
+        self::assertContains('GPT-OSS-120B', $suggestions);
+        self::assertContains('Gemma 4', $suggestions);
+        self::assertContains('Qwen3.5-122b', $suggestions);
 
         // Submit the languageModel input with a free-typed value —
-        // this is the "not on the shortlist" branch Choices.js's
-        // addItems / addItemText affordance would surface at
-        // runtime, and the server accepts it as-is.
+        // the server accepts any string via the plain TextType field.
         $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
         $languageModelField = $this->findFieldName($stepTwo->all(), '[languageModel]');
         $stepTwo[$languageModelField] = 'brand-new-model-9000';

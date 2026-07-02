@@ -5,10 +5,14 @@
 
     The `languageModel` field renders as a plain `<input>` that
     a Choices.js-backed Stimulus controller enhances into a
-    tag-input combobox: suggestions from SUPPORTED_LANGUAGE_MODELS
-    ∪ previously-persisted values, plus free-tagging on the
-    typed value via the "+ Tilføj" affordance. Turning JS off
-    leaves a plain text input behind.
+    tag-input combobox (match `<h2>Text inputs</h2>` on
+    https://choices-js.github.io/Choices/): the operator types
+    a value and commits it via Enter, and the "+ Tilføj: '…'"
+    affordance from `addItemText` shows the commit prompt.
+    Known models are surfaced as help text below the field so
+    the operator can see what's common in the catalogue without
+    conflating that with the widget's mechanics.
+    Turning JS off leaves a plain text input behind.
 #}
 {% set lm = flow.metadata.languageModel %}
 {% set lm_options = lm.vars.language_model_options %}
@@ -17,13 +21,22 @@
     {{ form_row(flow.metadata.description) }}
 
     <div data-controller="language-model-picker"
-         data-language-model-picker-known-options-value="{{ lm_options|json_encode }}"
          data-language-model-picker-add-text-value="{{ 'assistant.new.step_metadata.language_model_add_hint'|trans({'%value%': '%s'}) }}"
-         data-language-model-picker-search-placeholder-value="{{ 'assistant.new.step_metadata.language_model_search_placeholder'|trans }}"
-         data-language-model-picker-no-results-text-value="{{ 'assistant.new.step_metadata.language_model_no_results'|trans }}"
-         data-language-model-picker-no-choices-text-value="{{ 'assistant.new.step_metadata.language_model_no_choices'|trans }}"
-         data-language-model-picker-item-select-text-value="{{ 'assistant.new.step_metadata.language_model_item_select'|trans }}">
+         data-language-model-picker-placeholder-value="{{ 'assistant.new.step_metadata.language_model_search_placeholder'|trans }}">
         {{ form_row(lm) }}
+        {% if lm_options is not empty %}
+            <p class="mt-1 text-sm text-text-muted">
+                <span class="font-medium">{{ 'assistant.new.step_metadata.language_model_common_prefix'|trans }}</span>
+                {% for option in lm_options %}
+                    <button type="button"
+                            data-action="click->language-model-picker#pick"
+                            data-value="{{ option }}"
+                            class="rounded bg-surface-2 px-2 py-0.5 text-xs font-mono text-text hover:bg-primary hover:text-primary-ink">
+                        {{ option }}
+                    </button>{% if not loop.last %} {% endif %}
+                {% endfor %}
+            </p>
+        {% endif %}
     </div>
 
     {{ form_row(flow.metadata.framework) }}

@@ -2,35 +2,30 @@ import { Controller } from "@hotwired/stimulus";
 import Choices from "choices.js";
 
 /*
- * Choices.js on the wizard's language-model field.
+ * Choices.js on the wizard's language-model `<input>`.
  *
- * The Symfony form renders `languageModel` as a plain
- * `<input type="text">`. Choices.js in text-input mode
- * (`maxItemCount: 1` for single value, `addItems: true` for
- * free-typing, `removeItemButton: true` so the operator can
- * clear a pick with one click) turns it into a pill-style
- * combobox that:
+ * Matches the "Text inputs" demo on
+ * https://choices-js.github.io/Choices/ — tag-style single
+ * value input with:
  *
- * - Shows the SUPPORTED_LANGUAGE_MODELS ∪ previously-persisted-
- *   values shortlist as dropdown suggestions (seeded via
- *   `setChoices()` after init — constructor `choices` is
- *   ignored for text inputs).
- * - Lets the operator commit a suggestion in one click.
- * - Lets the operator free-type a value not on the shortlist
- *   and commit it via Enter (Choices.js shows a
- *   "+ Tilføj: '…'" affordance controlled by `addItemText`).
+ *   - `maxItemCount: 1` — one committed value at a time.
+ *   - `addItems: true` — the operator can type a new value and
+ *     commit it via Enter. `addItemText` supplies the
+ *     "+ Tilføj: '…'" prompt Choices.js surfaces while typing.
+ *   - `removeItemButton: true` — one-click clear on the pill.
  *
- * On JS-off the untouched `<input>` is a plain text field —
- * the picker degrades gracefully.
+ * Known models (SUPPORTED_LANGUAGE_MODELS ∪ persisted values)
+ * are surfaced as help text on the field label — Choices.js's
+ * text-input mode has no "known-choices dropdown" as a feature
+ * (that's a select-mode capability), so the help text is where
+ * operators see what's common and copy-paste if they want.
+ *
+ * Turning JS off leaves a plain `<input>` behind.
  */
 export default class extends Controller {
     static values = {
-        knownOptions: String,
         addText: String,
-        searchPlaceholder: String,
-        noResultsText: String,
-        noChoicesText: String,
-        itemSelectText: String,
+        placeholder: String,
     };
 
     connect() {
@@ -38,16 +33,6 @@ export default class extends Controller {
         if (!input) {
             return;
         }
-
-        let known;
-        try {
-            const parsed = JSON.parse(this.knownOptionsValue || "[]");
-            known = Array.isArray(parsed) ? parsed : [];
-        } catch {
-            known = [];
-        }
-
-        const initial = String(input.value || "").trim();
 
         this.choices = new Choices(input, {
             allowHTML: false,
@@ -57,33 +42,9 @@ export default class extends Controller {
             addItems: true,
             addItemText: (value) => this.addTextValue.replace("%s", value),
             duplicateItemsAllowed: false,
-            searchEnabled: true,
-            searchResultLimit: 50,
-            shouldSort: false,
             placeholder: true,
-            placeholderValue: this.searchPlaceholderValue,
-            searchPlaceholderValue: this.searchPlaceholderValue,
-            noResultsText: this.noResultsTextValue,
-            noChoicesText: this.noChoicesTextValue,
-            itemSelectText: this.itemSelectTextValue,
+            placeholderValue: this.placeholderValue,
         });
-
-        // Seed the dropdown suggestions. `choices` in the
-        // constructor is ignored for text inputs, so we call
-        // `setChoices` explicitly.
-        if (known.length > 0) {
-            this.choices.setChoices(
-                known.map((v) => ({ value: v, label: v })),
-                "value",
-                "label",
-                false,
-            );
-        }
-
-        // Pre-select the extractor's suggestion, if any.
-        if ("" !== initial) {
-            this.choices.setValue([initial]);
-        }
     }
 
     disconnect() {
@@ -91,5 +52,20 @@ export default class extends Controller {
             this.choices.destroy();
             this.choices = null;
         }
+    }
+
+    /**
+     * Commit a suggested value from the help-text pill row into
+     * the widget. Click handler for the buttons the template
+     * renders under the input; each carries the model name on
+     * its `data-value` attribute.
+     */
+    pick(event) {
+        const value = event.currentTarget?.dataset?.value;
+        if (!value || !this.choices) {
+            return;
+        }
+        this.choices.removeActiveItems();
+        this.choices.setValue([value]);
     }
 }
