@@ -35,6 +35,33 @@ class AssistantRepository extends ServiceEntityRepository
     }
 
     /**
+     * List every distinct `languageModel` value in use across the
+     * catalogue.
+     *
+     * Feeds the "custom values" half of the "Del assistent"
+     * language-model picker via
+     * {@see \App\Model\SupportedLanguageModels::list()}. Blank
+     * values are already excluded by the entity's non-empty
+     * constraint, but the query filters defensively in case a
+     * fixture or migration ever slips one through.
+     *
+     * @return list<string> distinct non-empty language-model names, in raw DB order
+     *
+     * @throws \Doctrine\DBAL\Exception when the underlying connection or query execution fails
+     */
+    public function distinctLanguageModels(): array
+    {
+        /** @var list<array{languageModel: string}> $rows */
+        $rows = $this->createQueryBuilder('a')
+            ->select('DISTINCT a.languageModel AS languageModel')
+            ->andWhere("a.languageModel != ''")
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row): string => $row['languageModel'], $rows);
+    }
+
+    /**
      * Paginated catalogue listing filtered by the given criteria.
      *
      * Each facet selection on the criteria is an OR-within / AND-across

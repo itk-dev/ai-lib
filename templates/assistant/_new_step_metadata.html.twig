@@ -2,11 +2,36 @@
     Step 2 body — metadata fields the user reviews and edits.
     Every input is pre-filled from the DTO the flow's step-1
     listener populated via OpenWebUiMetadataExtractor.
+
+    The `languageModel` field renders as a native
+    `<input type="text" list="…">` + `<datalist>` combination.
+    The datalist supplies the union of deploy-time defaults
+    (`SUPPORTED_LANGUAGE_MODELS` env var) and every distinct
+    language-model value already persisted on `Assistant`. A
+    small Stimulus controller enhances the field with an
+    "Add new" affordance when the typed value doesn't match any
+    existing option — the server accepts the typed value as-is,
+    so operators can free-tag without a round-trip.
 #}
+{% set lm = flow.metadata.languageModel %}
+{% set lm_options = lm.vars.language_model_options %}
+{% set lm_datalist_id = lm.vars.language_model_datalist_id %}
 <div class="grid gap-4">
     {{ form_row(flow.metadata.title) }}
     {{ form_row(flow.metadata.description) }}
-    {{ form_row(flow.metadata.languageModel) }}
+    <div data-controller="language-model-picker"
+         data-language-model-picker-existing-value="{{ lm_options|json_encode }}">
+        {{ form_row(lm) }}
+        <datalist id="{{ lm_datalist_id }}">
+            {% for option in lm_options %}
+                <option value="{{ option }}"></option>
+            {% endfor %}
+        </datalist>
+        <p data-language-model-picker-target="hint"
+           data-add-template="{{ 'assistant.new.step_metadata.language_model_add_hint'|trans({'%value%': '__VALUE__'}) }}"
+           aria-live="polite"
+           class="mt-1 hidden text-sm text-primary"></p>
+    </div>
     {{ form_row(flow.metadata.framework) }}
     {{ form_row(flow.metadata.tags) }}
 </div>

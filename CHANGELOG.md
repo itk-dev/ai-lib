@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Free-tagging language-model picker on the "Del assistent"
+  wizard's metadata step. The `languageModel` field renders
+  as a native `<input type="text" list="…">` +
+  `<datalist>` combination with the union of two option
+  sources: the deploy-time `SUPPORTED_LANGUAGE_MODELS` env
+  var (comma-separated names, e.g.
+  `gpt-4o,gpt-4o-mini,claude-3.5-sonnet`), and every distinct
+  `languageModel` value currently persisted on `Assistant`.
+  A model an operator typed in yesterday becomes a suggestion
+  for the next operator today. A new
+  `App\Model\SupportedLanguageModels` service merges the two
+  sets (defaults first in env-var order, custom values
+  appended sorted case-insensitive natural order, deduped) and
+  a new `AssistantRepository::distinctLanguageModels()` query
+  drives the custom half. `AssistantMetadataStepType` wires
+  the datalist id via `list` attribute + `finishView()` view
+  vars, and a new `language-model-picker` Stimulus controller
+  shows a live "+ Tilføj ny: …" aria-live hint whenever the
+  typed value matches nothing in the known set. The server
+  side stays a plain `TextType` — free-typed values submit
+  as-is and land unchanged on `Assistant::$languageModel`.
+  Approach A (string snapshot) recorded as ADR 009; Approach
+  B (promote to entity + JSON create endpoint) is a follow-up
+  if rename / delete workflows ever justify the schema cost
+  ([#177](https://github.com/itk-dev/ai-reolen/issues/177)).
 - `/assistant/new` is now a three-step wizard: **Indsæt JSON**
   → **Gennemgang** → **Kvittering**. The user pastes / uploads
   an OpenWebUI export on step 1, reviews auto-extracted metadata

@@ -159,6 +159,51 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertStringContainsString('/assistant/'.(string) $created->getId(), $body);
     }
 
+    // Verifies step 2 renders the language-model picker: input carries list attr, datalist carries the expected options (fixture models + defaults), and a free-typed value round-trips through to persistence.
+    public function testLanguageModelPickerExposesOptionsAndAcceptsFreeTypedValues(): void
+    {
+        // Advance to step 2.
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $stepOne[$textareaName] = json_encode([
+            'name' => 'Picker demo',
+            'base_model_id' => 'gpt-4o',
+            'meta' => ['description' => 'Free-typed picker demo'],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
+
+        self::assertResponseIsSuccessful();
+
+        // The input carries the `list` attribute pointing at the datalist.
+        $inputList = $crawler->filter('input[name$="[languageModel]"]')->attr('list');
+        self::assertSame('assistantLanguageModelOptions', $inputList);
+
+        // The datalist renders every distinct languageModel value in the fixture
+        // catalogue (the defaults env var is unset in the test environment, so
+        // the picker's options are the custom-values half only).
+        $datalistOptions = $crawler
+            ->filter('datalist#assistantLanguageModelOptions option')
+            ->each(static fn ($node) => (string) $node->attr('value'));
+        // The AssistantFixtures baseline seeds these language-model values.
+        self::assertContains('gpt-4o', $datalistOptions);
+        self::assertContains('claude-3.5-sonnet', $datalistOptions);
+        self::assertContains('llama-3.1-70b', $datalistOptions);
+
+        // Free-type a value that isn't in the picker's options and submit.
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $languageModelField = $this->findFieldName($stepTwo->all(), '[languageModel]');
+        $stepTwo[$languageModelField] = 'brand-new-model-9000';
+        $this->client->submit($stepTwo);
+
+        // Step 3 renders and the persisted row carries the free-typed value verbatim.
+        self::assertResponseIsSuccessful();
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $created = $repository->findOneBy(['title' => 'Picker demo']);
+        self::assertNotNull($created);
+        self::assertSame('brand-new-model-9000', $created->getLanguageModel());
+    }
+
     // Ensures a fresh GET after completing the wizard drops the receipt-state session slot and re-renders step 1.
     public function testGetAfterCompletionResetsToStepOne(): void
     {

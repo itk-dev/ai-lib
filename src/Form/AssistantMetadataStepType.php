@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Framework\SupportedFrameworks;
+use App\Model\SupportedLanguageModels;
 use App\Validator\SupportedFramework;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
@@ -12,6 +13,8 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -42,10 +45,20 @@ final class AssistantMetadataStepType extends AbstractType
     private const string ROW_CLASS = 'grid gap-1 text-sm';
 
     /**
-     * @param SupportedFrameworks $frameworks deploy-time list feeding the framework `<select>` choices + validator
+     * DOM id used for the language-model `<datalist>` the picker
+     * attaches to. Kept as a constant so form + template + Stimulus
+     * controller can reference the same value without drift.
      */
-    public function __construct(private readonly SupportedFrameworks $frameworks)
-    {
+    public const string LANGUAGE_MODEL_DATALIST_ID = 'assistantLanguageModelOptions';
+
+    /**
+     * @param SupportedFrameworks     $frameworks     deploy-time list feeding the framework `<select>` choices + validator
+     * @param SupportedLanguageModels $languageModels deploy-time defaults + user-contributed values feeding the language-model picker
+     */
+    public function __construct(
+        private readonly SupportedFrameworks $frameworks,
+        private readonly SupportedLanguageModels $languageModels,
+    ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -81,6 +94,7 @@ final class AssistantMetadataStepType extends AbstractType
             ])
             ->add('languageModel', TextType::class, [
                 'label' => 'assistant.new.step_metadata.language_model_label',
+                'help' => 'assistant.new.step_metadata.language_model_help',
                 'required' => true,
                 'empty_data' => '',
                 'constraints' => [
@@ -89,7 +103,14 @@ final class AssistantMetadataStepType extends AbstractType
                         groups: ['metadata'],
                     ),
                 ],
-                'attr' => ['class' => self::INPUT_CLASS],
+                'attr' => [
+                    'class' => self::INPUT_CLASS,
+                    'list' => self::LANGUAGE_MODEL_DATALIST_ID,
+                    // Autocomplete `off` so browsers don't compete
+                    // with the `<datalist>` suggestions.
+                    'autocomplete' => 'off',
+                    'spellcheck' => 'false',
+                ],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
@@ -140,5 +161,21 @@ final class AssistantMetadataStepType extends AbstractType
             'inherit_data' => true,
             'validation_groups' => ['Default', 'metadata'],
         ]);
+    }
+
+    /**
+     * Expose the resolved language-model options + the shared
+     * datalist id onto the field's view vars so the template can
+     * render the `<datalist>` and the "Add new" hint without
+     * pulling the service in as a Twig global.
+     *
+     * @param array<string, mixed> $options the resolved form options (unused here — kept for signature parity)
+     */
+    public function finishView(FormView $view, FormInterface $form, array $options): void
+    {
+        if (isset($view['languageModel'])) {
+            $view['languageModel']->vars['language_model_options'] = $this->languageModels->list();
+            $view['languageModel']->vars['language_model_datalist_id'] = self::LANGUAGE_MODEL_DATALIST_ID;
+        }
     }
 }
