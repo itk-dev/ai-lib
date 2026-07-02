@@ -33,23 +33,23 @@ import Choices from "choices.js";
  *    unfiltered list.
  * 2. Doing the filter ourselves lets us guarantee the "+ Tilføj"
  *    row appears exactly once — at the bottom, only when the
- *    query doesn't already match a known option — no matter how
- *    Choices.js's fuse.js scores partial-string matches on the
- *    injected row's label.
+ *    query doesn't already match a known option — and lets us
+ *    hide the currently-selected value from the dropdown so it
+ *    doesn't reappear as the top row on every keystroke.
  *
- * Promoting a free-tag pick
- * -------------------------
- * When the user clicks "+ Tilføj: '…'", Choices.js commits it as
- * the current item and writes its underlying `<option>` into the
- * `<select>` with the `+ Tilføj: '…'` label + a
- * `data-custom-properties="{injected: true}"` marker. Neither
- * `setChoices(replaceChoices: true)` nor `removeActiveItemsByValue`
- * fully strips that residual `<option>` — the select's selected
- * option survives every rebuild by design (Choices.js protects
- * the current value). We work around that by destroying Choices.js,
- * rewriting the `<select>`'s option list to the clean known set
- * with the promoted value pre-selected, and re-initialising
- * Choices.js on the fresh DOM. Nuclear but reliable.
+ * Hiding the current selection
+ * ----------------------------
+ * Choices.js keeps the currently-picked `<option>` in the
+ * underlying `<select>` to preserve the committed value across
+ * `setChoices` calls. When the pick came from an injected
+ * "+ Tilføj" row, that residual `<option>` still carries its
+ * `+ Tilføj: '…'` label + `data-custom-properties="{injected:
+ * true}"` marker, and it resurfaces as a duplicate dropdown row
+ * on subsequent renders. Excluding the current value from our
+ * `setChoices` payload keeps the dropdown clean — the pill
+ * still displays the current selection at the top of the
+ * widget, but the value doesn't get a second row inside the
+ * dropdown list.
  */
 export default class extends Controller {
     static values = {
@@ -82,47 +82,7 @@ export default class extends Controller {
         this.knownOriginals = known.slice();
         this.knownLower = new Set(known.map((v) => String(v).toLowerCase()));
 
-        this.onSearch = this.onSearch.bind(this);
-        this.onChoice = this.onChoice.bind(this);
-        this.initChoices();
-    }
-
-    disconnect() {
-        this.teardownChoices();
-    }
-
-    /**
-     * Instantiate Choices.js against the current `<select>` and
-     * wire the `search` + `choice` event handlers.
-     */
-    initChoices() {
-        this.choices = new Choices(this.select, this.choicesConfig());
-        this.select.addEventListener("search", this.onSearch);
-        this.select.addEventListener("choice", this.onChoice);
-    }
-
-    /**
-     * Destroy the Choices.js instance and detach its event
-     * handlers. Leaves the `<select>` in whatever state it
-     * currently has (the caller reassigns its options before
-     * re-init).
-     */
-    teardownChoices() {
-        if (this.select) {
-            this.select.removeEventListener("search", this.onSearch);
-            this.select.removeEventListener("choice", this.onChoice);
-        }
-        if (this.choices) {
-            this.choices.destroy();
-            this.choices = null;
-        }
-    }
-
-    /**
-     * @returns {import("choices.js").Options}
-     */
-    choicesConfig() {
-        return {
+        this.choices = new Choices(this.select, {
             allowHTML: false,
             searchEnabled: true,
             // Do the filtering ourselves — see the class docblock.
@@ -136,7 +96,23 @@ export default class extends Controller {
             noResultsText: this.noResultsTextValue,
             noChoicesText: this.noChoicesTextValue,
             itemSelectText: this.itemSelectTextValue,
-        };
+        });
+
+        this.onSearch = this.onSearch.bind(this);
+        this.onChoice = this.onChoice.bind(this);
+        this.select.addEventListener("search", this.onSearch);
+        this.select.addEventListener("choice", this.onChoice);
+    }
+
+    disconnect() {
+        if (this.select) {
+            this.select.removeEventListener("search", this.onSearch);
+            this.select.removeEventListener("choice", this.onChoice);
+        }
+        if (this.choices) {
+            this.choices.destroy();
+            this.choices = null;
+        }
     }
 
     onSearch(event) {
@@ -149,39 +125,20 @@ export default class extends Controller {
         if (!props || !props.injected) {
             return;
         }
-        // Promote the typed value to a regular known option.
+        // Promote the typed value into a regular known option so
+        // the next `render()` includes it in the shortlist and
+        // stops offering to re-add it. The residual injected
+        // `<option>` Choices.js keeps around for the current
+        // selection is hidden by `render()`'s current-value
+        // filter — the pill still shows the picked value at the
+        // top of the widget, but the dropdown won't render a
+        // duplicate row for it.
         const value = event.detail.choice.value;
         const valueLower = value.toLowerCase();
         if (!this.knownLower.has(valueLower)) {
             this.knownOriginals.push(value);
             this.knownLower.add(valueLower);
         }
-        // Defer to the next tick so Choices.js has finished
-        // committing the injected pick (writing its residual
-        // `<option>`) before we tear it down.
-        setTimeout(() => this.rebuildWithSelection(value), 0);
-    }
-
-    /**
-     * Rebuild the `<select>` from scratch with the clean known
-     * option set and the given value pre-selected, then
-     * re-instantiate Choices.js on top of it.
-     *
-     * @param {string} selectedValue
-     */
-    rebuildWithSelection(selectedValue) {
-        this.teardownChoices();
-        this.select.innerHTML = "";
-        for (const value of this.knownOriginals) {
-            const opt = document.createElement("option");
-            opt.value = value;
-            opt.textContent = value;
-            if (value === selectedValue) {
-                opt.selected = true;
-            }
-            this.select.appendChild(opt);
-        }
-        this.initChoices();
     }
 
     /**
@@ -189,25 +146,35 @@ export default class extends Controller {
      * query.
      *
      * Emits every known option whose value contains the query
-     * (case-insensitive substring). When the query is non-empty
-     * and doesn't exactly match any known value, appends a single
-     * "+ Tilføj: '<query>'" row so the operator can commit the
-     * free-typed value in one click.
+     * (case-insensitive substring) *except* the currently-
+     * selected value. When the query is non-empty, doesn't
+     * exactly match any known value, and isn't the current
+     * selection, appends a single "+ Tilføj: '<query>'" row so
+     * the operator can commit the free-typed value in one click.
      *
      * @param {string} query the current search-input contents
      */
     render(query) {
         const queryLower = query.toLowerCase();
-        const filtered =
+        const currentValue = this.currentValue();
+        const currentValueLower =
+            null === currentValue ? null : currentValue.toLowerCase();
+
+        const filtered = (
             "" === query
                 ? this.knownOriginals
                 : this.knownOriginals.filter((v) =>
                       v.toLowerCase().includes(queryLower),
-                  );
+                  )
+        ).filter((v) => v.toLowerCase() !== currentValueLower);
 
         const list = filtered.map((v) => ({ value: v, label: v }));
 
-        if ("" !== query && !this.knownLower.has(queryLower)) {
+        if (
+            "" !== query &&
+            !this.knownLower.has(queryLower) &&
+            queryLower !== currentValueLower
+        ) {
             list.push({
                 value: query,
                 label: this.addTextValue.replace("%s", query),
@@ -216,5 +183,26 @@ export default class extends Controller {
         }
 
         this.choices.setChoices(list, "value", "label", true);
+    }
+
+    /**
+     * Return the currently-selected item's value, or `null`
+     * when nothing is selected.
+     *
+     * Choices.js's `getValue(true)` returns the raw value for
+     * select-one; we normalise `undefined` / empty-string to
+     * `null` so callers can compare with a strict equality.
+     *
+     * @returns {string|null}
+     */
+    currentValue() {
+        if (!this.choices) {
+            return null;
+        }
+        const raw = this.choices.getValue(true);
+        if (raw === null || raw === undefined || raw === "") {
+            return null;
+        }
+        return String(raw);
     }
 }
