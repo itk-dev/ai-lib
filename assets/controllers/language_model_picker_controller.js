@@ -43,6 +43,14 @@ export default class extends Controller {
         this.choices = new Choices(this.select, {
             allowHTML: false,
             searchEnabled: true,
+            // We filter the choice list ourselves in `onSearch` so
+            // we can (a) keep the filter in sync with the typed
+            // value round-trip below and (b) inject the free-typed
+            // value as a pickable option without Choices.js's own
+            // filter fighting our `setChoices` call. Every keystroke
+            // rebuilds the choice list from a pre-filtered known
+            // set — one source of truth, no flicker.
+            searchChoices: false,
             searchResultLimit: 50,
             shouldSort: false,
             removeItemButton: false,
@@ -70,21 +78,26 @@ export default class extends Controller {
 
     onSearch(event) {
         const query = String(event.detail?.value ?? "").trim();
-        if ("" === query) {
-            return;
+        const queryLower = query.toLowerCase();
+
+        // Filter the known set to case-insensitive substring
+        // matches on the query. Empty query → whole set.
+        const filtered =
+            "" === query
+                ? this.knownOriginals
+                : this.knownOriginals.filter((v) =>
+                      v.toLowerCase().includes(queryLower),
+                  );
+
+        const list = filtered.map((v) => ({ value: v, label: v }));
+
+        // If the typed value isn't already in the known set,
+        // append it as a pickable row so Enter / click commits
+        // it as-is.
+        if ("" !== query && !this.knownLower.has(queryLower)) {
+            list.push({ value: query, label: query });
         }
-        if (this.knownLower.has(query.toLowerCase())) {
-            return;
-        }
-        // Rebuild the choice list so the typed value shows as a
-        // pickable row alongside any known matches. Choices.js's
-        // own filter narrows the display to matches; the typed
-        // value naturally matches itself.
-        const list = this.knownOriginals.map((v) => ({
-            value: v,
-            label: v,
-        }));
-        list.push({ value: query, label: query });
+
         this.choices.setChoices(list, "value", "label", true);
     }
 
