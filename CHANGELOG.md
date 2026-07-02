@@ -9,26 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- OS2ai brand applied as design tokens: the colour palette is now the
-  OS2ai green (primary/accent), charcoal (text/neutrals and borders),
-  and sand (surfaces) scale, replacing the previous teal/gold. Borders
-  stay neutral charcoal so the sand tint reads only on surfaces and
-  badges; admin pages get a light sand tint instead of pink.
-- OS2ai typography: Inter (self-hosted, variable) is the UI face for
-  body and all headings; DM Serif Display (self-hosted) is reserved as
-  an opt-in display face for editorial/hero. Fonts load via `@font-face`
-  from `assets/fonts/`, dropping the Google Fonts request, and the
-  favicon becomes an on-brand green mark.
-- The site header shows the brand name as a wordmark (the first word in
-  the primary green), replacing the icon tile and tagline. Front-page
-  stat figures sit in subtle sand cards.
-- The hero headline renders in the DM Serif Display face at a fluid
-  `text-hero` display size (a new `@theme` token) that scales smoothly
-  with the viewport, added as a `hero` size on the shared `Heading`
-  component.
-- Fixed the hero heading rendering empty: the `Hero` component now
-  forwards the caller's `heading`/`lead` block content into the nested
-  `Heading` component instead of dropping it.
+- Applied the OS2ai brand: green/charcoal/sand colour tokens replace
+  the old teal/gold, self-hosted Inter + DM Serif Display replace the
+  Google Fonts stack, and the header carries the brand as a wordmark.
 - `/assistant/new` is now a three-step wizard: **Indsæt JSON**
   → **Gennemgang** → **Kvittering**. The user pastes / uploads
   an OpenWebUI export on step 1, reviews auto-extracted metadata
