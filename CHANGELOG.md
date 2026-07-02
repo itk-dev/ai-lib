@@ -9,46 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Pluggable import/export **format abstraction** so a second
-  assistant-config format can be added later as "write an adapter +
-  register it," with no changes to the wizard, creator, or export
-  controller. A `App\Assistant\Format\FormatAdapter` interface
-  (validate, detect, parse-to-source, and canonical ↔ source
-  conversions) is discovered through the `app.format_adapter` tag by
-  `App\Assistant\Format\FormatAdapterRegistry`, which is now the
-  single source of truth for the framework taxonomy — the admin
-  organisation `<select>`, the catalogue framework facet, and the
-  `framework_label` Twig filter all read from it, replacing the
-  retired env-driven `SupportedFrameworks` service. Formats convert
-  through a neutral `App\Assistant\Format\CanonicalModel`, and export
-  gains a `?format=` seam (`AssistantExporter`) for future
-  cross-format downloads. OpenWebUI is the sole implementation
-  (`App\Assistant\Format\OpenWebUiAdapter`); the source config is
-  stored format-agnostically in the `source_config` column, and the
-  wizard sets an assistant's framework from the format detected on
-  step 1 (`App\Assistant\AssistantDraftPrefiller`) rather than a
-  step-2 choice.
-- JSON Schema validation, PII-stripping, and re-importable export
-  for OpenWebUI uploads. A shipped schema
-  (`config/schema/openwebui-model.json`, draft 2020-12, validated
-  with `opis/json-schema`) accepts the three shapes an export
-  arrives in — a one-element array, a flat model object, or an
-  `info`-wrapped object — and rejects arrays that don't hold
-  exactly one model. It is wired into the existing check pipeline
-  (`syntax` + `schema`) so the step-1 upload UI and a server-side
-  `App\Validator\ValidAssistantConfig` form constraint both gate on
-  it. A `App\Assistant\OpenWebUiModelNormalizer` flattens the wrapper
-  shapes, and `App\Assistant\OpenWebUiConfigSanitizer` strips
-  instance-specific data and PII (the source instance's model `id`,
-  the uploading `user`, `user_id`, `access_grants`, `write_access`,
-  timestamps, `is_active`, and `meta.knowledge`) before the model is
-  persisted — only the cleaned functional model reaches the database.
-  The assistant detail page gains a **Download til OpenWebUI** button
-  backed by `GET /assistant/{id}/export`, which rebuilds the
-  array-of-one import payload from the stored model with the
-  catalogue-editable title, description, language model, and tags
-  re-applied, and without the model `id` so the download imports as a
-  new model rather than overwriting the one it came from.
 - Primary site nav now carries only working destinations. **Del
   assistent** points at `/assistant/new`. **Mine assistenter**
   is a new page at `/mine/assistenter` (route
