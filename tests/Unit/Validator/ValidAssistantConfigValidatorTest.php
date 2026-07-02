@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Validator;
 
 use App\Assistant\Format\FormatAdapterRegistry;
 use App\Assistant\Format\OpenWebUiAdapter;
+use App\Assistant\Model\ModelMap;
 use App\Assistant\OpenWebUiConfigSanitizer;
 use App\Assistant\OpenWebUiModelNormalizer;
 use App\Validator\OpenWebUiConfigValidator;
@@ -28,6 +29,7 @@ final class ValidAssistantConfigValidatorTest extends ConstraintValidatorTestCas
                 new OpenWebUiConfigValidator(\dirname(__DIR__, 3).'/config/schema/openwebui-model.json'),
                 new OpenWebUiModelNormalizer(),
                 new OpenWebUiConfigSanitizer(),
+                new ModelMap(\dirname(__DIR__, 3).'/config/model_map.yaml'),
             ),
         ]);
     }

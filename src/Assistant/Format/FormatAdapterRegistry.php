@@ -112,6 +112,28 @@ final class FormatAdapterRegistry
     }
 
     /**
+     * The union of every registered format's required canonical fields.
+     *
+     * The create wizard uses this to decide which canonical fields a
+     * curator must supply, so an assistant imported from a sparse format
+     * can still be exported into any registered format and re-imported
+     * there. Order follows first appearance across adapters.
+     *
+     * @return list<string> the deduplicated required canonical field names
+     */
+    public function requiredForAnyExport(): array
+    {
+        $fields = [];
+        foreach ($this->adapters as $adapter) {
+            foreach ($adapter->requiredCanonicalFields() as $field) {
+                $fields[$field] = true;
+            }
+        }
+
+        return array_keys($fields);
+    }
+
+    /**
      * The install-wide default format id (the first registered), or an
      * empty string when no adapter is registered.
      *

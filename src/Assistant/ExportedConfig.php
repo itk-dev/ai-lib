@@ -11,14 +11,16 @@ namespace App\Assistant;
 final class ExportedConfig
 {
     /**
-     * @param string $payload   the serialised, re-importable config
-     * @param string $mediaType MIME type for the response `Content-Type`
-     * @param string $extension filename extension (without the dot)
+     * @param string       $payload   the serialised, re-importable config
+     * @param string       $mediaType MIME type for the response `Content-Type`
+     * @param string       $extension filename extension (without the dot)
+     * @param list<string> $warnings  non-blocking notes about the export (e.g. a model with no equivalent in the target); the payload is still valid and importable
      */
     public function __construct(
         public readonly string $payload,
         public readonly string $mediaType,
         public readonly string $extension,
+        public readonly array $warnings = [],
     ) {
     }
 }

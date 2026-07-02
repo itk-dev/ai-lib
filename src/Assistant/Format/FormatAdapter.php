@@ -44,6 +44,17 @@ interface FormatAdapter
     public function label(): string;
 
     /**
+     * Whether this format's import/export is experimental.
+     *
+     * OpenWebUI is the manually-verified, supported format; the others
+     * are best-effort and unverified, so the UI can caution the user
+     * before they rely on a round-trip through them.
+     *
+     * @return bool true when the format is experimental
+     */
+    public function isExperimental(): bool;
+
+    /**
      * MIME type of the exported payload (e.g. `application/json`).
      *
      * @return string the media type for the download response
@@ -115,6 +126,21 @@ interface FormatAdapter
      * @throws \App\Assistant\InvalidAssistantInputException when `$raw` fails validation
      */
     public function parseToSource(string $raw): array;
+
+    /**
+     * The canonical fields this format needs to render a payload that
+     * re-imports cleanly.
+     *
+     * The create wizard unions these across every registered format (see
+     * {@see FormatAdapterRegistry::requiredForAnyExport()}) to decide which
+     * fields the curator must supply, so an assistant imported from a
+     * sparse format can still be exported into a stricter one.
+     *
+     * @return list<string> canonical field names, matching
+     *                      {@see CanonicalModel} properties (e.g. `name`,
+     *                      `baseModel`)
+     */
+    public function requiredCanonicalFields(): array;
 
     /**
      * Convert a stored source dict to the neutral canonical model.

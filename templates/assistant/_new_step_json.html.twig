@@ -28,7 +28,7 @@
         <p class="text-sm font-medium text-ink">{{ 'assistant.new.step_json.dropzone_prompt'|trans }}</p>
         <p class="text-xs text-text-muted">{{ 'assistant.new.step_json.dropzone_hint'|trans }}</p>
         <input type="file"
-               accept="application/json,.json"
+               accept=".json,.modelfile,application/json,text/plain"
                data-assistant-config-upload-target="file"
                data-action="change->assistant-config-upload#fileChanged"
                class="sr-only"

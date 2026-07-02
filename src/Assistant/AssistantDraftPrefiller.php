@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Assistant;
 
 use App\Assistant\Format\FormatAdapterRegistry;
+use App\Assistant\Model\ModelMap;
 
 /**
  * Pre-fills step 2 of the create wizard from the config pasted on
@@ -16,14 +17,21 @@ use App\Assistant\Format\FormatAdapterRegistry;
  * touched, so a Back → edit → Next round-trip never clobbers a value
  * the user already changed. An unrecognised payload leaves the draft
  * untouched — the step-1 constraint reports the error separately.
+ *
+ * The detected base model is folded onto its canonical id via
+ * {@see ModelMap} so the step-2 model selector defaults to a recognised
+ * choice; an unrecognised model is kept verbatim as a custom value.
  */
 final class AssistantDraftPrefiller
 {
     /**
-     * @param FormatAdapterRegistry $formats detects the format and converts it to the canonical model
+     * @param FormatAdapterRegistry $formats  detects the format and converts it to the canonical model
+     * @param ModelMap              $modelMap folds the detected base model onto its canonical id
      */
-    public function __construct(private readonly FormatAdapterRegistry $formats)
-    {
+    public function __construct(
+        private readonly FormatAdapterRegistry $formats,
+        private readonly ModelMap $modelMap,
+    ) {
     }
 
     /**
@@ -61,7 +69,7 @@ final class AssistantDraftPrefiller
         }
 
         if ('' === $draft->languageModel && null !== $canonical->baseModel && '' !== $canonical->baseModel) {
-            $draft->languageModel = $canonical->baseModel;
+            $draft->languageModel = $this->modelMap->normalise($canonical->baseModel) ?? $canonical->baseModel;
         }
 
         if ([] === $draft->tags && [] !== $canonical->tags) {

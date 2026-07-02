@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Assistant\Format;
 use App\Assistant\Format\CanonicalModel;
 use App\Assistant\Format\OpenWebUiAdapter;
 use App\Assistant\InvalidAssistantInputException;
+use App\Assistant\Model\ModelMap;
 use App\Assistant\OpenWebUiConfigSanitizer;
 use App\Assistant\OpenWebUiModelNormalizer;
 use App\Validator\OpenWebUiConfigValidator;
@@ -23,6 +24,7 @@ final class OpenWebUiAdapterTest extends TestCase
             new OpenWebUiConfigValidator(\dirname(__DIR__, 4).'/config/schema/openwebui-model.json'),
             new OpenWebUiModelNormalizer(),
             new OpenWebUiConfigSanitizer(),
+            new ModelMap(\dirname(__DIR__, 4).'/config/model_map.yaml'),
         );
     }
 
@@ -35,6 +37,13 @@ final class OpenWebUiAdapterTest extends TestCase
         self::assertSame('Open WebUI', $adapter->label());
         self::assertSame('application/json', $adapter->mediaType());
         self::assertSame('json', $adapter->fileExtension());
+        self::assertFalse($adapter->isExperimental());
+    }
+
+    // Verifies OpenWebUI requires only the canonical name for a re-importable export.
+    public function testRequiredCanonicalFields(): void
+    {
+        self::assertSame(['name'], $this->adapter()->requiredCanonicalFields());
     }
 
     // Verifies supports() accepts a valid OWUI payload and rejects non-OWUI input.

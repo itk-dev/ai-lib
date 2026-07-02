@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Assistant\Model\ModelMap;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -34,6 +37,17 @@ final class AssistantMetadataStepType extends AbstractType
     private const string INPUT_CLASS = 'rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40';
     private const string LABEL_CLASS = 'block font-medium text-ink';
     private const string ROW_CLASS = 'grid gap-1 text-sm';
+
+    /**
+     * The datalist id shared between the model input and its `<datalist>`
+     * of known models rendered by the step-2 template.
+     */
+    public const string MODEL_DATALIST_ID = 'metadata-model-options';
+
+    public function __construct(
+        private readonly ModelMap $modelMap,
+    ) {
+    }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -76,7 +90,11 @@ final class AssistantMetadataStepType extends AbstractType
                         groups: ['metadata'],
                     ),
                 ],
-                'attr' => ['class' => self::INPUT_CLASS],
+                // A free-text input backed by a datalist of known models:
+                // the curator picks a recognised model (stored as its
+                // canonical id, which maps cleanly on export) or types a
+                // custom one.
+                'attr' => ['class' => self::INPUT_CLASS, 'list' => self::MODEL_DATALIST_ID],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
@@ -101,6 +119,26 @@ final class AssistantMetadataStepType extends AbstractType
                 )),
             ))
         ;
+    }
+
+    /**
+     * Expose the known-model choices to the language-model field so the
+     * template can render them as a `<datalist>` for the input.
+     *
+     * Runs in `finishView` (not `buildView`) because child views only
+     * exist once they are built. The flow builds this step's fields only
+     * while it is the active step, so the child is absent on other steps'
+     * renders — skip it then.
+     */
+    public function finishView(FormView $view, FormInterface $form, array $options): void
+    {
+        $languageModel = $view->children['languageModel'] ?? null;
+        if (null === $languageModel) {
+            return;
+        }
+
+        $languageModel->vars['model_choices'] = $this->modelMap->choices();
+        $languageModel->vars['model_datalist_id'] = self::MODEL_DATALIST_ID;
     }
 
     public function configureOptions(OptionsResolver $resolver): void
