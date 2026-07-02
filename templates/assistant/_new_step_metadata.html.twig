@@ -3,15 +3,19 @@
     Every input is pre-filled from the DTO the flow's step-1
     listener populated via OpenWebUiMetadataExtractor.
 
-    The `languageModel` field renders as a native
-    `<input type="text" list="…">` + `<datalist>` combination.
-    The datalist supplies the union of deploy-time defaults
-    (`SUPPORTED_LANGUAGE_MODELS` env var) and every distinct
-    language-model value already persisted on `Assistant`. A
-    small Stimulus controller enhances the field with an
-    "Add new" affordance when the typed value doesn't match any
-    existing option — the server accepts the typed value as-is,
-    so operators can free-tag without a round-trip.
+    The `languageModel` field renders as a plain
+    `<input type="text">` that a Choices.js-backed Stimulus
+    controller enhances into a pill-style combobox. The
+    controller receives the deploy-time-defaults ∪
+    previously-persisted-values shortlist via
+    `data-language-model-picker-existing-value` and offers those
+    as suggestions; any value the operator types that doesn't
+    match a known option surfaces as an explicit "+ Tilføj: '…'"
+    row they can commit.
+
+    Server-side stays a plain `TextType` so free-typed values
+    submit as-is. Turning JS off leaves a fully-usable native
+    text input behind.
 #}
 {% set lm = flow.metadata.languageModel %}
 {% set lm_options = lm.vars.language_model_options %}
@@ -20,17 +24,27 @@
     {{ form_row(flow.metadata.title) }}
     {{ form_row(flow.metadata.description) }}
     <div data-controller="language-model-picker"
-         data-language-model-picker-existing-value="{{ lm_options|json_encode }}">
+         data-language-model-picker-existing-value-value="{{ lm_options|json_encode }}"
+         data-language-model-picker-add-text-value="{{ 'assistant.new.step_metadata.language_model_add_hint'|trans({'%value%': '%s'}) }}"
+         data-language-model-picker-search-placeholder-value="{{ 'assistant.new.step_metadata.language_model_search_placeholder'|trans }}"
+         data-language-model-picker-no-results-text-value="{{ 'assistant.new.step_metadata.language_model_no_results'|trans }}"
+         data-language-model-picker-no-choices-text-value="{{ 'assistant.new.step_metadata.language_model_no_choices'|trans }}"
+         data-language-model-picker-item-select-text-value="{{ 'assistant.new.step_metadata.language_model_item_select'|trans }}">
         {{ form_row(lm) }}
+        {#
+            JS-off fallback: a native `<datalist>` gives the same
+            "type + pick from list" affordance without JS. The
+            `list` attribute on the input (set by
+            AssistantMetadataStepType) targets this datalist id.
+            Choices.js hides the input at connect time, so the
+            datalist becomes inert when JS is on — the two
+            surfaces don't fight each other.
+        #}
         <datalist id="{{ lm_datalist_id }}">
             {% for option in lm_options %}
                 <option value="{{ option }}"></option>
             {% endfor %}
         </datalist>
-        <p data-language-model-picker-target="hint"
-           data-add-template="{{ 'assistant.new.step_metadata.language_model_add_hint'|trans({'%value%': '__VALUE__'}) }}"
-           aria-live="polite"
-           class="mt-1 hidden text-sm text-primary"></p>
     </div>
     {{ form_row(flow.metadata.framework) }}
     {{ form_row(flow.metadata.tags) }}

@@ -26,10 +26,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   drives the custom half. `AssistantMetadataStepType` wires
   the datalist id via `list` attribute + `finishView()` view
   vars, and a new `language-model-picker` Stimulus controller
-  shows a live "+ Tilføj ny: …" aria-live hint whenever the
-  typed value matches nothing in the known set. The server
-  side stays a plain `TextType` — free-typed values submit
-  as-is and land unchanged on `Assistant::$languageModel`.
+  initialises **Choices.js** (in text mode with
+  `maxItemCount: 1`) so the field renders as a pill-style
+  combobox with search-as-you-type, keyboard nav, and an
+  explicit "+ Tilføj: '…'" affordance for values not on the
+  known-value list. Choices.js is pulled in via
+  `importmap:require` + a paired CSS import in
+  `assets/app.js`; no npm/webpack step. A native `<datalist>`
+  stays in the markup as the JS-off fallback — Choices.js
+  hides the original `<input>` at connect time so the two
+  surfaces don't fight each other. The server side stays a
+  plain `TextType` — free-typed values submit as-is and land
+  unchanged on `Assistant::$languageModel`.
   Approach A (string snapshot) recorded as ADR 009; Approach
   B (promote to entity + JSON create endpoint) is a follow-up
   if rename / delete workflows ever justify the schema cost

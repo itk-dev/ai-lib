@@ -127,13 +127,19 @@ isn't a current pain point.
 - `AssistantMetadataStepType` sets `list="assistantLanguageModelOptions"`
   on the `languageModel` `<input>` and exposes the resolved options
   list + datalist id via `finishView()` so the template can render
-  the `<datalist>` and the "Add new" hint without pulling the service
-  in as a Twig global.
+  a native `<datalist>` fallback and hand the same option set to
+  the JS enhancer without pulling the service in as a Twig global.
 - The Stimulus controller
-  `assets/controllers/language_model_picker_controller.js` reads the
-  known-value set at connect time and shows / hides the aria-live
-  "+ Add new: '…'" hint on input. Case-insensitive matching so
-  `GPT-4o` and `gpt-4o` share the same hint state.
+  `assets/controllers/language_model_picker_controller.js`
+  initialises [Choices.js](https://github.com/Choices-js/Choices)
+  in text mode (`maxItemCount: 1`) so the field behaves as a
+  single-value pill-style combobox with search-as-you-type, keyboard
+  navigation, and an explicit "+ Tilføj: '…'" affordance for values
+  not on the known-value list. Choices.js hides the original
+  `<input>` at connect time, so the JS-off `<datalist>` fallback and
+  the JS-on combobox don't fight each other. Choices.js is pulled
+  in via `importmap:require` + a same-named CSS import in
+  `assets/app.js`; no npm/webpack step.
 
 If the rename or delete workflows later become worth the schema cost,
 Approach B is the natural follow-up. This ADR is not superseded until

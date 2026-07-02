@@ -1,44 +1,50 @@
 import { Controller } from "@hotwired/stimulus";
+import Choices from "choices.js";
 
 /*
  * Free-tagging language-model picker on the wizard's metadata
- * step.
+ * step, powered by Choices.js.
  *
- * Enhances a plain `<input type="text" list="…">` +
- * `<datalist>` pairing (rendered by
- * `templates/assistant/_new_step_metadata.html.twig`) with an
- * "Add new" hint that fades in when the currently-typed value
- * matches nothing in the datalist. The server accepts free-typed
- * values as-is, so this controller is purely a UX aid — turning
- * off JS leaves a fully-usable native combobox behind.
+ * Enhances a plain `<input type="text">` (rendered by
+ * `templates/assistant/_new_step_metadata.html.twig`) into a
+ * pill-style combobox that offers the deploy-time-defaults ∪
+ * previously-persisted-values shortlist as suggestions and lets
+ * the user free-tag any value not on the list via an explicit
+ * "+ Tilføj: '…'" affordance.
+ *
+ * Server-side is unchanged — the field stays a plain `TextType`
+ * that accepts any string. Choices.js is configured in text
+ * mode with `maxItemCount: 1` so the picker behaves as a
+ * single-value selector rather than the multi-tag input Choices
+ * defaults to. On form submit the underlying input receives the
+ * committed value (Choices.js writes it back before submit
+ * fires), so the flow's DTO round-trips as before.
  *
  * Wiring:
  *
  * - The wrapper `<div>` carries `data-controller="language-model-picker"`.
- * - The wrapper's `data-language-model-picker-existing-value`
- *   attribute is a JSON array of known option strings, used as
- *   the source of truth for "does the typed value match a
- *   known option?". Reading it once at connect time avoids a
- *   DOM query per keystroke.
- * - The `<p data-language-model-picker-target="hint">` element
- *   inside the wrapper carries the aria-live announcement and
- *   the visible "Add new: …" label. Its `data-add-template`
- *   holds the localised string with an `__VALUE__` placeholder
- *   we substitute at render time; keeping the template in the
- *   DOM keeps the localised copy out of the JS bundle.
+ * - `data-language-model-picker-existing-value` is a JSON array
+ *   of known option strings — the union the server-side service
+ *   built (`SupportedLanguageModels::list()`).
+ * - `data-language-model-picker-add-text` is the localised
+ *   "+ Tilføj: '…'" template with a `%s` placeholder Choices.js
+ *   fills at render time.
+ * - `data-language-model-picker-search-placeholder` /
+ *   `no-results-text` / `no-choices-text` supply the remaining
+ *   localised copy so the JS stays language-agnostic.
  *
- * Behaviour:
- *
- * - When the input matches nothing in the known set (and is
- *   non-empty), the hint is un-hidden and the placeholder
- *   substituted with the typed value.
- * - When the input matches a known option (or is empty), the
- *   hint hides again.
- * - Matching is case-insensitive so `GPT-4o` and `gpt-4o` share
- *   the same hint state.
+ * On JS-off the untouched native `<input>` is a fully-usable
+ * plain text field — the picker degrades gracefully.
  */
 export default class extends Controller {
-    static targets = ["hint"];
+    static values = {
+        existingValue: String,
+        addText: String,
+        searchPlaceholder: String,
+        noResultsText: String,
+        noChoicesText: String,
+        itemSelectText: String,
+    };
 
     connect() {
         this.input = this.element.querySelector('input[type="text"]');
@@ -46,48 +52,45 @@ export default class extends Controller {
             return;
         }
 
-        const raw =
-            this.element.dataset.languageModelPickerExistingValue || "[]";
-        let parsed;
+        let known;
         try {
-            parsed = JSON.parse(raw);
+            const parsed = JSON.parse(this.existingValueValue || "[]");
+            known = Array.isArray(parsed) ? parsed : [];
         } catch {
-            parsed = [];
+            known = [];
         }
-        this.knownLower = new Set(
-            (Array.isArray(parsed) ? parsed : []).map((v) =>
-                String(v).toLowerCase(),
-            ),
-        );
 
-        this.template = this.hasHintTarget
-            ? this.hintTarget.dataset.addTemplate || ""
-            : "";
+        const initialValue = (this.input.value || "").trim();
 
-        this.onInput = this.onInput.bind(this);
-        this.input.addEventListener("input", this.onInput);
-        // Run once so a pre-filled value (extractor's suggestion)
-        // gets the hint state correct on first paint.
-        this.onInput();
+        this.choices = new Choices(this.input, {
+            allowHTML: false,
+            removeItemButton: true,
+            duplicateItemsAllowed: false,
+            editItems: true,
+            maxItemCount: 1,
+            searchEnabled: true,
+            searchResultLimit: 20,
+            addItems: true,
+            addItemText: (value) => this.addTextValue.replace("%s", value),
+            placeholder: true,
+            placeholderValue: this.searchPlaceholderValue,
+            searchPlaceholderValue: this.searchPlaceholderValue,
+            noResultsText: this.noResultsTextValue,
+            noChoicesText: this.noChoicesTextValue,
+            itemSelectText: this.itemSelectTextValue,
+            shouldSort: false,
+            choices: known.map((value) => ({
+                value,
+                label: value,
+                selected: value === initialValue,
+            })),
+        });
     }
 
     disconnect() {
-        if (this.input) {
-            this.input.removeEventListener("input", this.onInput);
+        if (this.choices) {
+            this.choices.destroy();
+            this.choices = null;
         }
-    }
-
-    onInput() {
-        if (!this.hasHintTarget) {
-            return;
-        }
-        const value = (this.input.value || "").trim();
-        if (value === "" || this.knownLower.has(value.toLowerCase())) {
-            this.hintTarget.classList.add("hidden");
-            this.hintTarget.textContent = "";
-            return;
-        }
-        this.hintTarget.textContent = this.template.replace("__VALUE__", value);
-        this.hintTarget.classList.remove("hidden");
     }
 }

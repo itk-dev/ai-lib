@@ -26,4 +26,6 @@ return [
     'app' => ['path' => './assets/app.js', 'entrypoint' => true],
     '@hotwired/stimulus' => ['version' => '3.2.2'],
     '@symfony/stimulus-bundle' => ['path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js'],
+    'choices.js' => ['version' => '11.2.3'],
+    'choices.js/public/assets/styles/choices.css' => ['version' => '11.2.3', 'type' => 'css'],
 ];
