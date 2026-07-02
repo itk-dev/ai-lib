@@ -1,0 +1,15 @@
+{#
+    Readme tab — placeholder for a long-form Markdown-ish README.
+
+    Backed by a future `readme` field on the entity. Rendered muted
+    until the schema and edit flow catches up.
+#}
+<div class="grid gap-4">
+    <h2 class="text-lg font-semibold text-ink">
+        {{ 'assistant.detail.readme.heading'|trans }}
+    </h2>
+    <div class="rounded-xl border border-dashed border-line bg-surface-2 p-6 text-sm text-text-muted italic"
+         role="note">
+        {{ 'assistant.detail.placeholder_body'|trans }}
+    </div>
+</div>
