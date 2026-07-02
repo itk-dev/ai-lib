@@ -45,13 +45,6 @@ final class AssistantMetadataStepType extends AbstractType
     private const string ROW_CLASS = 'grid gap-1 text-sm';
 
     /**
-     * DOM id used for the language-model `<datalist>` the picker
-     * attaches to. Kept as a constant so form + template + Stimulus
-     * controller can reference the same value without drift.
-     */
-    public const string LANGUAGE_MODEL_DATALIST_ID = 'assistantLanguageModelOptions';
-
-    /**
      * @param SupportedFrameworks     $frameworks     deploy-time list feeding the framework `<select>` choices + validator
      * @param SupportedLanguageModels $languageModels deploy-time defaults + user-contributed values feeding the language-model picker
      */
@@ -103,14 +96,7 @@ final class AssistantMetadataStepType extends AbstractType
                         groups: ['metadata'],
                     ),
                 ],
-                'attr' => [
-                    'class' => self::INPUT_CLASS,
-                    'list' => self::LANGUAGE_MODEL_DATALIST_ID,
-                    // Autocomplete `off` so browsers don't compete
-                    // with the `<datalist>` suggestions.
-                    'autocomplete' => 'off',
-                    'spellcheck' => 'false',
-                ],
+                'attr' => ['class' => self::INPUT_CLASS],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
@@ -164,10 +150,11 @@ final class AssistantMetadataStepType extends AbstractType
     }
 
     /**
-     * Expose the resolved language-model options + the shared
-     * datalist id onto the field's view vars so the template can
-     * render the `<datalist>` and the "Add new" hint without
-     * pulling the service in as a Twig global.
+     * Expose the resolved language-model options list onto the
+     * field's view vars so the template can render a `<select>`
+     * seeded with the SUPPORTED_LANGUAGE_MODELS ∪
+     * previously-persisted-values shortlist without pulling the
+     * service in as a Twig global.
      *
      * @param array<string, mixed> $options the resolved form options (unused here — kept for signature parity)
      */
@@ -175,7 +162,6 @@ final class AssistantMetadataStepType extends AbstractType
     {
         if (isset($view['languageModel'])) {
             $view['languageModel']->vars['language_model_options'] = $this->languageModels->list();
-            $view['languageModel']->vars['language_model_datalist_id'] = self::LANGUAGE_MODEL_DATALIST_ID;
         }
     }
 }

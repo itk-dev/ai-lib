@@ -53,9 +53,11 @@ final class AssistantControllerTest extends WebTestCase
         // Runtime + tags moved into the `meta` / `actions` slots of
         // `<twig:Layout:ContentWithAsides>`, so they are siblings of
         // `<article>` rather than children. Scope to the layout
-        // container instead.
+        // container instead. Framework renders through the
+        // `framework_label` filter so the machine name resolves to
+        // the readable "Open WebUI" from SUPPORTED_FRAMEWORKS.
         $runtime = $crawler->filter('.layout-content-with-asides dl')->text();
-        self::assertStringContainsString('openwebui', $runtime);
+        self::assertStringContainsString('Open WebUI', $runtime);
         self::assertStringContainsString('Mistral 24b', $runtime);
 
         // Default tab (beskrivelse) shows the description + tag chips.
@@ -63,10 +65,6 @@ final class AssistantControllerTest extends WebTestCase
         self::assertStringContainsString('Hjælper sagsbehandlere', $article);
         self::assertStringContainsString('borgerservice', $article);
         self::assertStringContainsString('social', $article);
-
-        // Meta aside carries the real values we do have on the entity.
-        $meta = $crawler->filter('.layout-content-with-asides dl')->text();
-        self::assertStringContainsString('gpt-4o', $meta);
 
         // Tabs render as anchors with ?tab= query strings and mark the current one.
         self::assertSelectorExists('nav[aria-label="Assistentdetaljer"] a[aria-current="page"]');

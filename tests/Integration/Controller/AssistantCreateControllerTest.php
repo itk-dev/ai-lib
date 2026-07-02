@@ -159,8 +159,8 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertStringContainsString('/assistant/'.(string) $created->getId(), $body);
     }
 
-    // Verifies step 2 renders the language-model picker: input carries list attr, datalist carries the expected options (fixture models + defaults), and a free-typed value round-trips through to persistence.
-    public function testLanguageModelPickerExposesOptionsAndAcceptsFreeTypedValues(): void
+    // Verifies step 2's language-model picker: the `<select>` is seeded with the fixture-derived options and a picker-selected value round-trips through to persistence.
+    public function testLanguageModelPickerExposesOptionsAndPersistsSelection(): void
     {
         // Advance to step 2.
         $crawler = $this->client->request('GET', '/assistant/new');
@@ -168,39 +168,71 @@ final class AssistantCreateControllerTest extends WebTestCase
         $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
         $stepOne[$textareaName] = json_encode([
             'name' => 'Picker demo',
-            'base_model_id' => 'gpt-4o',
+            'base_model_id' => 'Mistral 24b',
             'meta' => ['description' => 'Free-typed picker demo'],
         ], \JSON_THROW_ON_ERROR);
         $crawler = $this->client->submit($stepOne);
 
         self::assertResponseIsSuccessful();
 
-        // The input carries the `list` attribute pointing at the datalist.
-        $inputList = $crawler->filter('input[name$="[languageModel]"]')->attr('list');
-        self::assertSame('assistantLanguageModelOptions', $inputList);
-
-        // The datalist renders every distinct languageModel value in the fixture
-        // catalogue (the defaults env var is unset in the test environment, so
-        // the picker's options are the custom-values half only).
-        $datalistOptions = $crawler
-            ->filter('datalist#assistantLanguageModelOptions option')
+        // The languageModel field renders as a <select> so Choices.js
+        // can seed it with the SUPPORTED_LANGUAGE_MODELS ∪ persisted-values
+        // shortlist. Every fixture-seeded value appears as an <option>.
+        $selectOptions = $crawler
+            ->filter('select[name$="[languageModel]"] option')
             ->each(static fn ($node) => (string) $node->attr('value'));
-        // The AssistantFixtures baseline seeds these language-model values.
-        self::assertContains('Mistral 24b', $datalistOptions);
-        self::assertContains('GPT-OSS-120B', $datalistOptions);
-        self::assertContains('Gemma 4', $datalistOptions);
-        self::assertContains('Qwen3.5-122b', $datalistOptions);
+        self::assertContains('Mistral 24b', $selectOptions);
+        self::assertContains('GPT-OSS-120B', $selectOptions);
+        self::assertContains('Gemma 4', $selectOptions);
+        self::assertContains('Qwen3.5-122b', $selectOptions);
 
-        // Free-type a value that isn't in the picker's options and submit.
+        // The extractor's pre-filled value ("Mistral 24b") is the
+        // pre-selected option so a straight submit picks it up.
         $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
         $languageModelField = $this->findFieldName($stepTwo->all(), '[languageModel]');
-        $stepTwo[$languageModelField] = 'brand-new-model-9000';
+        // Switch to a different picker-listed value to prove the
+        // form's submitted value drives persistence rather than
+        // the extractor's pre-fill.
+        $stepTwo[$languageModelField]->select('Gemma 4');
         $this->client->submit($stepTwo);
 
-        // Step 3 renders and the persisted row carries the free-typed value verbatim.
+        // Step 3 renders and the persisted row carries the selected value.
         self::assertResponseIsSuccessful();
         $repository = self::getContainer()->get(AssistantRepository::class);
         $created = $repository->findOneBy(['title' => 'Picker demo']);
+        self::assertNotNull($created);
+        self::assertSame('Gemma 4', $created->getLanguageModel());
+    }
+
+    // Ensures a value the extractor pulled out of the JSON that isn't on the picker's shortlist still round-trips — the template emits the current value as a selected `<option>` even when it's not on the union list.
+    public function testLanguageModelPickerCarriesUnknownExtractorValue(): void
+    {
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $stepOne[$textareaName] = json_encode([
+            'name' => 'Unknown model demo',
+            'base_model_id' => 'brand-new-model-9000',
+            'meta' => ['description' => 'A model no fixture uses yet.'],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
+
+        self::assertResponseIsSuccessful();
+
+        // Even though brand-new-model-9000 is on neither the env-var
+        // nor the persisted-values shortlist, the template emits it
+        // as a selected <option> so the DTO's pre-fill survives.
+        $selectedOption = $crawler
+            ->filter('select[name$="[languageModel]"] option[selected]')
+            ->first();
+        self::assertSame('brand-new-model-9000', $selectedOption->attr('value'));
+
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $this->client->submit($stepTwo);
+
+        self::assertResponseIsSuccessful();
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $created = $repository->findOneBy(['title' => 'Unknown model demo']);
         self::assertNotNull($created);
         self::assertSame('brand-new-model-9000', $created->getLanguageModel());
     }

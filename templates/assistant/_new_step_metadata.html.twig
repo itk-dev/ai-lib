@@ -3,49 +3,77 @@
     Every input is pre-filled from the DTO the flow's step-1
     listener populated via OpenWebUiMetadataExtractor.
 
-    The `languageModel` field renders as a plain
-    `<input type="text">` that a Choices.js-backed Stimulus
-    controller enhances into a pill-style combobox. The
-    controller receives the deploy-time-defaults ∪
-    previously-persisted-values shortlist via
-    `data-language-model-picker-existing-value` and offers those
-    as suggestions; any value the operator types that doesn't
-    match a known option surfaces as an explicit "+ Tilføj: '…'"
-    row they can commit.
+    The `languageModel` field renders as a `<select>` — the
+    Choices.js-backed Stimulus controller needs a `<select>` to
+    render its dropdown of suggestions (Choices.js's text-input
+    mode ignores the `choices` config, so a plain `<input>`
+    silently drops the SUPPORTED_LANGUAGE_MODELS shortlist on
+    the floor). The `<select>` is authored manually so we can
+    keep the server-side field as free-typed `TextType` while
+    seeding the dropdown with the union of deploy-time defaults
+    and every distinct value already persisted on `Assistant`.
+    Free-tagging (values not on the list) is handled by the
+    controller listening to Choices.js's `search` event and
+    injecting a "+ Tilføj" pseudo-choice on the fly.
 
-    Server-side stays a plain `TextType` so free-typed values
-    submit as-is. Turning JS off leaves a fully-usable native
-    text input behind.
+    On JS-off, the plain `<select>` remains a fully-usable
+    keyboard combobox; a value outside the list simply can't be
+    typed, which is the honest state-of-the-world for a
+    non-JS environment.
 #}
 {% set lm = flow.metadata.languageModel %}
 {% set lm_options = lm.vars.language_model_options %}
-{% set lm_datalist_id = lm.vars.language_model_datalist_id %}
+{% set lm_value = lm.vars.value %}
+{% set lm_full_name = lm.vars.full_name %}
+{% set lm_id = lm.vars.id %}
+{% set lm_row_class = 'grid gap-1 text-sm' %}
+{% set lm_label_class = 'block font-medium text-ink' %}
+{% set lm_input_class = 'rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40' %}
 <div class="grid gap-4">
     {{ form_row(flow.metadata.title) }}
     {{ form_row(flow.metadata.description) }}
-    <div data-controller="language-model-picker"
+
+    <div class="{{ lm_row_class }}"
+         data-controller="language-model-picker"
          data-language-model-picker-existing-value-value="{{ lm_options|json_encode }}"
          data-language-model-picker-add-text-value="{{ 'assistant.new.step_metadata.language_model_add_hint'|trans({'%value%': '%s'}) }}"
          data-language-model-picker-search-placeholder-value="{{ 'assistant.new.step_metadata.language_model_search_placeholder'|trans }}"
          data-language-model-picker-no-results-text-value="{{ 'assistant.new.step_metadata.language_model_no_results'|trans }}"
          data-language-model-picker-no-choices-text-value="{{ 'assistant.new.step_metadata.language_model_no_choices'|trans }}"
          data-language-model-picker-item-select-text-value="{{ 'assistant.new.step_metadata.language_model_item_select'|trans }}">
-        {{ form_row(lm) }}
-        {#
-            JS-off fallback: a native `<datalist>` gives the same
-            "type + pick from list" affordance without JS. The
-            `list` attribute on the input (set by
-            AssistantMetadataStepType) targets this datalist id.
-            Choices.js hides the input at connect time, so the
-            datalist becomes inert when JS is on — the two
-            surfaces don't fight each other.
-        #}
-        <datalist id="{{ lm_datalist_id }}">
+        <label for="{{ lm_id }}" class="{{ lm_label_class }}">
+            {{ 'assistant.new.step_metadata.language_model_label'|trans }}
+        </label>
+        <select id="{{ lm_id }}" name="{{ lm_full_name }}" class="{{ lm_input_class }}">
+            {#
+                Emit the current value as a selected `<option>` even
+                when it isn't on the known list — otherwise a value
+                the extractor pulled out of the JSON that isn't in
+                the picker's defaults would be silently dropped by
+                the browser's `<select>` validation.
+            #}
+            {% if lm_value is not empty and lm_value not in lm_options %}
+                <option value="{{ lm_value }}" selected>{{ lm_value }}</option>
+            {% endif %}
             {% for option in lm_options %}
-                <option value="{{ option }}"></option>
+                <option value="{{ option }}"{% if option == lm_value %} selected{% endif %}>
+                    {{ option }}
+                </option>
             {% endfor %}
-        </datalist>
+        </select>
+        {% if lm.vars.help is defined and lm.vars.help %}
+            <p class="text-sm text-text-muted">{{ lm.vars.help|trans }}</p>
+        {% endif %}
+        {{ form_errors(lm) }}
+        {#
+            Mark the field as rendered so `form_end(flow)`'s
+            trailing `form_rest` doesn't re-emit it as a plain
+            `<input>` (which would duplicate the name and confuse
+            both the browser and the DomCrawler in tests).
+        #}
+        {% do lm.setRendered %}
     </div>
+
     {{ form_row(flow.metadata.framework) }}
     {{ form_row(flow.metadata.tags) }}
 </div>

@@ -5,36 +5,31 @@ import Choices from "choices.js";
  * Free-tagging language-model picker on the wizard's metadata
  * step, powered by Choices.js.
  *
- * Enhances a plain `<input type="text">` (rendered by
+ * Enhances a `<select>` (rendered by
  * `templates/assistant/_new_step_metadata.html.twig`) into a
- * pill-style combobox that offers the deploy-time-defaults ∪
- * previously-persisted-values shortlist as suggestions and lets
- * the user free-tag any value not on the list via an explicit
- * "+ Tilføj: '…'" affordance.
+ * search-as-you-type combobox that offers the SUPPORTED_LANGUAGE_MODELS
+ * ∪ previously-persisted-values shortlist as options. When the
+ * typed value matches nothing in the shortlist, an ad-hoc
+ * "+ Tilføj: '…'" choice is injected via the `search` event and
+ * a click on it commits the typed value as a real option.
  *
- * Server-side is unchanged — the field stays a plain `TextType`
- * that accepts any string. Choices.js is configured in text
- * mode with `maxItemCount: 1` so the picker behaves as a
- * single-value selector rather than the multi-tag input Choices
- * defaults to. On form submit the underlying input receives the
- * committed value (Choices.js writes it back before submit
- * fires), so the flow's DTO round-trips as before.
+ * Choices.js's text-input mode ignores the constructor `choices`
+ * option — that's why the picker uses `<select>` here rather
+ * than the more obvious `<input type="text">`. Server-side
+ * stays a plain `TextType` because the `<select>` on the form
+ * carries the full form-field name, so a submitted `<option>`
+ * value (whether from the shortlist or the "+ Tilføj" injection)
+ * round-trips through the form as a plain string.
  *
  * Wiring:
  *
  * - The wrapper `<div>` carries `data-controller="language-model-picker"`.
  * - `data-language-model-picker-existing-value` is a JSON array
- *   of known option strings — the union the server-side service
- *   built (`SupportedLanguageModels::list()`).
- * - `data-language-model-picker-add-text` is the localised
- *   "+ Tilføj: '…'" template with a `%s` placeholder Choices.js
- *   fills at render time.
- * - `data-language-model-picker-search-placeholder` /
- *   `no-results-text` / `no-choices-text` supply the remaining
- *   localised copy so the JS stays language-agnostic.
- *
- * On JS-off the untouched native `<input>` is a fully-usable
- * plain text field — the picker degrades gracefully.
+ *   of known option strings — the server-side union built by
+ *   `App\Model\SupportedLanguageModels::list()`.
+ * - The other `data-...-value` attributes hand the controller
+ *   the localised copy so the JS bundle stays
+ *   language-agnostic.
  */
 export default class extends Controller {
     static values = {
@@ -47,10 +42,11 @@ export default class extends Controller {
     };
 
     connect() {
-        this.input = this.element.querySelector('input[type="text"]');
-        if (!this.input) {
+        const select = this.element.querySelector("select");
+        if (!select) {
             return;
         }
+        this.select = select;
 
         let known;
         try {
@@ -59,38 +55,111 @@ export default class extends Controller {
         } catch {
             known = [];
         }
+        // Case-insensitive membership check for the "+ Tilføj"
+        // affordance so `GPT-4o` and `gpt-4o` share the same
+        // is-known state.
+        this.knownLower = new Set(known.map((v) => String(v).toLowerCase()));
 
-        const initialValue = (this.input.value || "").trim();
-
-        this.choices = new Choices(this.input, {
+        this.choices = new Choices(select, {
             allowHTML: false,
-            removeItemButton: true,
-            duplicateItemsAllowed: false,
-            editItems: true,
-            maxItemCount: 1,
             searchEnabled: true,
             searchResultLimit: 20,
-            addItems: true,
-            addItemText: (value) => this.addTextValue.replace("%s", value),
+            shouldSort: false,
+            removeItemButton: false,
             placeholder: true,
             placeholderValue: this.searchPlaceholderValue,
             searchPlaceholderValue: this.searchPlaceholderValue,
             noResultsText: this.noResultsTextValue,
             noChoicesText: this.noChoicesTextValue,
             itemSelectText: this.itemSelectTextValue,
-            shouldSort: false,
-            choices: known.map((value) => ({
-                value,
-                label: value,
-                selected: value === initialValue,
-            })),
         });
+
+        // On every keystroke, inject a "+ Tilføj: '<query>'"
+        // choice when the query doesn't match any known option
+        // (and isn't already the value on a previous injection).
+        this.onSearch = this.onSearch.bind(this);
+        this.onChoice = this.onChoice.bind(this);
+        select.addEventListener("search", this.onSearch);
+        select.addEventListener("choice", this.onChoice);
     }
 
     disconnect() {
+        if (this.select) {
+            this.select.removeEventListener("search", this.onSearch);
+            this.select.removeEventListener("choice", this.onChoice);
+        }
         if (this.choices) {
             this.choices.destroy();
             this.choices = null;
+        }
+    }
+
+    onSearch(event) {
+        const query = String(event.detail?.value ?? "").trim();
+        if ("" === query || this.knownLower.has(query.toLowerCase())) {
+            // Match — Choices.js's own search filter handles the
+            // dropdown. Nothing to inject.
+            return;
+        }
+        // Inject a virtual "+ Tilføj" option. `setChoices` with
+        // `replaceChoices: false` appends, but we want a single
+        // ephemeral row that follows the typed query — clear the
+        // last inject first via `clearChoices` isn't a public API,
+        // so we replace the choice list with the full known set
+        // plus the injected row. Ordering keeps the known matches
+        // first so a real match ranks above the inject.
+        const injected = [
+            {
+                value: query,
+                label: this.addTextValue.replace("%s", query),
+                customProperties: { injected: true },
+            },
+        ];
+        // `setChoices` on a select input replaces the full choice
+        // list. Include the known set so real matches still show.
+        // Casing comes from the initial JSON payload (via
+        // `originalKnown()`) so the picker shows what the user
+        // typed to reach a match rather than the lowercased key.
+        const originals = this.originalKnown();
+        this.choices.setChoices(
+            [...originals.map((v) => ({ value: v, label: v })), ...injected],
+            "value",
+            "label",
+            true,
+        );
+    }
+
+    onChoice(event) {
+        const props = event.detail?.choice?.customProperties;
+        if (!props || !props.injected) {
+            return;
+        }
+        // The user picked the "+ Tilføj" virtual option. The
+        // committed value is the typed query; rebase the choice
+        // set so the value sits alongside the known options
+        // rather than as an ephemeral inject.
+        const value = event.detail.choice.value;
+        this.knownLower.add(value.toLowerCase());
+        this._extraKnown = this._extraKnown || [];
+        this._extraKnown.push(value);
+    }
+
+    /**
+     * Return the currently-known option list in original casing.
+     * Kept as a helper so the search handler can seed
+     * `setChoices()` with the same casing the user sees in the
+     * initial dropdown.
+     */
+    originalKnown() {
+        try {
+            const parsed = JSON.parse(this.existingValueValue || "[]");
+            const base = Array.isArray(parsed) ? parsed : [];
+            if (this._extraKnown && this._extraKnown.length) {
+                return [...base, ...this._extraKnown];
+            }
+            return base;
+        } catch {
+            return [];
         }
     }
 }

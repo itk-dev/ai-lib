@@ -58,7 +58,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(
             $expected,
-            $crawler->filter('a[href^="/assistant/"]')->count(),
+            $crawler->filter('main a[href^="/assistant/"]')->count(),
             'card count must match the Mistral 24b fixture facet count',
         );
         self::assertSelectorTextContains('[aria-label="Aktive filtre"]', 'Mistral 24b');
