@@ -52,7 +52,7 @@ final class AssistantControllerTest extends WebTestCase
         // container instead.
         $runtime = $crawler->filter('.layout-content-with-asides dl')->text();
         self::assertStringContainsString('openwebui', $runtime);
-        self::assertStringContainsString('gpt-4o', $runtime);
+        self::assertStringContainsString('Mistral 24b', $runtime);
 
         $tagsText = $crawler->filter('.layout-content-with-asides ul')->text();
         self::assertStringContainsString('borgerservice', $tagsText);

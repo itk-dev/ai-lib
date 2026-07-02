@@ -48,7 +48,7 @@ final class AssistantRepositoryTest extends KernelTestCase
     // Tests that the languageModels criterion narrows results to rows whose languageModel is in the selected list.
     public function testFindPaginatedFiltersByLanguageModel(): void
     {
-        $criteria = new CatalogCriteria(languageModels: ['gpt-4o']);
+        $criteria = new CatalogCriteria(languageModels: ['Mistral 24b']);
 
         $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
 
@@ -57,8 +57,8 @@ final class AssistantRepositoryTest extends KernelTestCase
             self::assertInstanceOf(Assistant::class, $assistant);
             $models[] = $assistant->getLanguageModel();
         }
-        self::assertNotEmpty($models, 'gpt-4o fixture rows must be reachable');
-        self::assertSame(['gpt-4o'], array_values(array_unique($models)));
+        self::assertNotEmpty($models, 'Mistral 24b fixture rows must be reachable');
+        self::assertSame(['Mistral 24b'], array_values(array_unique($models)));
         self::assertCount(\count($models), $paginator);
     }
 
@@ -99,7 +99,7 @@ final class AssistantRepositoryTest extends KernelTestCase
         self::assertGreaterThan(max($firstIds), min($secondIds), 'page 2 starts after page 1 by id-ASC order');
     }
 
-    // Verifies the facet-count helpers reflect the fixture baseline (five LM buckets summing to 21, single openwebui bucket).
+    // Verifies the facet-count helpers reflect the fixture baseline (four LM buckets summing to 21, single openwebui bucket).
     public function testFacetCountsReflectFixtureBaseline(): void
     {
         $languageModels = $this->repository->languageModelFacetCounts();
@@ -108,7 +108,7 @@ final class AssistantRepositoryTest extends KernelTestCase
         $languageModelKeys = array_keys($languageModels);
         sort($languageModelKeys);
         self::assertSame(
-            ['claude-3.5-sonnet', 'gpt-4o', 'gpt-4o-mini', 'llama-3.1-70b', 'mistral-large'],
+            ['GPT-OSS-120B', 'Gemma 4', 'Mistral 24b', 'Qwen3.5-122b'],
             $languageModelKeys,
         );
         self::assertSame(21, array_sum($languageModels), 'facet counts sum to total fixture rows');

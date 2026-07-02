@@ -186,9 +186,10 @@ final class AssistantCreateControllerTest extends WebTestCase
             ->filter('datalist#assistantLanguageModelOptions option')
             ->each(static fn ($node) => (string) $node->attr('value'));
         // The AssistantFixtures baseline seeds these language-model values.
-        self::assertContains('gpt-4o', $datalistOptions);
-        self::assertContains('claude-3.5-sonnet', $datalistOptions);
-        self::assertContains('llama-3.1-70b', $datalistOptions);
+        self::assertContains('Mistral 24b', $datalistOptions);
+        self::assertContains('GPT-OSS-120B', $datalistOptions);
+        self::assertContains('Gemma 4', $datalistOptions);
+        self::assertContains('Qwen3.5-122b', $datalistOptions);
 
         // Free-type a value that isn't in the picker's options and submit.
         $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();

@@ -61,7 +61,7 @@ final class AssistantFixturesTest extends TestCase
         ));
         sort($models);
         self::assertSame(
-            ['claude-3.5-sonnet', 'gpt-4o', 'gpt-4o-mini', 'llama-3.1-70b', 'mistral-large'],
+            ['GPT-OSS-120B', 'Gemma 4', 'Mistral 24b', 'Qwen3.5-122b'],
             $models,
         );
     }
