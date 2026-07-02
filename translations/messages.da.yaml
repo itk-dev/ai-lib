@@ -21,8 +21,6 @@ nav:
         catalog: "Katalog"
         share: "Del assistent"
         mine: "Mine assistenter"
-        favorites: "Favoritter"
-        collections: "Samlinger"
     user:
         section_user: "Bruger"
         section_admin: "Administration"
@@ -340,6 +338,17 @@ profile:
         submit: "Gem ændringer"
         flash:
             saved: "Profilen er opdateret."
+
+user:
+    assistants:
+        title: "Mine assistenter – %brand%"
+        eyebrow: "Mine assistenter"
+        heading: "Assistenter du har delt"
+        lead: "Assistenter du har uploadet til biblioteket. Nye tilføjelser via »Del assistent« vises her."
+        list_label: "Mine assistenter"
+        empty:
+            heading: "Ingen assistenter endnu"
+            help: "Du har ikke delt en assistent endnu. Klik på »Del assistent« for at komme i gang."
 
 assistant:
     detail:

@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'user.assistants.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+
+{% block body %}
+    <section class="grid gap-8">
+        <header class="grid gap-3">
+            <twig:Eyebrow as="p">{{ 'user.assistants.eyebrow'|trans }}</twig:Eyebrow>
+            <twig:Heading level="1">{{ 'user.assistants.heading'|trans }}</twig:Heading>
+            <p class="max-w-[60ch] text-base text-text">{{ 'user.assistants.lead'|trans }}</p>
+        </header>
+
+        {% if assistants is empty %}
+            <twig:EmptyState heading="user.assistants.empty.heading" help="user.assistants.empty.help" />
+        {% else %}
+            <ul role="list"
+                aria-label="{{ 'user.assistants.list_label'|trans }}"
+                class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {% for assistant in assistants %}
+                    <li class="h-full">
+                        <twig:Catalog:AssistantCard
+                            assistant="{{ assistant }}"
+                            href="{{ path('app_assistant_show', {id: assistant.id}) }}"
+                        />
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+{% endblock %}
