@@ -132,9 +132,18 @@ export default class extends Controller {
             this.knownOriginals.push(value);
             this.knownLower.add(valueLower);
         }
-        // Rebuild without the injected row so the newly-promoted
-        // value replaces its placeholder representation.
+        // Choices.js's `setChoices(replaceChoices: true)` replaces
+        // the choice list but *preserves* the currently-selected
+        // item — so the underlying `<option>` from the injected
+        // pick (with its `+ Tilføj: '…'` label + `data-custom-
+        // properties="{injected:true}"` marker) survives the
+        // rebuild. Remove that item first, rebuild the choice
+        // list with the promoted value included, then re-select
+        // the value from the clean list so its option is a plain
+        // one.
+        this.choices.removeActiveItemsByValue(value);
         this.render("");
+        this.choices.setChoiceByValue(value);
     }
 
     /**
