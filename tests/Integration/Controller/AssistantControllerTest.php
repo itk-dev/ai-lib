@@ -17,6 +17,11 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * keys are exercised together. Uses the baseline catalogue loaded by
  * `tests/bootstrap_integration.php` (see `AssistantFixtures`); each
  * test's mutations are rolled back by DAMA at tearDown.
+ *
+ * The detail page renders four tabs (Beskrivelse / Modelkort /
+ * Readme / JSON) driven by the `?tab=` query parameter. The tests
+ * below walk each one so the tab-partial include paths are
+ * covered.
  */
 final class AssistantControllerTest extends WebTestCase
 {
@@ -33,8 +38,8 @@ final class AssistantControllerTest extends WebTestCase
         $this->client->loginUser($alice);
     }
 
-    // Tests that GET /assistant/{id} renders the title, description, runtime box, and tag list for a fixture row.
-    public function testRendersAssistantDetail(): void
+    // Tests that GET /assistant/{id} renders the title, description flow, meta aside, and tab bar.
+    public function testRendersDefaultTab(): void
     {
         $repository = self::getContainer()->get(AssistantRepository::class);
         $assistant = $repository->findOneBy(['title' => 'Borgerservice-vejviser']);
@@ -44,23 +49,59 @@ final class AssistantControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Borgerservice-vejviser');
-        self::assertSelectorTextContains('article', 'Hjælper sagsbehandlere');
 
-        // Runtime + tags moved into the `meta` / `actions` slots of
-        // `<twig:Layout:ContentWithAsides>`, so they are siblings of
-        // `<article>` rather than children. Scope to the layout
-        // container instead.
-        $runtime = $crawler->filter('.layout-content-with-asides dl')->text();
-        self::assertStringContainsString('openwebui', $runtime);
-        self::assertStringContainsString('gpt-4o', $runtime);
+        // Default tab (beskrivelse) shows the description + tag chips.
+        $article = $crawler->filter('article')->text();
+        self::assertStringContainsString('Hjælper sagsbehandlere', $article);
+        self::assertStringContainsString('borgerservice', $article);
+        self::assertStringContainsString('social', $article);
 
-        $tagsText = $crawler->filter('.layout-content-with-asides ul')->text();
-        self::assertStringContainsString('borgerservice', $tagsText);
-        self::assertStringContainsString('social', $tagsText);
-        self::assertStringContainsString('jura', $tagsText);
+        // Meta aside carries the real values we do have on the entity.
+        $meta = $crawler->filter('.layout-content-with-asides dl')->text();
+        self::assertStringContainsString('gpt-4o', $meta);
+
+        // Tabs render as anchors with ?tab= query strings and mark the current one.
+        self::assertSelectorExists('nav[aria-label="Assistentdetaljer"] a[aria-current="page"]');
+        self::assertSelectorTextContains('nav[aria-label="Assistentdetaljer"] a[aria-current="page"]', 'Beskrivelse');
     }
 
-    // Ensures the tags `<ul>` is omitted entirely when the assistant has no tags.
+    // Verifies each whitelisted ?tab= value renders the matching partial heading.
+    public function testEachTabRendersItsPartial(): void
+    {
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $assistant = $repository->findOneBy(['title' => 'Borgerservice-vejviser']);
+        self::assertNotNull($assistant);
+        $base = '/assistant/'.$assistant->getId();
+
+        $cases = [
+            'modelkort' => ['heading' => 'Modelkort', 'tabLabel' => 'Modelkort'],
+            'readme' => ['heading' => 'Readme', 'tabLabel' => 'Readme'],
+            'json' => ['heading' => 'Eksportér konfiguration', 'tabLabel' => 'JSON'],
+        ];
+
+        foreach ($cases as $tab => $expected) {
+            $this->client->request('GET', $base.'?tab='.$tab);
+
+            self::assertResponseIsSuccessful();
+            self::assertSelectorTextContains('article h2', $expected['heading'], "tab={$tab} must render its own H2 heading");
+            self::assertSelectorTextContains('nav[aria-label="Assistentdetaljer"] a[aria-current="page"]', $expected['tabLabel']);
+        }
+    }
+
+    // Ensures an unknown ?tab= value falls back to the default (beskrivelse) tab silently, no 4xx.
+    public function testUnknownTabFallsBackToDefault(): void
+    {
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $assistant = $repository->findOneBy(['title' => 'Borgerservice-vejviser']);
+        self::assertNotNull($assistant);
+
+        $crawler = $this->client->request('GET', '/assistant/'.$assistant->getId().'?tab=no-such-tab');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('nav[aria-label="Assistentdetaljer"] a[aria-current="page"]', 'Beskrivelse');
+    }
+
+    // Ensures the tags <ul> is omitted entirely when the assistant has no tags.
     public function testOmitsTagsSectionWhenAssistantHasNone(): void
     {
         $repository = self::getContainer()->get(AssistantRepository::class);
@@ -70,7 +111,9 @@ final class AssistantControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/assistant/'.$tagless->getId());
 
         self::assertResponseIsSuccessful();
-        self::assertCount(0, $crawler->filter('.layout-content-with-asides ul'), 'tags <ul> must be absent when the list is empty');
+        // The tab bar is a <nav>, so `article ul` catches only the
+        // content <ul> — tags-heading + list are omitted when empty.
+        self::assertCount(0, $crawler->filter('article ul'), 'tags <ul> must be absent when the list is empty');
     }
 
     // Verifies that a non-existent assistant id returns a 404 response.

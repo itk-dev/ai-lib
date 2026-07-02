@@ -86,7 +86,9 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertCount(1, $next, 'page 1 must offer a "next" link to page 2');
         self::assertStringContainsString('page=2', (string) $next->attr('href'));
 
-        $current = $crawler->filter('[aria-current="page"]');
+        // Scope to <main> so the nav's active Catalog link (which now
+        // also carries aria-current="page") doesn't inflate the match.
+        $current = $crawler->filter('main [aria-current="page"]');
         self::assertSame('1', trim($current->text()), 'page 1 badge marks the current page');
 
         $page2Link = $crawler->filter('a[aria-label="Side 2"]');

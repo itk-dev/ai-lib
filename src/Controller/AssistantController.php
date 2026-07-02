@@ -16,11 +16,26 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 
 final class AssistantController extends AbstractController
 {
+    /**
+     * Whitelisted tab ids for the detail page. The `?tab=` query
+     * parameter is validated against this list; anything else falls
+     * back to {@see self::DEFAULT_TAB} silently.
+     */
+    private const array DETAIL_TABS = ['beskrivelse', 'modelkort', 'readme', 'json'];
+    private const string DEFAULT_TAB = 'beskrivelse';
+
     #[Route(path: '/assistant/{id}', name: 'app_assistant_show', requirements: ['id' => Requirement::ULID], methods: ['GET'])]
-    public function show(Assistant $assistant): Response
+    public function show(Assistant $assistant, Request $request): Response
     {
+        $tab = (string) $request->query->get('tab', self::DEFAULT_TAB);
+        if (!\in_array($tab, self::DETAIL_TABS, true)) {
+            $tab = self::DEFAULT_TAB;
+        }
+
         return $this->render('assistant/show.html.twig', [
             'assistant' => $assistant,
+            'tab' => $tab,
+            'tabs' => self::DETAIL_TABS,
         ]);
     }
 
