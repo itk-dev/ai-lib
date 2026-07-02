@@ -159,10 +159,9 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertStringContainsString('/assistant/'.(string) $created->getId(), $body);
     }
 
-    // Verifies step 2's language-model picker exposes the known-models shortlist as clickable help-text pills and a free-typed value round-trips through to persistence.
-    public function testLanguageModelPickerExposesShortlistAndPersistsFreeTypedValue(): void
+    // Verifies step 2's language-model `<select>` carries the SUPPORTED_LANGUAGE_MODELS ∪ persisted-values shortlist as options and a picker-selected value round-trips through to persistence.
+    public function testLanguageModelPickerExposesShortlistAndPersistsSelection(): void
     {
-        // Advance to step 2.
         $crawler = $this->client->request('GET', '/assistant/new');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
         $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
@@ -175,28 +174,54 @@ final class AssistantCreateControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
 
-        // The template surfaces the SUPPORTED_LANGUAGE_MODELS
-        // ∪ persisted-values shortlist as clickable
-        // help-text pills below the input.
-        $suggestions = $crawler
-            ->filter('[data-controller="language-model-picker"] button[data-action*="language-model-picker#pick"]')
-            ->each(static fn ($node) => (string) $node->attr('data-value'));
-        self::assertContains('Mistral 24b', $suggestions);
-        self::assertContains('GPT-OSS-120B', $suggestions);
-        self::assertContains('Gemma 4', $suggestions);
-        self::assertContains('Qwen3.5-122b', $suggestions);
+        $selectOptions = $crawler
+            ->filter('select[name$="[languageModel]"] option')
+            ->each(static fn ($node) => (string) $node->attr('value'));
+        self::assertContains('Mistral 24b', $selectOptions);
+        self::assertContains('GPT-OSS-120B', $selectOptions);
+        self::assertContains('Gemma 4', $selectOptions);
+        self::assertContains('Qwen3.5-122b', $selectOptions);
 
-        // Submit the languageModel input with a free-typed value —
-        // the server accepts any string via the plain TextType field.
+        // Pick a different picker-listed value to prove the
+        // form's submitted value drives persistence rather than
+        // the extractor's pre-fill.
         $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
         $languageModelField = $this->findFieldName($stepTwo->all(), '[languageModel]');
-        $stepTwo[$languageModelField] = 'brand-new-model-9000';
+        $stepTwo[$languageModelField]->select('Gemma 4');
         $this->client->submit($stepTwo);
 
-        // Step 3 renders and the persisted row carries the free-typed value.
         self::assertResponseIsSuccessful();
         $repository = self::getContainer()->get(AssistantRepository::class);
         $created = $repository->findOneBy(['title' => 'Picker demo']);
+        self::assertNotNull($created);
+        self::assertSame('Gemma 4', $created->getLanguageModel());
+    }
+
+    // Ensures a value the extractor pulled out of the JSON that isn't on the shortlist still round-trips — the template pre-emits it as a selected `<option>` so the DTO's pre-fill survives.
+    public function testLanguageModelPickerCarriesUnknownExtractorValue(): void
+    {
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $stepOne[$textareaName] = json_encode([
+            'name' => 'Unknown model demo',
+            'base_model_id' => 'brand-new-model-9000',
+            'meta' => ['description' => 'A model no fixture uses yet.'],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
+
+        self::assertResponseIsSuccessful();
+        $selectedOption = $crawler
+            ->filter('select[name$="[languageModel]"] option[selected]')
+            ->first();
+        self::assertSame('brand-new-model-9000', $selectedOption->attr('value'));
+
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $this->client->submit($stepTwo);
+
+        self::assertResponseIsSuccessful();
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $created = $repository->findOneBy(['title' => 'Unknown model demo']);
         self::assertNotNull($created);
         self::assertSame('brand-new-model-9000', $created->getLanguageModel());
     }

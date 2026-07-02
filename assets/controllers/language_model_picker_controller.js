@@ -2,48 +2,43 @@ import { Controller } from "@hotwired/stimulus";
 import Choices from "choices.js";
 
 /*
- * Choices.js on the wizard's language-model `<input>`.
+ * Choices.js on the wizard's language-model `<select>`.
  *
- * Matches the "Text inputs" demo on
- * https://choices-js.github.io/Choices/ — tag-style single
- * value input with:
+ * Same shape as the "Options from remote source" example on
+ * https://choices-js.github.io/Choices/ — a `<select>` element
+ * with the option list seeded (in our case synchronously from
+ * the template's data attribute rather than fetched, but the
+ * pattern is the same). Default single-select search UI: type
+ * to filter, click / Enter to pick, one visible pill for the
+ * selection. Turning JS off leaves the plain `<select>`.
  *
- *   - `maxItemCount: 1` — one committed value at a time.
- *   - `addItems: true` — the operator can type a new value and
- *     commit it via Enter. `addItemText` supplies the
- *     "+ Tilføj: '…'" prompt Choices.js surfaces while typing.
- *   - `removeItemButton: true` — one-click clear on the pill.
- *
- * Known models (SUPPORTED_LANGUAGE_MODELS ∪ persisted values)
- * are surfaced as help text on the field label — Choices.js's
- * text-input mode has no "known-choices dropdown" as a feature
- * (that's a select-mode capability), so the help text is where
- * operators see what's common and copy-paste if they want.
- *
- * Turning JS off leaves a plain `<input>` behind.
+ * Free-tagging (typing a model that isn't on the list) is
+ * intentionally not wired: Choices.js's select modes don't
+ * support it, and mixing text-input mode (which does) with
+ * choice seeding doesn't work — the two are separate widgets.
+ * If free-tagging turns out to be a hard requirement, the
+ * follow-up is a hand-rolled combobox rather than more layers
+ * on top of Choices.js.
  */
 export default class extends Controller {
     static values = {
-        addText: String,
         placeholder: String,
     };
 
     connect() {
-        const input = this.element.querySelector('input[type="text"]');
-        if (!input) {
+        const select = this.element.querySelector("select");
+        if (!select) {
             return;
         }
-
-        this.choices = new Choices(input, {
+        this.choices = new Choices(select, {
             allowHTML: false,
-            editItems: true,
-            maxItemCount: 1,
-            removeItemButton: true,
-            addItems: true,
-            addItemText: (value) => this.addTextValue.replace("%s", value),
-            duplicateItemsAllowed: false,
+            searchEnabled: true,
+            searchResultLimit: 50,
+            shouldSort: false,
+            removeItemButton: false,
             placeholder: true,
             placeholderValue: this.placeholderValue,
+            searchPlaceholderValue: this.placeholderValue,
         });
     }
 
@@ -52,20 +47,5 @@ export default class extends Controller {
             this.choices.destroy();
             this.choices = null;
         }
-    }
-
-    /**
-     * Commit a suggested value from the help-text pill row into
-     * the widget. Click handler for the buttons the template
-     * renders under the input; each carries the model name on
-     * its `data-value` attribute.
-     */
-    pick(event) {
-        const value = event.currentTarget?.dataset?.value;
-        if (!value || !this.choices) {
-            return;
-        }
-        this.choices.removeActiveItems();
-        this.choices.setValue([value]);
     }
 }
