@@ -7,6 +7,7 @@ namespace App\Security;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Notification\AdminRegistrationNotifier;
+use App\Notification\EmailConfirmationNotifier;
 use App\Notification\RegistrationConfirmationNotifier;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -29,31 +30,38 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
  * 5. The name must be non-empty (rule shared with {@see UserManager}).
  *
  * On success the new {@see User} is persisted with
- * `status = Pending`. The {@see \App\Security\AccountStatusChecker}
- * keeps them out of the login flow until a domain manager approves
- * the row.
+ * `status = AwaitingEmailConfirmation`. Three transactional emails
+ * are dispatched: the admin moderator notification, a "thanks for
+ * registering" courtesy message to the user, and the single-use
+ * confirmation link that flips the status to `Pending` once
+ * clicked. The {@see \App\Security\AccountStatusChecker} keeps the
+ * user out of the login flow at every status below `Approved`, so
+ * the moderator queue still gates site access regardless of
+ * whether the user has confirmed their email yet.
  *
  * On a duplicate e-mail the method is intentionally idempotent — it
  * returns `null` rather than throwing, so the controller can render
- * the same "thanks, awaiting approval" response and no information
- * leaks about whether the address is already registered.
+ * the same response and no information leaks about whether the
+ * address is already registered.
  */
 final class Registration
 {
     /**
-     * @param UserManager                       $userManager                       owns the persistence + password-hashing step
-     * @param AllowedEmailDomains               $allowedEmailDomains               domain allow-list parsed from the env var
-     * @param AdminRegistrationNotifier         $adminNotifier                     fires the moderator-inbox notification
-     * @param RegistrationConfirmationNotifier  $confirmationNotifier              fires the user-facing confirmation
-     * @param LoggerInterface                   $logger                            receives a warning on transient mailer failures
-     * @param RateLimiterFactoryInterface  $registrationPerIp      per-IP rate limiter (10/day by default)
-     * @param RateLimiterFactoryInterface  $registrationSystemWide system-wide rate limiter (100/day by default)
+     * @param UserManager                      $userManager            owns the persistence + password-hashing step
+     * @param AllowedEmailDomains              $allowedEmailDomains    domain allow-list parsed from the env var
+     * @param AdminRegistrationNotifier        $adminNotifier          fires the moderator-inbox notification
+     * @param RegistrationConfirmationNotifier $confirmationNotifier   fires the user-facing courtesy confirmation
+     * @param EmailConfirmationNotifier        $emailLinkNotifier      fires the single-use email-confirmation link
+     * @param LoggerInterface                  $logger                 receives a warning on transient mailer failures
+     * @param RateLimiterFactoryInterface      $registrationPerIp      per-IP rate limiter (10/day by default)
+     * @param RateLimiterFactoryInterface      $registrationSystemWide system-wide rate limiter (100/day by default)
      */
     public function __construct(
         private readonly UserManager $userManager,
         private readonly AllowedEmailDomains $allowedEmailDomains,
         private readonly AdminRegistrationNotifier $adminNotifier,
         private readonly RegistrationConfirmationNotifier $confirmationNotifier,
+        private readonly EmailConfirmationNotifier $emailLinkNotifier,
         private readonly LoggerInterface $logger,
         #[Autowire(service: 'limiter.registration_per_ip')]
         private readonly RateLimiterFactoryInterface $registrationPerIp,
@@ -63,7 +71,7 @@ final class Registration
     }
 
     /**
-     * Run the self-signup pipeline and persist a `Pending` user.
+     * Run the self-signup pipeline and persist an `AwaitingEmailConfirmation` user.
      *
      * The thrown exceptions carry localised translation keys; the
      * controller uses them as the rendered form error. A duplicate
@@ -76,7 +84,7 @@ final class Registration
      * @param string $plainPassword        chosen password
      * @param string $plainPasswordConfirm confirmation field; must match `$plainPassword`
      *
-     * @return User|null the persisted user with `status = Pending`, or null when the e-mail is already registered
+     * @return User|null the persisted user with `status = AwaitingEmailConfirmation`, or null when the e-mail is already registered
      *
      * @throws RateLimitedRegistrationException when either the per-IP or system-wide limiter rejects the request
      * @throws RegistrationException            when any of the inputs fails validation
@@ -120,7 +128,7 @@ final class Registration
                 $email,
                 trim($name),
                 $plainPassword,
-                status: UserStatus::Pending,
+                status: UserStatus::AwaitingEmailConfirmation,
             );
         } catch (\DomainException) {
             // Idempotent: same outward response as a fresh registration
@@ -158,14 +166,15 @@ final class Registration
     }
 
     /**
-     * Fire the two transactional emails triggered by a fresh signup.
+     * Fire the three transactional emails triggered by a fresh signup.
      *
-     * Wrapped in a try/catch around the mailer transport — a
-     * transient delivery failure must not undo the persisted user
-     * (the moderator can still review and approve the row through
-     * `/admin/users`), so failures are logged and swallowed.
+     * Each send is wrapped in its own try/catch around the mailer
+     * transport — a transient delivery failure must not undo the
+     * persisted user (the moderator can still review and approve
+     * the row through `/admin/users`, and a confirmation link can
+     * be re-issued), so failures are logged and swallowed.
      *
-     * @param User $user the freshly-created pending user
+     * @param User $user the freshly-created `AwaitingEmailConfirmation` user
      */
     private function dispatchNotifications(User $user): void
     {
@@ -182,6 +191,15 @@ final class Registration
             $this->confirmationNotifier->confirmRegistration($user);
         } catch (TransportExceptionInterface $e) {
             $this->logger->warning('Failed to deliver registration confirmation mail.', [
+                'user_email' => $user->getUserIdentifier(),
+                'exception' => $e,
+            ]);
+        }
+
+        try {
+            $this->emailLinkNotifier->sendConfirmationLink($user);
+        } catch (TransportExceptionInterface $e) {
+            $this->logger->warning('Failed to deliver email-confirmation link mail.', [
                 'user_email' => $user->getUserIdentifier(),
                 'exception' => $e,
             ]);

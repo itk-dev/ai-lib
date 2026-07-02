@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller;
 
+use App\DataFixtures\UserFixtures;
 use App\Entity\Tag;
 use App\Repository\AssistantRepository;
 use App\Repository\UserRepository;
@@ -11,13 +12,13 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * End-to-end coverage of the assistant create form and its AJAX
- * validation endpoint.
+ * End-to-end coverage of the three-step assistant-create wizard.
  *
- * The AJAX endpoint accepts a `check` identifier and runs only that
- * check, so the client can step a progress bar forward one notch per
- * completed check. The form-submit path goes through
- * `AssistantCreator` which runs the full pipeline.
+ * The wizard uses Symfony's `AbstractFlowType` with
+ * `SessionDataStorage`, so tests thread session cookies via
+ * `KernelBrowser` across the step boundaries. Each test either
+ * exercises one step or walks all three (step 1 → step 2 →
+ * receipt) as a full happy-path.
  */
 final class AssistantCreateControllerTest extends WebTestCase
 {
@@ -27,27 +28,28 @@ final class AssistantCreateControllerTest extends WebTestCase
     {
         $this->client = self::createClient();
         // The create form is gated behind authentication (any
-        // logged-in user; no role required), so log in a baseline
-        // fixture user before each test.
-        $alice = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'alice@example.test']);
+        // logged-in user; no role required), so log in the
+        // fixture baseline user before each test.
+        $alice = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => UserFixtures::ALICE_EMAIL]);
         \assert(null !== $alice, 'UserFixtures must seed alice@example.test.');
         $this->client->loginUser($alice);
     }
 
-    // Tests that GET /assistant/new renders the form with every expected input.
-    public function testFormRenders(): void
+    // Tests that GET /assistant/new renders step 1 with the JSON textarea + file input, plus the step rail.
+    public function testFormRendersStepOne(): void
     {
-        $this->client->request('GET', '/assistant/new');
+        $crawler = $this->client->request('GET', '/assistant/new');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('input[name="title"]');
-        self::assertSelectorExists('textarea[name="description"]');
-        self::assertSelectorExists('input[name="language_model"]');
-        self::assertSelectorExists('input[name="framework"]');
-        self::assertSelectorExists('input[name="tags"]');
-        self::assertSelectorExists('textarea[name="openwebui_config"]');
-        self::assertSelectorExists('input[name="_token"]');
+        // Step 1 body: file input + a JSON textarea, no metadata fields yet.
         self::assertSelectorExists('input[type="file"]');
+        self::assertSelectorExists('textarea[name$="[openwebuiConfig]"]');
+        self::assertSelectorNotExists('input[name$="[title]"]');
+        // Step rail shows all three step labels.
+        $body = $crawler->filter('body')->text();
+        self::assertStringContainsString('Indsæt JSON', $body);
+        self::assertStringContainsString('Gennemgang', $body);
+        self::assertStringContainsString('Kvittering', $body);
     }
 
     // Verifies the AJAX validation endpoint returns valid=true for the syntax check on parseable JSON.
@@ -101,67 +103,141 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertNotEmpty($payload['errors']);
     }
 
-    // Tests the happy path: a valid submit creates an Assistant with the parsed config and redirects to its detail page.
-    public function testSubmitPersistsAssistantWithConfig(): void
+    // Full happy-path: valid JSON on step 1 → auto-extracted metadata on step 2 → persist → step 3 receipt with permalink.
+    public function testHappyPathAcrossThreeSteps(): void
     {
+        // Step 1: paste a JSON payload with fields the extractor knows how to map.
         $crawler = $this->client->request('GET', '/assistant/new');
-        $form = $crawler->filter('form')->form();
-        $form['title'] = 'Test assistant';
-        $form['description'] = 'Test description';
-        $form['language_model'] = 'gpt-4o';
-        $form['framework'] = 'openwebui';
-        $form['tags'] = 'alpha, beta';
-        $form['openwebui_config'] = '{"name":"demo","temperature":0.5}';
-        $this->client->submit($form);
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $stepOne[$textareaName] = json_encode([
+            'name' => 'Demo assistant',
+            'base_model_id' => 'gpt-4o',
+            'meta' => [
+                'description' => 'A demo assistant',
+                'tags' => ['alpha', 'beta'],
+            ],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
 
-        self::assertResponseRedirects();
-        $location = (string) $this->client->getResponse()->headers->get('Location');
-        // Entity ids are ULIDs after the entity-bundle adoption (26-char Crockford base32).
-        self::assertMatchesRegularExpression('#^/assistant/[0-9A-HJKMNP-TV-Z]{26}$#', $location);
+        // Landed on step 2 with metadata pre-filled from the JSON.
+        self::assertResponseIsSuccessful();
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $titleField = $this->findFieldName($stepTwo->all(), '[title]');
+        self::assertSame('Demo assistant', $stepTwo[$titleField]->getValue());
+
+        $descriptionField = $this->findFieldName($stepTwo->all(), '[description]');
+        self::assertSame('A demo assistant', $stepTwo[$descriptionField]->getValue());
+
+        $languageModelField = $this->findFieldName($stepTwo->all(), '[languageModel]');
+        self::assertSame('gpt-4o', $stepTwo[$languageModelField]->getValue());
+
+        $tagsField = $this->findFieldName($stepTwo->all(), '[tags]');
+        self::assertSame('alpha, beta', $stepTwo[$tagsField]->getValue());
+
+        // Advance to step 3 with the pre-filled values.
+        $crawler = $this->client->submit($stepTwo);
+
+        // Step 3 shows the "assistant delt" receipt with the persisted permalink.
+        self::assertResponseIsSuccessful();
+        $body = $crawler->filter('body')->text();
+        self::assertStringContainsString('Assistenten er delt', $body);
 
         $repository = self::getContainer()->get(AssistantRepository::class);
-        $created = $repository->findOneBy(['title' => 'Test assistant']);
+        $created = $repository->findOneBy(['title' => 'Demo assistant']);
         self::assertNotNull($created);
         self::assertSame(
             ['alpha', 'beta'],
             array_map(static fn (Tag $t) => $t->getName(), $created->getTags()->toArray()),
         );
-        self::assertSame(['name' => 'demo', 'temperature' => 0.5], $created->getOpenwebuiConfig());
+        self::assertSame(
+            ['name' => 'Demo assistant', 'base_model_id' => 'gpt-4o', 'meta' => ['description' => 'A demo assistant', 'tags' => ['alpha', 'beta']]],
+            $created->getOpenwebuiConfig(),
+        );
+
+        // The permalink to the created row is on the receipt page.
+        self::assertStringContainsString('/assistant/'.(string) $created->getId(), $body);
     }
 
-    // Ensures a submit with malformed JSON returns 422 and does not persist an Assistant.
-    public function testSubmitRejectsInvalidJson(): void
+    // Ensures a fresh GET after completing the wizard drops the receipt-state session slot and re-renders step 1.
+    public function testGetAfterCompletionResetsToStepOne(): void
+    {
+        // Walk to the receipt (step 3) once.
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $stepOne[$textareaName] = json_encode([
+            'name' => 'Reset assistant',
+            'base_model_id' => 'gpt-4o',
+            'meta' => ['description' => 'Reset demo', 'tags' => ['x']],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $this->client->submit($stepTwo);
+
+        // Same session, fresh GET — should land on step 1 again.
+        $crawler = $this->client->request('GET', '/assistant/new');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('textarea[name$="[openwebuiConfig]"]');
+        self::assertSelectorNotExists('input[name$="[title]"]');
+        $body = $crawler->filter('body')->text();
+        self::assertStringNotContainsString('Assistenten er delt', $body);
+    }
+
+    // Ensures a step 1 submit with malformed JSON returns 422 and does not persist an Assistant.
+    public function testStepOneRejectsInvalidJson(): void
     {
         $crawler = $this->client->request('GET', '/assistant/new');
-        $form = $crawler->filter('form')->form();
-        $form['title'] = 'Rejected assistant';
-        $form['description'] = 'Should not persist.';
-        $form['language_model'] = 'gpt-4o';
-        $form['framework'] = 'openwebui';
-        $form['openwebui_config'] = '{not json';
-        $this->client->submit($form);
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $stepOne[$textareaName] = '{not json';
+        $this->client->submit($stepOne);
 
         self::assertResponseStatusCodeSame(422);
 
         $repository = self::getContainer()->get(AssistantRepository::class);
-        self::assertNull($repository->findOneBy(['title' => 'Rejected assistant']));
+        self::assertNull($repository->findOneBy(['title' => '{not json']));
     }
 
-    // Ensures an invalid CSRF token yields 403 and does not persist an Assistant.
-    public function testRejectsInvalidCsrfToken(): void
+    // Ensures an invalid CSRF token yields 422 (Symfony Form rejects the submission before it reaches the flow's advance logic) and does not persist an Assistant.
+    public function testStepOneRejectsInvalidCsrfToken(): void
     {
+        // Prime the session with a GET so the token would otherwise be valid.
+        $this->client->request('GET', '/assistant/new');
+
         $this->client->request('POST', '/assistant/new', [
-            'title' => 'Hacker assistant',
-            'description' => 'Should not persist.',
-            'language_model' => 'gpt-4o',
-            'framework' => 'openwebui',
-            'openwebui_config' => '{"name":"demo"}',
-            '_token' => 'nope',
+            'assistant_create_flow' => [
+                'json' => ['openwebuiConfig' => '{"name":"demo"}'],
+                'navigator' => ['next' => ''],
+                '_token' => 'nope',
+            ],
         ]);
 
-        self::assertResponseStatusCodeSame(403);
+        // Symfony's form CSRF rejection surfaces as an invalid form
+        // (unprocessable entity), not a raw 403.
+        self::assertResponseStatusCodeSame(422);
 
         $repository = self::getContainer()->get(AssistantRepository::class);
         self::assertNull($repository->findOneBy(['title' => 'Hacker assistant']));
+    }
+
+    /**
+     * Locate a field whose full name ends with the supplied suffix.
+     * The FormFlow's dotted / bracketed field names are stable but
+     * long — this helper avoids hard-coding them and re-computing
+     * the block prefix in every test.
+     *
+     * @param array<string, \Symfony\Component\DomCrawler\Field\FormField> $fields
+     */
+    private function findFieldName(array $fields, string $suffix): string
+    {
+        foreach (array_keys($fields) as $name) {
+            if (str_ends_with($name, $suffix)) {
+                return $name;
+            }
+        }
+
+        self::fail(\sprintf('Form field ending with "%s" not found. Available: %s', $suffix, implode(', ', array_keys($fields))));
     }
 }

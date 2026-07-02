@@ -78,6 +78,8 @@ final class SettingsController extends AbstractController
             'admin_notification_body' => $this->settingsManager->getAdminNotificationBody(),
             'registration_confirmation_subject' => $this->settingsManager->getRegistrationConfirmationSubject(),
             'registration_confirmation_body' => $this->settingsManager->getRegistrationConfirmationBody(),
+            'email_confirmation_subject' => $this->settingsManager->getEmailConfirmationSubject(),
+            'email_confirmation_body' => $this->settingsManager->getEmailConfirmationBody(),
         ];
 
         if ('POST' === $request->getMethod()) {
@@ -88,6 +90,8 @@ final class SettingsController extends AbstractController
                 'admin_notification_body' => (string) $request->request->get('admin_notification_body', ''),
                 'registration_confirmation_subject' => (string) $request->request->get('registration_confirmation_subject', ''),
                 'registration_confirmation_body' => (string) $request->request->get('registration_confirmation_body', ''),
+                'email_confirmation_subject' => (string) $request->request->get('email_confirmation_subject', ''),
+                'email_confirmation_body' => (string) $request->request->get('email_confirmation_body', ''),
             ];
 
             if (!$this->isCsrfTokenValid('admin-settings-email', (string) $request->request->get('_token'))) {
@@ -123,6 +127,8 @@ final class SettingsController extends AbstractController
                 $submitted['admin_notification_body'],
                 $submitted['registration_confirmation_subject'],
                 $submitted['registration_confirmation_body'],
+                $submitted['email_confirmation_subject'],
+                $submitted['email_confirmation_body'],
             );
 
             $this->addFlash('success', 'admin.settings.flash.saved');

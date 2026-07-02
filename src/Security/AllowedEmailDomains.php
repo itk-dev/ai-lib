@@ -4,58 +4,68 @@ declare(strict_types=1);
 
 namespace App\Security;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use App\Repository\OrganizationRepository;
 
 /**
  * Allow-list of email domains accepted by anonymous self-signup.
  *
- * Sourced from a comma-separated env var
- * (`REGISTRATION_ALLOWED_EMAIL_DOMAINS=aarhus.dk,kk.dk,…`).
- * Domains are normalised to lowercase + trimmed on construction
- * so `aarhus.dk`, `Aarhus.DK`, and `  AARHUS.dk` all match the same
- * way.
+ * Sourced live from the `Organization.emailDomains` column —
+ * adding or editing an organisation through `/admin/organization`
+ * flips a domain on or off without a redeploy. Domains are
+ * normalised to lowercase + trimmed inside the repository query
+ * so `aarhus.dk`, `Aarhus.DK`, and `  AARHUS.dk` all match the
+ * same way.
  *
- * Empty / blank entries are dropped silently — an env var like
- * `,,aarhus.dk,` is interpreted as a single-entry list.
+ * A fresh install with no organisations rejects every signup —
+ * operators are expected to seed at least one organisation
+ * before opening signup. The admin UI at `/admin/organization`
+ * (or the `OrganizationFixtures` for local dev) is the intended
+ * way to populate the list.
  */
 final class AllowedEmailDomains
 {
     /**
-     * @var list<string> lowercased + trimmed domain entries
-     */
-    private readonly array $domains;
-
-    /**
-     * @param string $allowedEmailDomainsRaw the comma-separated env-var payload
+     * @param OrganizationRepository $organizationRepository read-side lookup of every organisation's email domains
      */
     public function __construct(
-        #[Autowire(env: 'REGISTRATION_ALLOWED_EMAIL_DOMAINS')]
-        string $allowedEmailDomainsRaw,
+        private readonly OrganizationRepository $organizationRepository,
     ) {
-        $entries = [];
-        foreach (explode(',', $allowedEmailDomainsRaw) as $entry) {
-            $normalised = strtolower(trim($entry));
-            if ('' !== $normalised) {
-                $entries[] = $normalised;
-            }
-        }
-
-        $this->domains = array_values(array_unique($entries));
     }
 
     /**
-     * @return bool whether `$domain` (case-insensitive, with surrounding whitespace tolerated) is on the allow-list
+     * Check whether `$domain` matches any organisation's allow-list.
+     *
+     * The comparison is case-insensitive and tolerates surrounding
+     * whitespace, mirroring the normalisation
+     * {@see OrganizationRepository::collectAllowedEmailDomains()}
+     * applies to the stored entries.
+     *
+     * @param string $domain candidate domain to check (e.g. `aarhus.dk`)
+     *
+     * @return bool whether the domain is on at least one organisation's allow-list
      */
     public function contains(string $domain): bool
     {
-        return \in_array(strtolower(trim($domain)), $this->domains, true);
+        return \in_array(
+            strtolower(trim($domain)),
+            $this->organizationRepository->collectAllowedEmailDomains(),
+            true,
+        );
     }
 
     /**
-     * @return list<string> the normalised allow-list, for diagnostics / templating
+     * Return the full normalised allow-list.
+     *
+     * Useful for diagnostics, admin-facing pages, and tests that
+     * want to assert "this domain became allowed when the org was
+     * created". The list is freshly fetched on every call — callers
+     * that need to inspect it many times in one request should
+     * snapshot the return value locally.
+     *
+     * @return list<string> the deduped, lowercased domains every organisation row contributes
      */
     public function all(): array
     {
-        return $this->domains;
+        return $this->organizationRepository->collectAllowedEmailDomains();
     }
 }

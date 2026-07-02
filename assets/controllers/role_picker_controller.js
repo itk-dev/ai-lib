@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
+import { generateCsrfToken } from "./csrf_protection_controller.js";
 
 /*
  * Inline role-mutation dropdown on /admin/users.
@@ -12,24 +13,38 @@ import { Controller } from "@hotwired/stimulus";
  * cross cell boundaries within a <tr>, but a single DOM lookup
  * scoped to `closest('tr')` works fine.
  *
- * Values:
- *   url            — endpoint URL for this row (`/admin/users/{id}/role`).
- *   csrfToken      — CSRF token for the `admin-user-action` intent,
- *                    forwarded in the JSON body so the controller can
- *                    validate it without depending on form-data shape.
- *   successMessage — translated success message shown in the feedback
- *                    span (the actual role label comes back from the
- *                    server response).
+ * CSRF on the JSON path
+ * ---------------------
+ * The project's CSRF is stateless (double-submit cookie pattern):
+ * `csrf_token('intent')` server-side renders only the intent name,
+ * and the bundled `csrf-protection` Stimulus controller mints the
+ * real random token + pairs it with a `__Host-{intent}_{token}`
+ * cookie at submit time. Form posts get this automatically via the
+ * global submit listener; for our JSON fetch path we replicate the
+ * same flow by hosting a hidden `<form>` carrier (rendered by the
+ * Twig partial) and calling the shared `generateCsrfToken()` helper
+ * at submit time. The minted token then travels in the JSON body
+ * and the matching cookie travels in the request headers — the
+ * server's `SameOriginCsrfTokenManager` validates the pair without
+ * ever seeing a session.
  *
  * Targets:
  *   select   — the <select> the user manipulates.
  *   feedback — aria-live="polite" span used for success / error copy.
+ *   csrfForm — hidden <form> carrier containing the csrf-protection
+ *              <input>; passed to `generateCsrfToken()` so the
+ *              shared minting logic populates the cookie + field.
+ *
+ * Values:
+ *   url            — endpoint URL for this row (`/admin/users/{id}/role`).
+ *   successMessage — translated success message shown in the feedback
+ *                    span (the actual role label comes back from the
+ *                    server response).
  */
 export default class extends Controller {
-    static targets = ["select", "feedback"];
+    static targets = ["select", "feedback", "csrfForm"];
     static values = {
         url: String,
-        csrfToken: String,
         successMessage: String,
     };
 
@@ -44,6 +59,8 @@ export default class extends Controller {
         this.feedbackTarget.classList.remove("text-red-600");
         this.feedbackTarget.classList.add("text-text-muted");
 
+        const token = this.mintCsrfToken();
+
         try {
             const response = await fetch(this.urlValue, {
                 method: "POST",
@@ -54,7 +71,7 @@ export default class extends Controller {
                 credentials: "same-origin",
                 body: JSON.stringify({
                     role,
-                    _token: this.csrfTokenValue,
+                    _token: token,
                 }),
             });
 
@@ -97,5 +114,15 @@ export default class extends Controller {
             return null;
         }
         return row.querySelector("[data-role-picker-row-label]");
+    }
+
+    // Run the shared csrf-protection minting logic against our hidden
+    // carrier form so the random token and matching cookie are paired
+    // up exactly the way the form submit path expects. Returns the
+    // freshly-minted token to embed in the JSON body.
+    mintCsrfToken() {
+        generateCsrfToken(this.csrfFormTarget);
+        const field = this.csrfFormTarget.querySelector('input[name="_token"]');
+        return field ? field.value : "";
     }
 }

@@ -1,121 +1,66 @@
 {% extends 'base.html.twig' %}
 
+{% block main_max_width %}max-w-wide{% endblock %}
+
 {% block title %}{{ 'assistant.new.title'|trans({'%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
-    <twig:Layout:SingleColumn>
-    <section class="max-w-2xl">
-        <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.new.eyebrow'|trans }}</twig:Eyebrow>
-        <h1 class="mb-6 text-[clamp(2rem,3vw,2.6rem)] font-bold leading-tight tracking-tight text-ink">
-            {{ 'assistant.new.heading'|trans }}
-        </h1>
+    {% set current_step = flow.vars.cursor.currentStep %}
+    {% set step_definitions = [
+        {name: 'json', label: 'assistant.new.step_json.rail_label', hint: 'assistant.new.step_json.rail_hint'},
+        {name: 'metadata', label: 'assistant.new.step_metadata.rail_label', hint: 'assistant.new.step_metadata.rail_hint'},
+        {name: 'receipt', label: 'assistant.new.step_receipt.rail_label', hint: 'assistant.new.step_receipt.rail_hint'},
+    ] %}
 
-        {% if errors is not empty %}
-            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
-                <ul class="list-disc pl-5">
-                    {% for error in errors %}
-                        <li>{{ error|trans }}</li>
-                    {% endfor %}
-                </ul>
+    <aside class="mx-auto mb-6 max-w-wide rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="note">
+        <p class="mb-2 font-medium text-ink">{{ 'assistant.new.responsibility.heading'|trans }}</p>
+        <p>{{ 'assistant.new.responsibility.body'|trans }}</p>
+    </aside>
+
+    <twig:Layout:ThreeColumn>
+        <twig:block name="start">
+            <div class="grid gap-6">
+                <div>
+                    <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.new.eyebrow'|trans }}</twig:Eyebrow>
+                    <twig:Heading level="1" size="md">{{ 'assistant.new.heading'|trans }}</twig:Heading>
+                </div>
+                <twig:StepRail steps="{{ step_definitions }}" currentStep="{{ current_step }}" />
             </div>
-        {% endif %}
+        </twig:block>
 
-        <form action="{{ path('app_assistant_new') }}"
-              method="post"
-              class="grid gap-4"
-              data-controller="assistant-config-upload"
-              data-assistant-config-upload-validate-url-value="{{ path('app_assistant_new_validate_config') }}"
-              data-assistant-config-upload-checks-value="{{ checks|json_encode }}">
-            <twig:Form:Label for="inputTitle" text="{{ 'assistant.new.title_label'|trans }}">
-                <twig:Form:TextInput
-                    id="inputTitle"
-                    name="title"
-                    value="{{ submitted.title }}"
-                    required
-                    autofocus
-                />
-            </twig:Form:Label>
+        <twig:block name="main">
+            <section class="max-w-2xl">
+                {{ form_start(flow, {attr: {class: 'grid gap-4'}}) }}
 
-            <twig:Form:Label for="inputDescription" text="{{ 'assistant.new.description_label'|trans }}">
-                <textarea id="inputDescription"
-                          name="description"
-                          required
-                          rows="4"
-                          class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.description }}</textarea>
-            </twig:Form:Label>
+                {% if not flow.vars.valid %}
+                    <div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
+                        {{ form_errors(flow) }}
+                    </div>
+                {% endif %}
 
-            <twig:Form:Label for="inputLanguageModel" text="{{ 'assistant.new.language_model_label'|trans }}">
-                <twig:Form:TextInput
-                    id="inputLanguageModel"
-                    name="language_model"
-                    value="{{ submitted.language_model }}"
-                    required
-                />
-            </twig:Form:Label>
+                {% if 'json' == current_step %}
+                    {{ include('assistant/_new_step_json.html.twig', {flow: flow, checks: checks}) }}
+                {% elseif 'metadata' == current_step %}
+                    {{ include('assistant/_new_step_metadata.html.twig', {flow: flow}) }}
+                {% elseif 'receipt' == current_step %}
+                    {{ include('assistant/_new_step_receipt.html.twig', {draft: draft}) }}
+                {% endif %}
 
-            <twig:Form:Label for="inputFramework" text="{{ 'assistant.new.framework_label'|trans }}">
-                <twig:Form:TextInput
-                    id="inputFramework"
-                    name="framework"
-                    value="{{ submitted.framework }}"
-                    required
-                />
-            </twig:Form:Label>
+                <div class="flex flex-wrap items-center gap-4">
+                    {#
+                        The navigator's Previous / Next / Finish buttons self-hide via
+                        their `include_if` callbacks (Previous on step 1, Next on step
+                        3, Finish on any non-last step). `form_end()` below emits the
+                        still-unrendered fields — the navigator group and the CSRF
+                        token — so we only need to render the Cancel link inline here.
+                    #}
+                    <a class="text-sm text-text underline hover:text-primary" href="{{ path('app_frontpage') }}">
+                        {{ 'assistant.new.action.cancel'|trans }}
+                    </a>
+                </div>
 
-            <twig:Form:Label for="inputTags" text="{{ 'assistant.new.tags_label'|trans }}">
-                <twig:Form:TextInput
-                    id="inputTags"
-                    name="tags"
-                    value="{{ submitted.tags|join(', ') }}"
-                />
-            </twig:Form:Label>
-
-            <div class="grid gap-2">
-                <twig:Form:Label for="inputConfig" text="{{ 'assistant.new.config_label'|trans }}">
-                    <input id="inputConfig"
-                           type="file"
-                           accept="application/json,.json"
-                           data-assistant-config-upload-target="file"
-                           data-action="change->assistant-config-upload#fileChanged"
-                           class="rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-ink hover:file:bg-primary-hover">
-                </twig:Form:Label>
-
-                <twig:Form:Label for="inputOpenwebuiConfig" text="{{ 'assistant.new.config_textarea_label'|trans }}">
-                    <textarea id="inputOpenwebuiConfig"
-                              name="openwebui_config"
-                              rows="10"
-                              spellcheck="false"
-                              data-assistant-config-upload-target="config"
-                              class="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.openwebui_config }}</textarea>
-                </twig:Form:Label>
-
-                <progress data-assistant-config-upload-target="progress"
-                          value="0"
-                          max="100"
-                          class="hidden h-2 w-full overflow-hidden rounded-full [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-surface-2 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary">
-                </progress>
-
-                <p data-assistant-config-upload-target="status"
-                   data-validating-text="{{ 'assistant.new.config_validating'|trans }}"
-                   data-valid-text="{{ 'assistant.new.config_valid'|trans }}"
-                   data-invalid-text="{{ 'assistant.new.config_invalid'|trans }}"
-                   class="text-sm text-text-muted"
-                   role="status">
-                    {{ 'assistant.new.config_help'|trans }}
-                </p>
-            </div>
-
-            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('assistant-create') }}">
-
-            <div class="flex items-center gap-4">
-                <twig:Form:Button type="submit">
-                    {{ 'assistant.new.submit'|trans }}
-                </twig:Form:Button>
-                <a class="text-sm text-text underline hover:text-primary" href="{{ path('app_frontpage') }}">
-                    {{ 'assistant.new.cancel'|trans }}
-                </a>
-            </div>
-        </form>
-    </section>
-    </twig:Layout:SingleColumn>
+                {{ form_end(flow) }}
+            </section>
+        </twig:block>
+    </twig:Layout:ThreeColumn>
 {% endblock %}
