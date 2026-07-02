@@ -21,9 +21,26 @@ import Choices from "choices.js";
  * value (whether from the shortlist or the "+ Tilføj" injection)
  * round-trips through the form as a plain string.
  *
- * Wiring:
+ * Filtering strategy
+ * ------------------
+ * We disable Choices.js's built-in `searchChoices` filter and do
+ * the filtering ourselves on every keystroke. Two reasons:
  *
- * - The wrapper `<div>` carries `data-controller="language-model-picker"`.
+ * 1. `setChoices()` (which we call to inject / remove the
+ *    "+ Tilføj" row) resets Choices.js's internal filter state,
+ *    so relying on the built-in filter and calling `setChoices`
+ *    on the side leads to the dropdown flickering back to the
+ *    unfiltered list.
+ * 2. Doing the filter ourselves lets us guarantee the "+ Tilføj"
+ *    row appears exactly once — at the bottom, only when the
+ *    query doesn't already match a known option — no matter how
+ *    Choices.js's fuse.js scores partial-string matches on the
+ *    injected row's label.
+ *
+ * Wiring
+ * ------
+ * - The wrapper `<div>` carries
+ *   `data-controller="language-model-picker"`.
  * - `data-language-model-picker-existing-value` is a JSON array
  *   of known option strings — the server-side union built by
  *   `App\Model\SupportedLanguageModels::list()`.
@@ -55,20 +72,19 @@ export default class extends Controller {
         } catch {
             known = [];
         }
-        this.knownOriginals = known.slice();
-        // Case-insensitive membership check for the "+ Tilføj"
-        // affordance so `GPT-4o` and `gpt-4o` share the same
+        // Original casing preserved for the dropdown labels; the
+        // lower-cased set handles the case-insensitive membership
+        // check so `GPT-4o` and `gpt-4o` share the same
         // is-known state.
+        this.knownOriginals = known.slice();
         this.knownLower = new Set(known.map((v) => String(v).toLowerCase()));
-        // Track whether the choice list currently carries the
-        // ephemeral "+ Tilføj" row, so we only rebuild via
-        // `setChoices` when the state has to change.
-        this.injectionActive = false;
 
         this.choices = new Choices(select, {
             allowHTML: false,
             searchEnabled: true,
-            searchResultLimit: 20,
+            // Do the filtering ourselves — see the class docblock.
+            searchChoices: false,
+            searchResultLimit: 50,
             shouldSort: false,
             removeItemButton: false,
             placeholder: true,
@@ -98,29 +114,7 @@ export default class extends Controller {
 
     onSearch(event) {
         const query = String(event.detail?.value ?? "").trim();
-        const matches =
-            "" === query || this.knownLower.has(query.toLowerCase());
-
-        if (matches) {
-            // Query is empty or already known — the dropdown
-            // must not carry a "+ Tilføj" row. Rebuild the choice
-            // list to the clean known set only when we currently
-            // have an injection to remove; otherwise this is a
-            // no-op that would just thrash the DOM.
-            if (this.injectionActive) {
-                this.rebuildChoices(null);
-                this.injectionActive = false;
-            }
-            return;
-        }
-
-        // Query doesn't match anything known — surface the
-        // "+ Tilføj" affordance. Rebuild the choice list with a
-        // fresh injected row so the label tracks the current
-        // query verbatim (an earlier keystroke's injection is
-        // replaced by this call).
-        this.rebuildChoices(query);
-        this.injectionActive = true;
+        this.render(query);
     }
 
     onChoice(event) {
@@ -129,47 +123,51 @@ export default class extends Controller {
             return;
         }
         // The user picked the "+ Tilføj" virtual option. Promote
-        // the typed value to a regular known option and drop the
-        // ephemeral injection — the pill that renders for the
-        // committed value should show the raw value, not the
-        // "+ Tilføj: '…'" prefix, and the dropdown must not
-        // continue to offer to re-add it.
+        // the typed value to a regular known option so the pill
+        // renders as the raw value (not "+ Tilføj: '…'") and the
+        // dropdown stops offering to re-add it.
         const value = event.detail.choice.value;
-        this.knownLower.add(value.toLowerCase());
-        this.knownOriginals.push(value);
-        this.rebuildChoices(null);
-        this.injectionActive = false;
+        const valueLower = value.toLowerCase();
+        if (!this.knownLower.has(valueLower)) {
+            this.knownOriginals.push(value);
+            this.knownLower.add(valueLower);
+        }
+        // Rebuild without the injected row so the newly-promoted
+        // value replaces its placeholder representation.
+        this.render("");
     }
 
     /**
-     * Replace the Choices.js choice list with the full known
-     * set, optionally appending a single "+ Tilføj" row.
+     * Rebuild the dropdown's choice list for the given search
+     * query.
      *
-     * Passing `injectionQuery` as a non-empty string emits the
-     * injected row after the known options; passing `null` or
-     * an empty string emits just the known options.
+     * Emits every known option whose value contains the query
+     * (case-insensitive substring). When the query is non-empty
+     * and doesn't exactly match any known value, appends a single
+     * "+ Tilføj: '<query>'" row so the operator can commit the
+     * free-typed value in one click.
      *
-     * @param {string|null} injectionQuery
+     * @param {string} query the current search-input contents
      */
-    rebuildChoices(injectionQuery) {
-        const clean = this.knownOriginals.map((value) => ({
-            value,
-            label: value,
-        }));
-        const list =
-            injectionQuery && injectionQuery.length > 0
-                ? [
-                      ...clean,
-                      {
-                          value: injectionQuery,
-                          label: this.addTextValue.replace(
-                              "%s",
-                              injectionQuery,
-                          ),
-                          customProperties: { injected: true },
-                      },
-                  ]
-                : clean;
+    render(query) {
+        const queryLower = query.toLowerCase();
+        const filtered =
+            "" === query
+                ? this.knownOriginals
+                : this.knownOriginals.filter((v) =>
+                      v.toLowerCase().includes(queryLower),
+                  );
+
+        const list = filtered.map((v) => ({ value: v, label: v }));
+
+        if ("" !== query && !this.knownLower.has(queryLower)) {
+            list.push({
+                value: query,
+                label: this.addTextValue.replace("%s", query),
+                customProperties: { injected: true },
+            });
+        }
+
         this.choices.setChoices(list, "value", "label", true);
     }
 }
