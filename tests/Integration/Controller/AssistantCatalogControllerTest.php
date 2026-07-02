@@ -42,7 +42,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Find en assistent');
         self::assertGreaterThanOrEqual(
             1,
-            $crawler->filter('a[href^="/assistant/"]')->count(),
+            $crawler->filter('main a[href^="/assistant/"]')->count(),
             'catalogue must surface at least one fixture entry on the first page',
         );
     }
@@ -71,7 +71,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Ingen assistenter matcher');
-        self::assertCount(0, $crawler->filter('a[href^="/assistant/"]'));
+        self::assertCount(0, $crawler->filter('main a[href^="/assistant/"]'));
     }
 
     // Verifies pagination renders a current-page badge and a working next link when results span multiple pages.
@@ -86,7 +86,9 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertCount(1, $next, 'page 1 must offer a "next" link to page 2');
         self::assertStringContainsString('page=2', (string) $next->attr('href'));
 
-        $current = $crawler->filter('[aria-current="page"]');
+        // Scope to <main> so the nav's active Catalog link (which now
+        // also carries aria-current="page") doesn't inflate the match.
+        $current = $crawler->filter('main [aria-current="page"]');
         self::assertSame('1', trim($current->text()), 'page 1 badge marks the current page');
 
         $page2Link = $crawler->filter('a[aria-label="Side 2"]');
@@ -123,7 +125,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertCount(
             1,
-            $crawler->filter('a[href^="/assistant/"]'),
+            $crawler->filter('main a[href^="/assistant/"]'),
             'the query matches exactly one fixture title',
         );
         self::assertSelectorTextContains('[aria-label="Aktive filtre"]', '"journaliseringsassistent"');
@@ -140,7 +142,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(
             $expected,
-            $crawler->filter('a[href^="/assistant/"]')->count(),
+            $crawler->filter('main a[href^="/assistant/"]')->count(),
             'card count must match the jura fixture tag-facet count',
         );
         self::assertSelectorTextContains('[aria-label="Aktive filtre"]', 'jura');
@@ -154,8 +156,8 @@ final class AssistantCatalogControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/search?q=borgerservice&tag%5B%5D=jura');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('a[href^="/assistant/"]'));
-        self::assertSelectorTextContains('a[href^="/assistant/"]', 'Borgerservice-vejviser');
+        self::assertCount(1, $crawler->filter('main a[href^="/assistant/"]'));
+        self::assertSelectorTextContains('main a[href^="/assistant/"]', 'Borgerservice-vejviser');
     }
 
     // Ensures a tag chip's href drops only its tag while preserving the search query.
@@ -197,7 +199,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertSame('name', $crawler->filter('#catalog-sort option[selected]')->attr('value'));
         self::assertStringContainsString(
             'Borgerhenvendelse-svarudkast',
-            $crawler->filter('a[href^="/assistant/"]')->first()->text(),
+            $crawler->filter('main a[href^="/assistant/"]')->first()->text(),
             'name-ascending puts the lowest title first',
         );
     }

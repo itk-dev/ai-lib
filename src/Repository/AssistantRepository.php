@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Catalog\CatalogCriteria;
 use App\Catalog\CatalogSort;
 use App\Entity\Assistant;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -20,6 +21,39 @@ class AssistantRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Assistant::class);
+    }
+
+    /**
+     * List every assistant this user is the `createdBy` blame for.
+     *
+     * Backs the "Mine assistenter" page — the operator's personal
+     * inventory of assistants they've shared. Ordered newest-first
+     * so the freshly-uploaded row is at the top; `id` DESC breaks
+     * ties deterministically when several rows share a timestamp
+     * (fixtures typically do).
+     *
+     * @param User $user the acting user whose creations we want
+     *
+     * @return list<Assistant> assistants stamped with `createdBy = $user`, newest first
+     */
+    public function findCreatedBy(User $user): array
+    {
+        // Bind by identifier rather than the entity — the mapping
+        // on BlameableTrait uses `targetEntity: UserInterface::class`
+        // with `resolve_target_entities`, which makes DQL's entity
+        // comparison ambiguous. `IDENTITY()` extracts the raw FK
+        // value; passing the `Ulid` object lets Doctrine's `ulid`
+        // type convert it to the stored binary form.
+        /** @var list<Assistant> $rows */
+        $rows = $this->createQueryBuilder('a')
+            ->andWhere('IDENTITY(a.createdBy) = :userId')
+            ->setParameter('userId', $user->getId(), 'ulid')
+            ->orderBy('a.createdAt', 'DESC')
+            ->addOrderBy('a.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $rows;
     }
 
     /**

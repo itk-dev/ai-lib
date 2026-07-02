@@ -21,8 +21,6 @@ nav:
         catalog: "Katalog"
         share: "Del assistent"
         mine: "Mine assistenter"
-        favorites: "Favoritter"
-        collections: "Samlinger"
     user:
         section_user: "Bruger"
         section_admin: "Administration"
@@ -196,7 +194,7 @@ admin:
             heading: "E-mail"
             lead: "Modtagere og indhold af systemmails. Lad et felt stå tomt for at gå tilbage til standardindholdet."
             section:
-                recipient: "Modtager af besked om nye brugere"
+                recipient: "E-mailkonti"
                 admin_notification: "Admin: Ny bruger venter godkendelse"
                 registration_confirmation: "Bruger: Velkomst-mail"
                 email_confirmation: "Bruger: Bekræft e-mail-link"
@@ -213,6 +211,14 @@ admin:
                 body:
                     label: "Indhold (Markdown)"
                     help: "Skrives som Markdown. Brug pladsholdere fra listen ovenfor."
+                    help_cheatsheet: "Markdown-oversigt"
+            actions:
+                preview: "Forhåndsvis"
+            preview:
+                modal_title: "Forhåndsvisning af e-mail"
+                subject_prefix: "Emne:"
+                close: "Luk"
+                error: "Forhåndsvisningen kunne ikke hentes. Prøv igen."
 
 catalog:
     title: "Katalog – %brand%"
@@ -341,15 +347,62 @@ profile:
         flash:
             saved: "Profilen er opdateret."
 
+user:
+    assistants:
+        title: "Mine assistenter – %brand%"
+        eyebrow: "Mine assistenter"
+        heading: "Assistenter du har delt"
+        lead: "Assistenter du har uploadet til biblioteket. Nye tilføjelser via »Del assistent« vises her."
+        list_label: "Mine assistenter"
+        empty:
+            heading: "Ingen assistenter endnu"
+            help: "Du har ikke delt en assistent endnu. Klik på »Del assistent« for at komme i gang."
+
 assistant:
     detail:
         title: "%title% – %brand%"
         back: "← Tilbage til kataloget"
         eyebrow: "Assistent"
+        breadcrumb_label: "Sti"
+        breadcrumb_catalog: "Katalog"
         runtime_heading: "Driftsplatform"
         framework_label: "Framework"
         language_model_label: "Sprogmodel"
         tags_heading: "Tags"
+        tabs_label: "Assistentdetaljer"
+        tab:
+            beskrivelse: "Beskrivelse"
+            modelkort: "Modelkort"
+            readme: "Readme"
+            json: "JSON"
+        meta_heading: "Detaljer"
+        meta_origin: "Oprindelseskommune"
+        meta_language_model: "Sprogmodel"
+        meta_framework: "Rammeværk"
+        meta_sensitivity: "Datafølsomhed"
+        meta_approved_for: "Godkendt til"
+        meta_created_at: "Dato oprettet"
+        meta_updated_at: "Dato opdateret"
+        actions_heading: "Handlinger"
+        action:
+            export: "Hjemtag JSON"
+        modelkort:
+            heading: "Modelkort"
+            lead: "Sprogmodel %model% og hensyn ved brug af assistenten."
+        readme:
+            heading: "Readme"
+        json:
+            heading: "Eksportér konfiguration"
+            lead: "Eksportér assistentens OpenWebUI-JSON og importér filen i din egen OpenWebUI."
+            empty: "Ingen konfiguration gemt for denne assistent."
+        placeholder_hint: "Feltet er endnu ikke understøttet af datamodellen — vises som pladsholder."
+        placeholder_origin: "Oprindelseskommune (kommer senere)"
+        placeholder_tagline: "Kort undertitel kommer senere, når feltet er tilføjet datamodellen."
+        placeholder_sensitivity: "Datafølsomhed (kommer senere)"
+        placeholder_approved_for: "Godkendt til (kommer senere)"
+        placeholder_versions: "Versionsvalg kommer senere."
+        placeholder_body: "Indholdet for dette faneblad tilføjes, når det pågældende felt er en del af assistentens datamodel."
+        placeholder_ai_tags: "AI-foreslåede tags markeres, når feltet er tilføjet datamodellen."
     new:
         title: "Del assistent – %brand%"
         eyebrow: "Del assistent"

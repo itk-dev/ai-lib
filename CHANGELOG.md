@@ -42,6 +42,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   B (promote to entity + JSON create endpoint) is a follow-up
   if rename / delete workflows ever justify the schema cost
   ([#177](https://github.com/itk-dev/ai-reolen/issues/177)).
+- Editor-experience upgrades on `/admin/settings/email`: every
+  Markdown body field grows a **Markdown-oversigt** cheat-sheet
+  link (opens
+  <https://www.markdownguide.org/cheat-sheet/> in a new tab,
+  `rel="noopener noreferrer"`) and a **Forhåndsvis** button that
+  opens a modal showing the rendered email for the current
+  subject + body. The modal reuses
+  `App\Mail\EmailTemplateRenderer` — same pipeline the mailer
+  runs through — so the preview is by construction what the
+  recipient would see. Token substitution uses the acting
+  admin's own `name` + `email` for the greeting slot, the
+  current brand name for `%brand_name%`, and a synthetic
+  `%approval_url%` / `%confirmation_url%` pointing at
+  `/admin/users` and the frontpage respectively so URL tokens
+  render as real links. The rendered HTML lives inside an
+  `<iframe sandbox="allow-same-origin">` driven by `srcdoc` so
+  admin-typed HTML can't script the admin UI or reach out over
+  the network. A new POST endpoint
+  `/admin/settings/email/preview` backs the modal: JSON in
+  (`subject`, `body`, `_token`), JSON out (`subject`, `html`),
+  admin-gated by the class-level `IsGranted` attribute and
+  CSRF-protected against a dedicated
+  `admin-settings-email-preview` intent so a stale carrier
+  token can't invalidate an in-flight main-form submit. The
+  new `email-preview` Stimulus controller mints tokens through
+  the same shared `csrf-protection` helper the role-picker
+  uses, so the double-submit-cookie handshake stays consistent
+  ([#149](https://github.com/itk-dev/ai-reolen/issues/149)).
+- Primary site nav now carries only working destinations. **Del
+  assistent** points at `/assistant/new`. **Mine assistenter**
+  is a new page at `/mine/assistenter` (route
+  `app_user_assistants`, gated to any authenticated user) that
+  lists every assistant the current user is the `createdBy`
+  blame for, ordered newest-first, rendered as a full-width
+  responsive card grid (1/2/3/4 columns at sm/md/lg/xl). The
+  page reuses the catalog's `<twig:Catalog:AssistantCard>` so
+  the visual language of a card matches the catalogue. Empty
+  state points the user at "Del assistent". Backed by a new
+  `AssistantRepository::findCreatedBy(User)` query that binds
+  the FK via `IDENTITY(a.createdBy) = :userId` with the ULID
+  type, sidestepping DQL's entity-comparison ambiguity when
+  the mapping uses `resolve_target_entities` on
+  `UserInterface::class`. The **Favoritter** and **Samlinger**
+  nav entries are dropped for now — they were placeholders
+  pointing at `#` and come back with their features. `<twig:Nav:Link>`
+  grows an `active` prop that emits `aria-current="page"` and
+  a bolder ink treatment on the current route, so the active
+  page is visible in the header at a glance
+  ([#160](https://github.com/itk-dev/ai-reolen/issues/160)).
+- The assistant details page (`/assistant/{id}`) is redesigned
+  to match the ai-bibliotek mock. The `<twig:Layout:ContentWithAsides>`
+  layout hosts a five-tab main column plus a sticky **Detaljer**
+  meta aside and a **Handlinger** actions aside. Tabs
+  (`Beskrivelse` / `Modelkort` / `Readme` / `Viden` / `JSON`)
+  are anchor-based with the existing `<twig:Tabs>` component and
+  driven by a whitelisted `?tab=` query string, so every tab is
+  bookmarkable and SEO-friendly with no JavaScript required. The
+  new `/assistant/{id}/export.json` route serves the assistant's
+  OpenWebUI config as a downloadable JSON file
+  (`Content-Disposition: attachment; filename="assistant-<id>.json"`)
+  and drives the `JSON` tab's export button as well as the top-
+  level "Hjemtag" action. Fields the entity does not yet carry
+  (`tagline`, origin organisation, `dataSensitivity`,
+  `approvedFor`, `modelCard`, `readme`, `knowledgeRecipe`, AI-
+  tag flag) render as muted italic placeholders with a tooltip
+  explaining the status, so the layout is stable when the
+  schema catches up. Version count, favourites, and collections
+  are held back entirely — the meta row and action buttons only
+  appear once the underlying feature ships.
+  A new `App\Twig\TextExtension` exposes a `paragraphs` filter
+  that splits a text blob on blank-line boundaries so the
+  Beskrivelse tab renders each paragraph as its own `<p>` with
+  `white-space: pre-wrap`
+  ([#20](https://github.com/itk-dev/ai-reolen/issues/20),
+  [#21](https://github.com/itk-dev/ai-reolen/issues/21)).
 - `/assistant/new` is now a three-step wizard: **Indsæt JSON**
   → **Gennemgang** → **Kvittering**. The user pastes / uploads
   an OpenWebUI export on step 1, reviews auto-extracted metadata
