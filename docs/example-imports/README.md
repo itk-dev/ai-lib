@@ -17,3 +17,17 @@ The base model is `gpt-4o` (or `llama3.2` for Ollama). On export to a
 system where the chosen model has no equivalent — e.g. `gpt-4o` to
 Ollama — the name is passed through unchanged and a non-blocking warning
 is shown; it is never silently swapped for a different model.
+
+## Sources
+
+Each format mirrors an upstream specification. Compare the example files
+against the source docs:
+
+- **AI-reolen native** — own format; see the JSON schema at
+  [`config/schema/native-assistant.json`](../../config/schema/native-assistant.json).
+- **Open WebUI** — [Models](https://docs.openwebui.com/features/workspace/models/)
+  and [Import & Export](https://docs.openwebui.com/features/chat-conversations/data-controls/import-export/).
+- **OpenAI Assistants** — [Create assistant](https://platform.openai.com/docs/api-reference/assistants/createAssistant)
+  API reference.
+- **LibreChat preset** — [Presets](https://www.librechat.ai/docs/user_guides/presets) user guide.
+- **Ollama Modelfile** — [Modelfile Reference](https://docs.ollama.com/modelfile).
