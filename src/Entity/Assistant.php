@@ -47,14 +47,16 @@ class Assistant extends AbstractEntity
     private Collection $tags;
 
     /**
-     * Verbatim OpenWebUI export JSON for this assistant, decoded into
-     * an associative array. Null for catalogue entries that pre-date
-     * the upload flow.
+     * The uploaded assistant config for this assistant, reduced to its
+     * format's model and stripped of instance-specific data and PII
+     * before storage (see {@see \App\Assistant\AssistantCreator}). The
+     * format that produced it is recorded in {@see self::$framework}.
+     * Null for catalogue entries that pre-date the upload flow.
      *
      * @var array<string, mixed>|null
      */
-    #[ORM\Column(type: Types::JSON, nullable: true)]
-    private ?array $openwebuiConfig = null;
+    #[ORM\Column(name: 'source_config', type: Types::JSON, nullable: true)]
+    private ?array $sourceConfig = null;
 
     /**
      * @param iterable<Tag> $tags tags to attach on creation
@@ -171,17 +173,17 @@ class Assistant extends AbstractEntity
     /**
      * @return array<string, mixed>|null
      */
-    public function getOpenwebuiConfig(): ?array
+    public function getSourceConfig(): ?array
     {
-        return $this->openwebuiConfig;
+        return $this->sourceConfig;
     }
 
     /**
-     * @param array<string, mixed>|null $openwebuiConfig
+     * @param array<string, mixed>|null $sourceConfig
      */
-    public function setOpenwebuiConfig(?array $openwebuiConfig): static
+    public function setSourceConfig(?array $sourceConfig): static
     {
-        $this->openwebuiConfig = $openwebuiConfig;
+        $this->sourceConfig = $sourceConfig;
 
         return $this;
     }

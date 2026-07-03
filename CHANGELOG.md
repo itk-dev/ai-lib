@@ -9,34 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Editor-experience upgrades on `/admin/settings/email`: every
-  Markdown body field grows a **Markdown-oversigt** cheat-sheet
-  link (opens
-  <https://www.markdownguide.org/cheat-sheet/> in a new tab,
-  `rel="noopener noreferrer"`) and a **Forhåndsvis** button that
-  opens a modal showing the rendered email for the current
-  subject + body. The modal reuses
-  `App\Mail\EmailTemplateRenderer` — same pipeline the mailer
-  runs through — so the preview is by construction what the
-  recipient would see. Token substitution uses the acting
-  admin's own `name` + `email` for the greeting slot, the
-  current brand name for `%brand_name%`, and a synthetic
-  `%approval_url%` / `%confirmation_url%` pointing at
-  `/admin/users` and the frontpage respectively so URL tokens
-  render as real links. The rendered HTML lives inside an
-  `<iframe sandbox="allow-same-origin">` driven by `srcdoc` so
-  admin-typed HTML can't script the admin UI or reach out over
-  the network. A new POST endpoint
-  `/admin/settings/email/preview` backs the modal: JSON in
-  (`subject`, `body`, `_token`), JSON out (`subject`, `html`),
-  admin-gated by the class-level `IsGranted` attribute and
-  CSRF-protected against a dedicated
-  `admin-settings-email-preview` intent so a stale carrier
-  token can't invalidate an in-flight main-form submit. The
-  new `email-preview` Stimulus controller mints tokens through
-  the same shared `csrf-protection` helper the role-picker
-  uses, so the double-submit-cookie handshake stays consistent
-  ([#149](https://github.com/itk-dev/ai-reolen/issues/149)).
 - Primary site nav now carries only working destinations. **Del
   assistent** points at `/assistant/new`. **Mine assistenter**
   is a new page at `/mine/assistenter` (route
@@ -66,11 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are anchor-based with the existing `<twig:Tabs>` component and
   driven by a whitelisted `?tab=` query string, so every tab is
   bookmarkable and SEO-friendly with no JavaScript required. The
-  new `/assistant/{id}/export.json` route serves the assistant's
-  OpenWebUI config as a downloadable JSON file
-  (`Content-Disposition: attachment; filename="assistant-<id>.json"`)
-  and drives the `JSON` tab's export button as well as the top-
-  level "Hjemtag" action. Fields the entity does not yet carry
+  `JSON` tab's export button and the top-level "Hjemtag" action
+  both point at the `app_assistant_export` download route (see the
+  format-abstraction entry above). Fields the entity does not yet carry
   (`tagline`, origin organisation, `dataSensitivity`,
   `approvedFor`, `modelCard`, `readme`, `knowledgeRecipe`, AI-
   tag flag) render as muted italic placeholders with a tooltip
@@ -90,11 +60,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an OpenWebUI export on step 1, reviews auto-extracted metadata
   (title, description, language model, tags) on step 2, and
   lands on step 3 with a permalink to the freshly-persisted
-  assistant. Metadata suggestions come from a new
-  `App\Assistant\OpenWebUiMetadataExtractor` that pulls values
-  from `parsed.name`, `parsed.meta.description` /
-  `parsed.params.system`, `parsed.base_model_id` /
-  `parsed.model`, and `parsed.meta.tags` — user edits on step 2
+  assistant. Metadata suggestions come from
+  `App\Assistant\AssistantDraftPrefiller`, which detects the format
+  and pulls values from the canonical model's name, description /
+  system-prompt, base model, and tags — user edits on step 2
   are preserved on Back-then-edit-then-Next round trips (empty
   fields refill, non-empty stay). The wizard uses Symfony's
   built-in `AbstractFlowType` + `SessionDataStorage` so state
@@ -132,28 +101,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   flow — now drives the failed-login response for a user who
   attempts to sign in before clicking the link
   ([#119](https://github.com/itk-dev/ai-reolen/issues/119)).
-- Deploy-time list of supported assistant frameworks. A new
-  `SUPPORTED_FRAMEWORKS` env var (comma-separated
-  `Readable Name:machine_name` pairs, shipped in `.env` with the
-  single default `Open WebUI:openwebui`) drives a new
-  `App\Framework\SupportedFrameworks` service that hands the
-  list to the `defaultFramework` `ChoiceType` on
-  `/admin/organization/new` and `/admin/organizations/{id}/edit`.
-  The stored value is the machine name (unchanged shape on the
-  entity); the `<select>` shows the readable name. A new
-  `App\Validator\SupportedFramework` constraint on
-  `Organization::$defaultFramework` closes the entity-boundary
-  path so fixtures and console writes can't leak an unknown
-  framework in either. The catalogue "Frameworks" facet renders
-  labels through a new `framework_label` Twig filter, falling
-  back to the machine name for legacy rows whose framework has
-  been removed from the list. Malformed env-var entries
-  (missing colon, empty machine name, machine name outside
-  `[a-z0-9_-]`) fail-fast at boot rather than ship a half-broken
-  config. An unset / empty env var yields an empty framework
-  list — the `<select>` renders no options, effectively blocking
-  organisation creation until the operator restores the line;
-  no hidden hard-coded fallback
+- Supported assistant frameworks are sourced from the registered
+  format adapters (see the format-abstraction entry above). The
+  `defaultFramework` `ChoiceType` on `/admin/organization/new` and
+  `/admin/organizations/{id}/edit` lists the adapter labels; the
+  stored value is the format id. A `App\Validator\SupportedFramework`
+  constraint on `Organization::$defaultFramework` closes the
+  entity-boundary path so fixtures and console writes can't leak an
+  unregistered framework. The catalogue "Frameworks" facet renders
+  labels through a `framework_label` Twig filter, falling back to the
+  id for legacy rows whose format is no longer registered
   ([#154](https://github.com/itk-dev/ai-reolen/issues/154)).
 - Public-signup allow-list now sources its domains from the
   `Organization.emailDomains` rows instead of the
@@ -449,8 +406,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   indentation the user typed (file upload, paste, hand-edit)
   collapses to minified JSON on disk
   ([#101](https://github.com/itk-dev/ai-reolen/issues/14)).
-- `Assistant.openwebui_config` JSON column for storing the
-  uploaded OpenWebUI export verbatim, plus a create form at
+- `Assistant.source_config` JSON column for storing the
+  uploaded assistant config (reduced to its format's cleaned
+  model; see the entries above), plus a create form at
   `/assistant/new` with a file-upload field that AJAX-validates
   the JSON before submit and writes the result into an editable
   textarea (users can also paste/type JSON directly). A shared

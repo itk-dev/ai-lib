@@ -12,6 +12,7 @@
         "doctrine/orm": "^3.6",
         "itk-dev/entity-bundle": "^0.1.1",
         "league/commonmark": "^2.5",
+        "opis/json-schema": "^2.6",
         "symfony/asset": "^8.1",
         "symfony/asset-mapper": "^8.1",
         "symfony/console": "~8.1.0",

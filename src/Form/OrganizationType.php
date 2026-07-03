@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Assistant\Format\FormatAdapterRegistry;
 use App\Entity\Organization;
-use App\Framework\SupportedFrameworks;
 use App\Validator\SupportedFramework;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
@@ -36,9 +36,9 @@ final class OrganizationType extends AbstractType
     private const string ROW_CLASS = 'grid gap-1 text-sm';
 
     /**
-     * @param SupportedFrameworks $frameworks deploy-time list feeding the `defaultFramework` `<select>` choices + validator
+     * @param FormatAdapterRegistry $formats registry feeding the `defaultFramework` `<select>` choices + validator
      */
-    public function __construct(private readonly SupportedFrameworks $frameworks)
+    public function __construct(private readonly FormatAdapterRegistry $formats)
     {
     }
 
@@ -70,10 +70,10 @@ final class OrganizationType extends AbstractType
             ->add('defaultFramework', ChoiceType::class, [
                 'label' => 'admin.organization.form.default_framework_label',
                 'help' => 'admin.organization.form.default_framework_help',
-                'choices' => $this->frameworks->list(),
+                'choices' => array_flip($this->formats->all()),
                 'placeholder' => false,
                 'required' => true,
-                'empty_data' => $this->frameworks->default(),
+                'empty_data' => $this->formats->default(),
                 'constraints' => [new SupportedFramework()],
                 'attr' => ['class' => self::INPUT_CLASS],
                 'label_attr' => ['class' => self::LABEL_CLASS],

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Validator;
 
+use Opis\JsonSchema\Errors\ErrorFormatter;
+use Opis\JsonSchema\Validator as SchemaValidator;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
 /**
  * Shared validation pipeline for OpenWebUI assistant config blobs.
  *
@@ -25,9 +29,25 @@ final class OpenWebUiConfigValidator
      *
      * The order is significant: it's the order the AJAX UI steps
      * through and the order {@see self::validate()} aggregates
-     * errors in.
+     * errors in. Syntax runs first so a parse failure surfaces
+     * before the structural schema check runs against garbage.
      */
-    private const array CHECKS = ['syntax', 'exampleDelay'];
+    private const array CHECKS = ['syntax', 'schema'];
+
+    /**
+     * Decoded JSON Schema document, loaded lazily from
+     * {@see self::$schemaPath} and cached for the service's lifetime.
+     */
+    private ?object $schema = null;
+
+    /**
+     * @param string $schemaPath absolute path to the OpenWebUI model JSON Schema
+     */
+    public function __construct(
+        #[Autowire('%kernel.project_dir%/config/schema/openwebui-model.json')]
+        private readonly string $schemaPath,
+    ) {
+    }
 
     /**
      * @return list<string> the check identifiers in declared order
@@ -51,7 +71,7 @@ final class OpenWebUiConfigValidator
     {
         return match ($name) {
             'syntax' => $this->validateSyntax($json),
-            'exampleDelay' => $this->exampleDelay($json),
+            'schema' => $this->validateSchema($json),
             default => throw new \InvalidArgumentException(\sprintf('Unknown check "%s".', $name)),
         };
     }
@@ -81,21 +101,49 @@ final class OpenWebUiConfigValidator
     }
 
     /**
-     * Temporary scaffolding: a deliberately slow validation that
-     * always succeeds, kept here so the upload UI can be exercised
-     * with the progress bar visible. Delete this method and its
-     * entry in {@see self::CHECKS} once a real long-running
-     * validation lands.
+     * Assert that `$json` matches the OpenWebUI model JSON Schema.
      *
-     * @param string $json raw uploaded payload (ignored)
+     * The payload is decoded into objects (not associative arrays)
+     * because {@see SchemaValidator} works on the PHP object shape
+     * JSON Schema is defined against. A parse failure is reported as
+     * a schema error too, so the check is safe to run standalone
+     * (the AJAX UI runs it after `syntax`, but nothing guarantees a
+     * caller ran `syntax` first).
      *
-     * @return ValidationResult always valid
+     * The schema accepts the three shapes an OpenWebUI export arrives
+     * in — a one-element array, a flat model object, or an
+     * `info`-wrapped object — and rejects arrays that don't hold
+     * exactly one model.
+     *
+     * @param string $json raw uploaded payload
+     *
+     * @return ValidationResult valid when the payload matches the
+     *                          schema, otherwise the flattened schema
+     *                          error messages
      */
-    public function exampleDelay(string $json): ValidationResult
+    public function validateSchema(string $json): ValidationResult
     {
-        sleep(2);
+        try {
+            $data = json_decode($json, associative: false, flags: \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            return new ValidationResult([$e->getMessage()]);
+        }
 
-        return ValidationResult::valid();
+        $result = (new SchemaValidator())->validate($data, $this->schema());
+
+        if ($result->isValid()) {
+            return ValidationResult::valid();
+        }
+
+        // The three-way `anyOf` at the schema root makes opis emit the
+        // same generic "must match type" line once per failed branch;
+        // dedupe so the UI shows each distinct reason once. `error()`
+        // is non-null once the result is invalid.
+        $error = $result->error();
+
+        return new ValidationResult(
+            null === $error ? [] : array_values(array_unique((new ErrorFormatter())->formatFlat($error))),
+        );
     }
 
     /**
@@ -119,5 +167,35 @@ final class OpenWebUiConfigValidator
         }
 
         return new ValidationResult($errors);
+    }
+
+    /**
+     * Load and cache the decoded JSON Schema document.
+     *
+     * Read once from disk and memoised so repeated checks within a
+     * request (the AJAX UI fires one HTTP call per check) don't
+     * re-read and re-parse the file.
+     *
+     * @return object the decoded schema, as the object shape opis expects
+     *
+     * @throws \RuntimeException when the schema file cannot be read or parsed
+     */
+    private function schema(): object
+    {
+        if (null !== $this->schema) {
+            return $this->schema;
+        }
+
+        $contents = is_file($this->schemaPath) ? file_get_contents($this->schemaPath) : false;
+        if (false === $contents) {
+            throw new \RuntimeException(\sprintf('Unable to read JSON Schema at "%s".', $this->schemaPath));
+        }
+
+        $decoded = json_decode($contents, associative: false, flags: \JSON_THROW_ON_ERROR);
+        if (!\is_object($decoded)) {
+            throw new \RuntimeException(\sprintf('JSON Schema at "%s" did not decode to an object.', $this->schemaPath));
+        }
+
+        return $this->schema = $decoded;
     }
 }
