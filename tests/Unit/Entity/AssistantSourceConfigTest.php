@@ -8,9 +8,9 @@ use App\Entity\Assistant;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Covers the `source_config` field, kept in a dedicated file so the
- * existing AssistantTest stays untouched (per the project's "tests are
- * not modified without approval" rule).
+ * Unit coverage for the Assistant `source_config` accessors: the null
+ * default, storing a decoded config array (fluent return), and clearing
+ * a stored value with null.
  */
 final class AssistantSourceConfigTest extends TestCase
 {
