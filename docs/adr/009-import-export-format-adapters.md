@@ -1,7 +1,7 @@
 # 009: Import/export format adapters and cross-system model mapping
 
 | Field | Value |
-|-------|-------|
+| ----- | ----- |
 | **Created By** | Troels Ugilt Jensen |
 | **Date** | 2026-07-02 |
 | **Decision Maker** | Troels Ugilt Jensen |
