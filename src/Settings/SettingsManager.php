@@ -8,7 +8,6 @@ use App\Entity\Setting;
 use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Mime\Address;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -32,14 +31,6 @@ class SettingsManager
      * Matched against {@see Setting::getName()}.
      */
     public const string ADMIN_RECIPIENT = 'admin_recipient';
-
-    /**
-     * Canonical key for the transactional-mail sender (`From:`) address.
-     *
-     * When unset, the manager falls back to the `MAILER_FROM` env var
-     * so a fresh install still has a working `From:`.
-     */
-    public const string SENDER_ADDRESS = 'sender_address';
 
     /**
      * Canonical key for the public-facing brand name (full title).
@@ -133,36 +124,24 @@ class SettingsManager
     }
 
     /**
-     * Read the configured transactional-mail sender (`From:`) address.
+     * Read the transactional-mail sender (`From:`) address.
      *
-     * Returns the admin-saved override when set, otherwise falls
-     * back to the deploy-time `MAILER_FROM` env var, or `null` when
-     * both are unset. Callers decide how to handle a `null` sender.
+     * Sourced from the deploy-time `MAILER_FROM` env var. Returns
+     * `null` when the env var is empty / unset, signalling to
+     * notifiers that they should skip the send — a fresh install
+     * with no mailer configured is a legitimate operating state
+     * (the moderator can still approve users through
+     * `/admin/users`).
      *
      * The string may include a display-name component, e.g.
-     * `"AI Reolen <noreply@…>"`; `Address::create()` parses both
-     * shapes on the send side.
+     * `"AI Reolen <noreply@…>"`; {@see \Symfony\Component\Mime\Address::create()}
+     * parses both shapes on the send side.
      *
-     * @return string|null current sender address, or null when neither setting nor env are configured
+     * @return string|null the configured sender address, or null when MAILER_FROM is empty
      */
     public function getSenderAddress(): ?string
     {
-        return $this->getString(self::SENDER_ADDRESS)
-            ?? ('' === $this->defaultSenderAddress ? null : $this->defaultSenderAddress);
-    }
-
-    /**
-     * Persist the transactional-mail sender address.
-     *
-     * Inserts a new `setting` row when the key is unset, otherwise
-     * updates the existing one. Pass `null` to revert to the
-     * `MAILER_FROM` env-var default.
-     *
-     * @param string|null $address sender address to store, or null to clear
-     */
-    public function setSenderAddress(?string $address): void
-    {
-        $this->setString(self::SENDER_ADDRESS, $address);
+        return '' === $this->defaultSenderAddress ? null : $this->defaultSenderAddress;
     }
 
     /**
@@ -511,35 +490,6 @@ class SettingsManager
     }
 
     /**
-     * Validate (and normalise) a submitted transactional-mail sender.
-     *
-     * Accepts either a bare e-mail (`noreply@…`) or a display-name
-     * form (`"AI Reolen <noreply@…>"`) — the same shape Symfony's
-     * {@see \Symfony\Component\Mime\Address::create()} parses on the
-     * send side. Returns the trimmed string on accept, `null` when
-     * the input was empty (clear the row), or `false` when the input
-     * is non-empty and unparseable. Pure — does not touch the
-     * repository.
-     *
-     * @param string|null $address raw submitted sender address
-     *
-     * @return string|false|null trimmed address (or null to clear) on accept, false on invalid
-     */
-    public function validateSenderAddress(?string $address): string|false|null
-    {
-        $normalised = self::emptyToNull($address);
-        if (null !== $normalised) {
-            try {
-                Address::create($normalised);
-            } catch (\Throwable) {
-                return false;
-            }
-        }
-
-        return $normalised;
-    }
-
-    /**
      * Validate and persist an admin notification recipient submission in one call.
      *
      * Delegates validation to {@see validateAdminRecipient()} and
@@ -561,30 +511,6 @@ class SettingsManager
         }
 
         $this->setAdminRecipient($result);
-
-        return true;
-    }
-
-    /**
-     * Validate and persist a transactional-mail sender submission in one call.
-     *
-     * Delegates validation to {@see validateSenderAddress()} and
-     * persists via {@see setSenderAddress()} on accept. Prefer the
-     * split form when multiple fields share a single form so the
-     * whole submission can be validated before any row is written.
-     *
-     * @param string|null $address raw submitted sender address
-     *
-     * @return bool true on accept (cleared or persisted), false on a syntactically invalid non-empty address
-     */
-    public function applySenderAddress(?string $address): bool
-    {
-        $result = $this->validateSenderAddress($address);
-        if (false === $result) {
-            return false;
-        }
-
-        $this->setSenderAddress($result);
 
         return true;
     }

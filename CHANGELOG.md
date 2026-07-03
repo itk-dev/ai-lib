@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The transactional-mail sender (`From:`) address is now
+  deploy-time-only via the `MAILER_FROM` env var; the
+  editable **Afsenderadresse** field on
+  `/admin/settings/email` is removed. `SettingsManager::getSenderAddress()`
+  reads `MAILER_FROM` and returns `null` when the env var is
+  empty. All three registration notifiers (admin moderation,
+  user welcome, email confirmation) already skip the send +
+  log a warning when the sender resolves to `null`, so a
+  fresh install with `MAILER_FROM=` unset no longer crashes
+  the signup flow — the moderator queue still gates site
+  access through `/admin/users`. Dropped:
+  `SettingsManager::setSenderAddress()`,
+  `validateSenderAddress()`, `applySenderAddress()`, the
+  `sender_address` setting key, and the two integration tests
+  that exercised the removed UI + persistence surface.
 - Editor-experience upgrades on `/admin/settings/email`: every
   Markdown body field grows a **Markdown-oversigt** cheat-sheet
   link (opens
