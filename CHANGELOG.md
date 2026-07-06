@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [PR-162](https://github.com/itk-dev/ai-reolen/issues/162)
+  Applied the OS2ai brand: green/charcoal/sand colour tokens replace
+  the old teal/gold, self-hosted Inter + DM Serif Display replace the
+  Google Fonts stack, and the header carries the brand as a wordmark.
 - Primary site nav now carries only working destinations. **Del
   assistent** points at `/assistant/new`. **Mine assistenter**
   is a new page at `/mine/assistenter` (route
