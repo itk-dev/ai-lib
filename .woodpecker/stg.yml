@@ -28,10 +28,10 @@ steps:
               - git checkout ${CI_COMMIT_BRANCH}
               - git pull
               - itkdev-docker-compose-server up -d --force-recreate
-              - itkdev-docker-compose-server exec phpfpm composer install --no-dev -o --classmap-authoritative
+              - itkdev-docker-compose-server exec phpfpm composer install -o --classmap-authoritative
               - itkdev-docker-compose-server exec phpfpm bin/console doctrine:schema:drop --full-database --force
               - itkdev-docker-compose-server exec phpfpm bin/console doctrine:migrations:migrate --no-interaction
-              - itkdev-docker-compose-server exec phpfpm bin/console doctrine:fixtures:load -no-interaction
+              - itkdev-docker-compose-server exec phpfpm bin/console doctrine:fixtures:load --no-interaction
               - itkdev-docker-compose-server exec phpfpm bin/console app:user:obfuscate-passwords --force
               - itkdev-docker-compose-server exec phpfpm bin/console assets:install public
               - itkdev-docker-compose-server exec phpfpm bin/console asset-map:compile
