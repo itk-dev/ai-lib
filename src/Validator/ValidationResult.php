@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Validator;
 
 /**
- * Outcome of running a validation against an OpenWebUI config blob.
+ * Outcome of running a format adapter's config validation.
  *
  * Immutable value object. A result with an empty error list is
  * considered valid; any error string makes the result invalid. The

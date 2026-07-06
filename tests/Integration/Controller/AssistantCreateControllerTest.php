@@ -43,7 +43,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         // Step 1 body: file input + a JSON textarea, no metadata fields yet.
         self::assertSelectorExists('input[type="file"]');
-        self::assertSelectorExists('textarea[name$="[openwebuiConfig]"]');
+        self::assertSelectorExists('textarea[name$="[sourceConfig]"]');
         self::assertSelectorNotExists('input[name$="[title]"]');
         // Step rail shows all three step labels.
         $body = $crawler->filter('body')->text();
@@ -109,7 +109,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         // Step 1: paste a JSON payload with fields the extractor knows how to map.
         $crawler = $this->client->request('GET', '/assistant/new');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
-        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
         $stepOne[$textareaName] = json_encode([
             'name' => 'Demo assistant',
             'base_model_id' => 'gpt-4o',
@@ -152,7 +152,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         );
         self::assertSame(
             ['name' => 'Demo assistant', 'base_model_id' => 'gpt-4o', 'meta' => ['description' => 'A demo assistant', 'tags' => ['alpha', 'beta']]],
-            $created->getOpenwebuiConfig(),
+            $created->getSourceConfig(),
         );
 
         // The permalink to the created row is on the receipt page.
@@ -165,7 +165,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         // Walk to the receipt (step 3) once.
         $crawler = $this->client->request('GET', '/assistant/new');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
-        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
         $stepOne[$textareaName] = json_encode([
             'name' => 'Reset assistant',
             'base_model_id' => 'gpt-4o',
@@ -179,7 +179,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/assistant/new');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('textarea[name$="[openwebuiConfig]"]');
+        self::assertSelectorExists('textarea[name$="[sourceConfig]"]');
         self::assertSelectorNotExists('input[name$="[title]"]');
         $body = $crawler->filter('body')->text();
         self::assertStringNotContainsString('Assistenten er delt', $body);
@@ -190,7 +190,7 @@ final class AssistantCreateControllerTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', '/assistant/new');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
-        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
         $stepOne[$textareaName] = '{not json';
         $this->client->submit($stepOne);
 
@@ -198,6 +198,41 @@ final class AssistantCreateControllerTest extends WebTestCase
 
         $repository = self::getContainer()->get(AssistantRepository::class);
         self::assertNull($repository->findOneBy(['title' => '{not json']));
+    }
+
+    // Ensures step 1 rejects syntactically valid JSON that fails the model schema (a two-model array), and persists nothing.
+    public function testStepOneRejectsSchemaInvalidJson(): void
+    {
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
+        $stepOne[$textareaName] = json_encode([
+            ['name' => 'First model'],
+            ['name' => 'Second model'],
+        ], \JSON_THROW_ON_ERROR);
+        $this->client->submit($stepOne);
+
+        self::assertResponseStatusCodeSame(422);
+
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        self::assertNull($repository->findOneBy(['title' => 'First model']));
+    }
+
+    // Verifies the AJAX validation endpoint runs the schema check and rejects a payload missing the required name.
+    public function testValidateConfigEndpointRejectsSchemaInvalidForSchemaCheck(): void
+    {
+        $this->client->request(
+            'POST',
+            '/assistant/new/validate-config',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['json' => '{"base_model_id":"gpt-4o"}', 'check' => 'schema'], \JSON_THROW_ON_ERROR),
+        );
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), associative: true);
+        self::assertIsArray($payload);
+        self::assertFalse($payload['valid']);
+        self::assertNotEmpty($payload['errors']);
     }
 
     // Ensures an invalid CSRF token yields 422 (Symfony Form rejects the submission before it reaches the flow's advance logic) and does not persist an Assistant.
@@ -208,7 +243,7 @@ final class AssistantCreateControllerTest extends WebTestCase
 
         $this->client->request('POST', '/assistant/new', [
             'assistant_create_flow' => [
-                'json' => ['openwebuiConfig' => '{"name":"demo"}'],
+                'json' => ['sourceConfig' => '{"name":"demo"}'],
                 'navigator' => ['next' => ''],
                 '_token' => 'nope',
             ],

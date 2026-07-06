@@ -22,12 +22,19 @@
 
         <twig:Layout:SiteHeader>
             <twig:Nav:Menu>
-                <twig:Nav:Link href="{{ path('app_assistant_catalog') }}">{{ 'nav.links.catalog'|trans }}</twig:Nav:Link>
-                <twig:Nav:Link href="#">{{ 'nav.links.share'|trans }}</twig:Nav:Link>
-                <twig:Nav:Link href="#">{{ 'nav.links.mine'|trans }}</twig:Nav:Link>
-                <twig:Nav:Link href="#">{{ 'nav.links.favorites'|trans }}</twig:Nav:Link>
-                <twig:Nav:Link href="#">{{ 'nav.links.collections'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="{{ path('app_assistant_catalog') }}"
+                               :active="app.current_route == 'app_assistant_catalog'">
+                    {{ 'nav.links.catalog'|trans }}
+                </twig:Nav:Link>
+                <twig:Nav:Link href="{{ path('app_assistant_new') }}"
+                               :active="app.current_route == 'app_assistant_new'">
+                    {{ 'nav.links.share'|trans }}
+                </twig:Nav:Link>
                 {% if app.user %}
+                    <twig:Nav:Link href="{{ path('app_user_assistants') }}"
+                                   :active="app.current_route == 'app_user_assistants'">
+                        {{ 'nav.links.mine'|trans }}
+                    </twig:Nav:Link>
                     <twig:Layout:UserMenu />
                 {% endif %}
             </twig:Nav:Menu>

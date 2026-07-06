@@ -13,7 +13,8 @@ use Doctrine\Migrations\AbstractMigration;
  *
  * Stores the OpenWebUI export JSON verbatim for assistants created
  * via the upload form. Nullable so rows pre-dating the upload flow
- * stay valid.
+ * stay valid. Renamed to `source_config` by a later migration once
+ * the storage became format-agnostic.
  *
  * Dated 2026-06-25 12:00 so it sequences after the entity-bundle
  * squash (`Version20260624142709`) that creates the `assistant`

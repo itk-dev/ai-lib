@@ -1,0 +1,20 @@
+{#
+    Modelkort tab — placeholder for the language-model rationale card.
+
+    The entity has no dedicated `modelCard` field today; a future
+    schema change will back this tab with real data. Until then we
+    render a muted placeholder pinned to the languageModel value we
+    do have.
+#}
+<div class="grid gap-4">
+    <h2 class="text-lg font-semibold text-ink">
+        {{ 'assistant.detail.modelkort.heading'|trans }}
+    </h2>
+    <p class="text-sm text-text-muted">
+        {{ 'assistant.detail.modelkort.lead'|trans({'%model%': assistant.languageModel}) }}
+    </p>
+    <div class="rounded-xl border border-dashed border-line bg-surface-2 p-6 text-sm text-text-muted italic"
+         role="note">
+        {{ 'assistant.detail.placeholder_body'|trans }}
+    </div>
+</div>
