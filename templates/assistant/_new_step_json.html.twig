@@ -4,7 +4,7 @@
     Wrapped by the assistant-config-upload Stimulus controller so
     a file drop, click-to-select, or paste enhances the textarea
     with live-validate feedback. The server-side form is a plain
-    textarea binding to the DTO's `openwebuiConfig`; the dropzone
+    textarea binding to the DTO's `sourceConfig`; the dropzone
     is client-side enhancement that fills the textarea and lets
     the operator review before submit.
 #}
@@ -36,7 +36,7 @@
                tabindex="-1">
     </div>
 
-    {{ form_row(flow.json.openwebuiConfig, {attr: {'data-assistant-config-upload-target': 'config'}}) }}
+    {{ form_row(flow.json.sourceConfig, {attr: {'data-assistant-config-upload-target': 'config'}}) }}
 
     <progress data-assistant-config-upload-target="progress"
               value="0"

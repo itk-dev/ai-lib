@@ -23,8 +23,8 @@
         </span>
     </div>
 
-    {% if assistant.openwebuiConfig %}
-        <pre class="max-h-[420px] overflow-auto whitespace-pre rounded-lg border border-line bg-surface-2 p-4 text-xs text-ink">{{ assistant.openwebuiConfig|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE')) }}</pre>
+    {% if assistant.sourceConfig %}
+        <pre class="max-h-[420px] overflow-auto whitespace-pre rounded-lg border border-line bg-surface-2 p-4 text-xs text-ink">{{ assistant.sourceConfig|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE')) }}</pre>
     {% else %}
         <p class="text-sm text-text-muted italic">
             {{ 'assistant.detail.json.empty'|trans }}

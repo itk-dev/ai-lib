@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Validator\ValidAssistantConfig;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -19,7 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * still submits the JSON as the textarea's value, so no separate
  * form field is needed here.
  *
- * `openwebuiConfig` maps to {@see \App\Assistant\AssistantDraft::$openwebuiConfig}
+ * `sourceConfig` maps to {@see \App\Assistant\AssistantDraft::$sourceConfig}
  * so state persists across step transitions via
  * `SessionDataStorage`. Validation lives in the `json` group so
  * step 2 (which uses the `metadata` group) doesn't re-check the
@@ -33,7 +34,7 @@ final class AssistantJsonStepType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder->add('openwebuiConfig', TextareaType::class, [
+        $builder->add('sourceConfig', TextareaType::class, [
             'label' => 'assistant.new.step_json.textarea_label',
             'help' => 'assistant.new.step_json.textarea_help',
             'required' => true,
@@ -43,10 +44,7 @@ final class AssistantJsonStepType extends AbstractType
                     message: 'assistant.new.step_json.required',
                     groups: ['json'],
                 ),
-                new Assert\Json(
-                    message: 'assistant.new.step_json.invalid',
-                    groups: ['json'],
-                ),
+                new ValidAssistantConfig(groups: ['json']),
             ],
             'attr' => [
                 'class' => self::INPUT_CLASS,
