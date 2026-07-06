@@ -1,47 +1,89 @@
 @import "tailwindcss";
 
 /*
- * Design tokens mirroring the AI Bibliotek prototype
- * (https://github.com/itk-dev/research-projects/tree/main/docs/public/projects/ai-bibliotek/mocks).
+ * Self-hosted brand fonts, vendored from Fontsource into assets/fonts/.
+ * AssetMapper rewrites these relative url() paths to digested asset URLs
+ * at build time, so no <link> tag or third-party request is needed.
+ *
+ * Inter is a single variable font covering the full 100–900 weight axis
+ * (used for all UI text and headings). DM Serif Display is a single
+ * regular weight reserved for editorial/hero moments via `font-display`.
+ */
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../fonts/inter-latin-wght-normal.woff2")
+        format("woff2-variations");
+}
+@font-face {
+    font-family: "DM Serif Display";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/dm-serif-display-latin-400-normal.woff2") format("woff2");
+}
+
+/*
+ * Design tokens for the OS2ai brand (Figma "Brand - OS2ai").
  * Registered via Tailwind v4's `@theme` so the values become utility
  * variants — e.g. `bg-surface`, `text-ink`, `font-display`.
+ *
+ * Raw brand scales (for reference — role tokens below point into these):
+ *   Green   100 #EEF8E3 200 #D5EEB8 300 #B4DE85 400 #8FCF56 500 #78C840
+ *           600 #5EAA2F 700 #478523 800 #315F17 900 #1C390D
+ *           (500 = brand, 700 = accessible on white)
+ *   Charcoal 100 #E9E9E9 200 #CFCFCF 300 #ABABAB 400 #838383 500 #585858
+ *           600 #3C3C3C 700 #2C2C2C 800 #1A1A1A 900 #0A0A0A
+ *   Sand    100 #FDF8F1 200 #F6EDDE 300 #EBDCC4 400 #DDC7A4 500 #C8A97E
+ *           600 #AD8A58 700 #8E6D3C 800 #6A502A 900 #47341A
  */
 @theme {
     /* Surface + ink palette */
     --color-bg: #ffffff;
     --color-surface: #ffffff;
-    --color-surface-2: #fbf9f5;
-    /* Very light pink tint applied to every /admin/** page body so */
-    /* operators see at a glance that they're in the back office. */
-    --color-admin-bg: #fdf2f8;
+    --color-surface-2: #fdf8f1; /* sand-100 */
+    /* Light sand tint applied to every /admin/** page body so operators */
+    /* see at a glance that they're in the back office (sand-100). */
+    --color-admin-bg: #fdf8f1;
     /* Alternating row background for the shared Table component. */
-    /* Distinct from surface-2 so hover states elsewhere keep their */
-    /* current tone while zebra striping reads clearly on white.   */
-    --color-row-alt: #f1f3f5;
-    --color-border: #e3ddd1;
-    --color-border-strong: #c8bea9;
-    --color-line: #ddd5c4;
-    --color-ink: #11192a;
-    --color-text: #1c2433;
-    --color-text-muted: #5b6478;
+    /* Sand-200 so zebra striping reads clearly against white rows.  */
+    --color-row-alt: #f6edde;
+    /* Borders and dividers stay neutral charcoal so the sand tint reads */
+    /* only on surfaces and badges, not as a warm cast over every edge.  */
+    --color-border: #e9e9e9; /* charcoal-100 */
+    --color-border-strong: #cfcfcf; /* charcoal-200 */
+    --color-line: #e9e9e9; /* charcoal-100 */
+    --color-ink: #1a1a1a; /* charcoal-800 — headings */
+    --color-text: #2c2c2c; /* charcoal-700 — body */
+    --color-text-muted: #585858; /* charcoal-500 */
 
-    /* Brand */
-    --color-primary: #0f766e;
-    --color-primary-hover: #0c5e57;
+    /* Brand — single green accent (700 = AA-accessible on white) */
+    --color-primary: #478523; /* green-700 */
+    --color-primary-hover: #315f17; /* green-800 */
     --color-primary-ink: #ffffff;
-    --color-accent: #c89b3c;
-    --color-accent-soft: #f0e3c2;
-    --color-accent-deep: #8a6a1f;
+    --color-accent: #478523; /* green-700 */
+    --color-accent-soft: #eef8e3; /* green-100 */
+    --color-accent-deep: #315f17; /* green-800 */
 
     /* Typography */
-    --font-display:
-        "Fraunces", "Source Serif Pro", "Iowan Old Style", Georgia, serif;
+    --font-display: "DM Serif Display", Georgia, "Times New Roman", serif;
     --font-sans:
-        "Geist", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
-        Roboto, Helvetica, Arial, sans-serif;
+        "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
     --font-mono:
         "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
         monospace;
+
+    /*
+     * Fluid display size for hero headlines: 40px on small screens up
+     * to 72px on large desktops, scaling with the viewport in between.
+     * The unitless line-height stays proportional at every size, unlike
+     * a fixed value. Generates a `text-hero` utility that sets both.
+     */
+    --text-hero: clamp(2.5rem, 6vw, 4.5rem);
+    --text-hero--line-height: 1.05;
 
     /*
      * Page-container widths. The `--container-*` namespace is Tailwind
@@ -56,9 +98,7 @@
 
 /*
  * Base layer: page chrome that has to apply to <body> regardless of
- * which utility classes the template carries. Mirrors the prototype's
- * body styling so the same font stack and ink colour are used
- * everywhere.
+ * which utility classes the template carries.
  */
 @layer base {
     body {
@@ -68,14 +108,21 @@
         font-feature-settings: "ss01", "ss02";
     }
 
+    /*
+     * Headings render in Inter (the functional UI face) per the OS2ai
+     * brand, which uses bold Inter for the H1–H6 scale. DM Serif Display
+     * (`--font-display`) is reserved for editorial/hero moments and is
+     * opted into explicitly via the `font-display` utility, not applied
+     * to every heading here.
+     */
     h1,
     h2,
     h3,
     h4 {
-        font-family: var(--font-display);
-        font-weight: 500;
+        font-family: var(--font-sans);
+        font-weight: 700;
         color: var(--color-ink);
-        letter-spacing: -0.01em;
+        letter-spacing: -0.02em;
         line-height: 1.15;
     }
 }
@@ -89,9 +136,9 @@
  */
 @layer components {
     /* Eyebrow label with leading decorative rule, used as a section kicker. */
-    /* font-family is set explicitly so an <h2 class="eyebrow"> renders in */
-    /* the sans body font instead of the serif `--font-display` that the   */
-    /* @layer base { h1..h4 } rule above otherwise applies to headings.    */
+    /* font-family is pinned to the body sans so the eyebrow stays in Inter */
+    /* even when applied to a heading element, independent of any future    */
+    /* heading-font change in the @layer base { h1..h4 } rule above.        */
     .eyebrow {
         display: inline-flex;
         align-items: center;
