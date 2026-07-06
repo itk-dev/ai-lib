@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added prod config for tailwind bundle.
 - Registration mail timing corrected. Signing up now fires
   exactly one transactional mail — the single-use email
   confirmation link. The two follow-up mails (moderator
