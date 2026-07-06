@@ -40,4 +40,3 @@ steps:
               - itkdev-docker-compose-server exec phpfpm bin/console cache:clear
               # Remove dev packages
               - itkdev-docker-compose-server exec phpfpm composer install -o --no-dev --classmap-authoritative
-
