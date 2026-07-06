@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added prod config for tailwind bundle.
 - Primary site nav now carries only working destinations. **Del
   assistent** points at `/assistant/new`. **Mine assistenter**
   is a new page at `/mine/assistenter` (route
