@@ -9,6 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The transactional-mail sender (`From:`) address is now
+  deploy-time-only via the `MAILER_FROM` env var; the
+  editable **Afsenderadresse** field on
+  `/admin/settings/email` is removed. `SettingsManager::getSenderAddress()`
+  reads `MAILER_FROM` and returns `null` when the env var is
+  empty. All three registration notifiers (admin moderation,
+  user welcome, email confirmation) already skip the send +
+  log a warning when the sender resolves to `null`, so a
+  fresh install with `MAILER_FROM=` unset no longer crashes
+  the signup flow — the moderator queue still gates site
+  access through `/admin/users`. Dropped:
+  `SettingsManager::setSenderAddress()`,
+  `validateSenderAddress()`, `applySenderAddress()`, the
+  `sender_address` setting key, and the two integration tests
+  that exercised the removed UI + persistence surface.
+- Editor-experience upgrades on `/admin/settings/email`: every
+  Markdown body field grows a **Markdown-oversigt** cheat-sheet
+  link (opens
+  <https://www.markdownguide.org/cheat-sheet/> in a new tab,
+  `rel="noopener noreferrer"`) and a **Forhåndsvis** button that
+  opens a modal showing the rendered email for the current
+  subject + body. The modal reuses
+  `App\Mail\EmailTemplateRenderer` — same pipeline the mailer
+  runs through — so the preview is by construction what the
+  recipient would see. Token substitution uses the acting
+  admin's own `name` + `email` for the greeting slot, the
+  current brand name for `%brand_name%`, and a synthetic
+  `%approval_url%` / `%confirmation_url%` pointing at
+  `/admin/users` and the frontpage respectively so URL tokens
+  render as real links. The rendered HTML lives inside an
+  `<iframe sandbox="allow-same-origin">` driven by `srcdoc` so
+  admin-typed HTML can't script the admin UI or reach out over
+  the network. A new POST endpoint
+  `/admin/settings/email/preview` backs the modal: JSON in
+  (`subject`, `body`, `_token`), JSON out (`subject`, `html`),
+  admin-gated by the class-level `IsGranted` attribute and
+  CSRF-protected against a dedicated
+  `admin-settings-email-preview` intent so a stale carrier
+  token can't invalidate an in-flight main-form submit. The
+  new `email-preview` Stimulus controller mints tokens through
+  the same shared `csrf-protection` helper the role-picker
+  uses, so the double-submit-cookie handshake stays consistent
+  ([#149](https://github.com/itk-dev/ai-reolen/issues/149)).
 - [PR-162](https://github.com/itk-dev/ai-reolen/issues/162)
   Applied the OS2ai brand: green/charcoal/sand colour tokens replace
   the old teal/gold, self-hosted Inter + DM Serif Display replace the
