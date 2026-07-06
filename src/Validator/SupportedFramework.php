@@ -7,8 +7,8 @@ namespace App\Validator;
 use Symfony\Component\Validator\Constraint;
 
 /**
- * Assert the annotated string value is one of the machine names
- * exposed by {@see \App\Framework\SupportedFrameworks::list()}.
+ * Assert the annotated string value is one of the format ids
+ * registered in {@see \App\Assistant\Format\FormatAdapterRegistry}.
  *
  * Applied to {@see \App\Entity\Organization::$defaultFramework} so
  * fixture loads, console commands, and any future non-form write

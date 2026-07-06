@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Assistant\AssistantDraft;
-use App\Assistant\OpenWebUiMetadataExtractor;
+use App\Assistant\AssistantDraftPrefiller;
 use Symfony\Component\Form\Flow\AbstractFlowType;
 use Symfony\Component\Form\Flow\DataStorage\SessionDataStorage;
 use Symfony\Component\Form\Flow\FormFlowBuilderInterface;
@@ -25,11 +25,12 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *
  * Steps:
  *
- * 1. `json`     — user pastes / uploads the OpenWebUI export.
+ * 1. `json`     — user pastes / uploads the assistant config.
  *                 On successful submit the step-1 `POST_SUBMIT`
- *                 listener runs {@see OpenWebUiMetadataExtractor}
- *                 so step 2 opens with title / description /
- *                 language model / tags pre-filled.
+ *                 listener runs {@see AssistantDraftPrefiller}
+ *                 so step 2 opens with the detected format's
+ *                 title / description / language model / tags
+ *                 pre-filled.
  * 2. `metadata` — review + edit the extracted metadata. Full
  *                 validation of the `metadata` group runs here.
  * 3. `receipt`  — render-only "assistant delt" page with a
@@ -52,12 +53,12 @@ final class AssistantCreateFlowType extends AbstractFlowType
     public const string SESSION_KEY = 'assistant_new_flow';
 
     /**
-     * @param RequestStack                $requestStack backing the session storage
-     * @param OpenWebUiMetadataExtractor $extractor    pre-populates step 2 from the step 1 JSON
+     * @param RequestStack            $requestStack backing the session storage
+     * @param AssistantDraftPrefiller $prefiller    detects the format and pre-populates step 2 from step 1
      */
     public function __construct(
         private readonly RequestStack $requestStack,
-        private readonly OpenWebUiMetadataExtractor $extractor,
+        private readonly AssistantDraftPrefiller $prefiller,
     ) {
     }
 
@@ -70,15 +71,14 @@ final class AssistantCreateFlowType extends AbstractFlowType
             ->add('navigator', NavigatorFlowType::class)
         ;
 
-        // On step 1 → step 2, the DTO's raw JSON is fresh. Extract
-        // suggested title / description / language model / tags
-        // into the still-empty step 2 fields so the user sees a
-        // filled form instead of blanks. Fires against the whole
-        // flow after the step 1 form submit resolves.
+        // On step 1 → step 2, the DTO's raw config is fresh. Detect
+        // its format and pre-fill the still-empty step 2 fields so the
+        // user sees a filled form instead of blanks. Fires against the
+        // whole flow after the step 1 form submit resolves.
         $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {
             $draft = $event->getData();
             if ($draft instanceof AssistantDraft && 'json' === $draft->step) {
-                $this->extractor->extractInto($draft);
+                $this->prefiller->prefill($draft);
             }
         });
     }

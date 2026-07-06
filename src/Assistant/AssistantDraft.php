@@ -31,11 +31,11 @@ final class AssistantDraft
     public string $step = 'json';
 
     /**
-     * Raw OpenWebUI JSON as the user pasted / uploaded it. The
-     * validator + `AssistantCreator::create()` decode this to an
-     * array at persist time.
+     * Raw assistant config as the user pasted / uploaded it, in the
+     * detected format. The adapter + `AssistantCreator::create()`
+     * validate and parse it to the stored source dict at persist time.
      */
-    public string $openwebuiConfig = '';
+    public string $sourceConfig = '';
 
     public string $title = '';
 

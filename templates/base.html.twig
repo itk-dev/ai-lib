@@ -4,11 +4,10 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}{{ brand_name }}{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
-
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400;9..144,500;9..144,600;9..144,700&family=Geist:wght@400;500;600;700&display=swap">
+        {# On-brand favicon: green-700 rounded tile with a white wordmark. #}
+        {# Brand fonts are self-hosted via @font-face in app.css, so no #}
+        {# remote font <link> or preconnect is required. #}
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><rect width=%22128%22 height=%22128%22 rx=%2228%22 fill=%22%23478523%22/><text x=%2264%22 y=%2288%22 font-family=%22Arial,sans-serif%22 font-size=%2264%22 font-weight=%22700%22 fill=%22white%22 text-anchor=%22middle%22>ai</text></svg>">
 
         {% block stylesheets %}
             <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
@@ -23,12 +22,19 @@
 
         <twig:Layout:SiteHeader>
             <twig:Nav:Menu>
-                <twig:Nav:Link href="{{ path('app_assistant_catalog') }}">{{ 'nav.links.catalog'|trans }}</twig:Nav:Link>
-                <twig:Nav:Link href="#">{{ 'nav.links.share'|trans }}</twig:Nav:Link>
-                <twig:Nav:Link href="#">{{ 'nav.links.mine'|trans }}</twig:Nav:Link>
-                <twig:Nav:Link href="#">{{ 'nav.links.favorites'|trans }}</twig:Nav:Link>
-                <twig:Nav:Link href="#">{{ 'nav.links.collections'|trans }}</twig:Nav:Link>
+                <twig:Nav:Link href="{{ path('app_assistant_catalog') }}"
+                               :active="app.current_route == 'app_assistant_catalog'">
+                    {{ 'nav.links.catalog'|trans }}
+                </twig:Nav:Link>
+                <twig:Nav:Link href="{{ path('app_assistant_new') }}"
+                               :active="app.current_route == 'app_assistant_new'">
+                    {{ 'nav.links.share'|trans }}
+                </twig:Nav:Link>
                 {% if app.user %}
+                    <twig:Nav:Link href="{{ path('app_user_assistants') }}"
+                                   :active="app.current_route == 'app_user_assistants'">
+                        {{ 'nav.links.mine'|trans }}
+                    </twig:Nav:Link>
                     <twig:Layout:UserMenu />
                 {% endif %}
             </twig:Nav:Menu>

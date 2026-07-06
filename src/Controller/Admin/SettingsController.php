@@ -4,19 +4,39 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use App\Entity\User;
+use App\Mail\EmailTemplateRenderer;
 use App\Security\Roles;
 use App\Settings\SettingsManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted(Roles::ADMIN)]
 final class SettingsController extends AbstractController
 {
+    /**
+     * CSRF intent for the preview JSON endpoint. Kept distinct
+     * from the enclosing form's `admin-settings-email` intent so
+     * a stale carrier form can be refreshed without invalidating
+     * an in-flight main-form submit.
+     */
+    private const string PREVIEW_CSRF_INTENT = 'admin-settings-email-preview';
+
+    /**
+     * Placeholder value substituted when the acting admin's `name`
+     * field is empty. Keeps the preview readable rather than
+     * showing a blank line where the greeting would be.
+     */
+    private const string PREVIEW_NAME_FALLBACK = 'Forhåndsvisning';
+
     public function __construct(
         private readonly SettingsManager $settingsManager,
+        private readonly EmailTemplateRenderer $emailTemplateRenderer,
     ) {
     }
 
@@ -73,7 +93,6 @@ final class SettingsController extends AbstractController
     {
         $submitted = [
             'admin_recipient' => $this->settingsManager->getAdminRecipient() ?? '',
-            'sender_address' => $this->settingsManager->getSenderAddress() ?? '',
             'admin_notification_subject' => $this->settingsManager->getAdminNotificationSubject(),
             'admin_notification_body' => $this->settingsManager->getAdminNotificationBody(),
             'registration_confirmation_subject' => $this->settingsManager->getRegistrationConfirmationSubject(),
@@ -85,7 +104,6 @@ final class SettingsController extends AbstractController
         if ('POST' === $request->getMethod()) {
             $submitted = [
                 'admin_recipient' => (string) $request->request->get('admin_recipient', ''),
-                'sender_address' => (string) $request->request->get('sender_address', ''),
                 'admin_notification_subject' => (string) $request->request->get('admin_notification_subject', ''),
                 'admin_notification_body' => (string) $request->request->get('admin_notification_body', ''),
                 'registration_confirmation_subject' => (string) $request->request->get('registration_confirmation_subject', ''),
@@ -109,18 +127,11 @@ final class SettingsController extends AbstractController
                 ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
             }
 
-            $senderAddress = $this->settingsManager->validateSenderAddress($submitted['sender_address']);
-            if (false === $senderAddress) {
-                return $this->render('admin/settings/email.html.twig', [
-                    'submitted' => $submitted,
-                    'error' => 'admin.settings.error.invalid_sender',
-                ], new Response('', Response::HTTP_UNPROCESSABLE_ENTITY));
-            }
-
-            // All fields validate — persist them together so a later
-            // invalid field cannot leave an earlier one partially saved.
+            // Persist the recipient + email templates together so a
+            // later invalid field cannot leave an earlier one partially
+            // saved. Sender address (`From:`) is deploy-time only via
+            // MAILER_FROM — not editable through the admin UI.
             $this->settingsManager->setAdminRecipient($adminRecipient);
-            $this->settingsManager->setSenderAddress($senderAddress);
 
             $this->settingsManager->applyEmailContent(
                 $submitted['admin_notification_subject'],
@@ -139,6 +150,73 @@ final class SettingsController extends AbstractController
         return $this->render('admin/settings/email.html.twig', [
             'submitted' => $submitted,
             'error' => null,
+        ]);
+    }
+
+    /**
+     * Render a preview of the currently-typed subject + Markdown
+     * body for the admin editor.
+     *
+     * Reuses {@see EmailTemplateRenderer} so the output matches
+     * what the mailer would ship — token substitution first, then
+     * CommonMark. Tokens are filled from the acting admin's own
+     * profile (`name`, `email`), the current brand name, and a
+     * synthetic `approval_url` pointing at the users admin so the
+     * preview is realistic without depending on fixture data.
+     *
+     * The endpoint is admin-gated via the class-level `IsGranted`
+     * attribute and CSRF-protected against a dedicated intent —
+     * the enclosing form's intent is deliberately not reused so a
+     * stale preview cookie cannot invalidate a legitimate settings
+     * submit.
+     *
+     * Response shape: `{"subject": string, "html": string}`.
+     */
+    #[Route(
+        path: '/admin/settings/email/preview',
+        name: 'app_admin_settings_email_preview',
+        methods: ['POST'],
+    )]
+    public function emailPreview(Request $request, UrlGeneratorInterface $urlGenerator): JsonResponse
+    {
+        /** @var array{subject?: string, body?: string, _token?: string} $payload */
+        $payload = json_decode((string) $request->getContent(), associative: true) ?: [];
+
+        if (!$this->isCsrfTokenValid(self::PREVIEW_CSRF_INTENT, (string) ($payload['_token'] ?? ''))) {
+            return new JsonResponse(
+                ['error' => 'csrf'],
+                Response::HTTP_FORBIDDEN,
+            );
+        }
+
+        $actor = $this->getUser();
+        \assert($actor instanceof User);
+
+        $tokens = [
+            'name' => '' !== $actor->getName() ? $actor->getName() : self::PREVIEW_NAME_FALLBACK,
+            'email' => $actor->getEmail(),
+            'brand_name' => $this->settingsManager->getBrandName(),
+            'approval_url' => $urlGenerator->generate(
+                'app_admin_users',
+                [],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            ),
+            'confirmation_url' => $urlGenerator->generate(
+                'app_frontpage',
+                [],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            ),
+        ];
+
+        $rendered = $this->emailTemplateRenderer->render(
+            (string) ($payload['subject'] ?? ''),
+            (string) ($payload['body'] ?? ''),
+            $tokens,
+        );
+
+        return new JsonResponse([
+            'subject' => $rendered->subject,
+            'html' => $rendered->bodyHtml,
         ]);
     }
 }

@@ -41,7 +41,7 @@ final class FrontpageControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
 
-        $cardLinks = $crawler->filter('a[href^="/assistant/"]');
+        $cardLinks = $crawler->filter('.assistant-card');
         self::assertCount(5, $cardLinks, 'rail surfaces the controller\'s id-DESC limit of 5');
 
         $hrefs = $cardLinks->each(static fn ($node) => $node->attr('href'));
@@ -73,7 +73,7 @@ final class FrontpageControllerTest extends WebTestCase
         self::assertStringContainsString('/search?q=', $this->client->getRequest()->getUri());
         self::assertCount(
             1,
-            $resultCrawler->filter('a[href^="/assistant/"]'),
+            $resultCrawler->filter('.assistant-card'),
             'the query reaches the catalogue and narrows to the matching assistant',
         );
         self::assertSelectorTextContains('[aria-label="Aktive filtre"]', '"journaliseringsassistent"');

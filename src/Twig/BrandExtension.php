@@ -29,17 +29,17 @@ final class BrandExtension extends AbstractExtension implements GlobalsInterface
     /**
      * Primary text colour. Mirrors `--color-text` in `assets/styles/app.css`.
      */
-    public const string PALETTE_TEXT = '#1c2433';
+    public const string PALETTE_TEXT = '#2c2c2c';
 
     /**
      * Divider / hairline colour. Mirrors `--color-line` in `assets/styles/app.css`.
      */
-    public const string PALETTE_LINE = '#ddd5c4';
+    public const string PALETTE_LINE = '#e9e9e9';
 
     /**
      * Muted secondary text colour. Mirrors `--color-text-muted` in `assets/styles/app.css`.
      */
-    public const string PALETTE_TEXT_MUTED = '#5b6478';
+    public const string PALETTE_TEXT_MUTED = '#585858';
 
     /**
      * @param SettingsManager $settings typed accessor for runtime-editable settings

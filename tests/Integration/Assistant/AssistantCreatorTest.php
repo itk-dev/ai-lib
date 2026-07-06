@@ -31,8 +31,8 @@ final class AssistantCreatorTest extends KernelTestCase
         $this->repository = $container->get(AssistantRepository::class);
     }
 
-    // Tests the happy path: a valid JSON payload persists an Assistant with the parsed config and the form data.
-    public function testCreatePersistsAssistantWithDecodedConfig(): void
+    // Tests the happy path: a valid payload persists an Assistant with the form data and a sanitised config.
+    public function testCreatePersistsAssistantWithSanitisedConfig(): void
     {
         $assistant = $this->creator->create(
             'Service Test Assistant',
@@ -40,7 +40,7 @@ final class AssistantCreatorTest extends KernelTestCase
             'gpt-4o',
             'openwebui',
             ['alpha', 'beta'],
-            '{"name":"demo","temperature":0.5}',
+            '{"name":"demo","base_model_id":"gpt-4o"}',
         );
 
         self::assertNotNull($assistant->getId());
@@ -49,45 +49,59 @@ final class AssistantCreatorTest extends KernelTestCase
             ['alpha', 'beta'],
             array_map(static fn (Tag $t) => $t->getName(), $assistant->getTags()->toArray()),
         );
-        self::assertSame(['name' => 'demo', 'temperature' => 0.5], $assistant->getOpenwebuiConfig());
-
-        $reloaded = $this->repository->find($assistant->getId());
-        self::assertNotNull($reloaded);
-        self::assertSame(['name' => 'demo', 'temperature' => 0.5], $reloaded->getOpenwebuiConfig());
+        self::assertSame(['name' => 'demo', 'base_model_id' => 'gpt-4o'], $assistant->getSourceConfig());
     }
 
-    // Verifies pretty-printed JSON with whitespace and newlines is normalised to a minified array on persist.
-    public function testCreateNormalisesPrettyPrintedConfigToMinifiedStorage(): void
+    // Verifies the real array-wrapped export is unwrapped and stripped of PII / instance data before storage.
+    public function testCreateUnwrapsArrayAndStripsPiiAndInstanceData(): void
     {
-        $prettyJson = <<<'JSON'
-            {
-                "name": "demo",
-                "temperature": 0.5,
-                "tags": [
-                    "alpha",
-                    "beta"
-                ]
-            }
-            JSON;
+        $payload = json_encode([[
+            'id' => 'det-gode-stillingsopslag',
+            'user_id' => 'redacted',
+            'name' => 'Demo',
+            'base_model_id' => 'gpt-4o',
+            'params' => ['system' => 'Du er en assistent.', 'temperature' => 0.5],
+            'meta' => [
+                'description' => 'A helpful assistant',
+                'capabilities' => ['vision' => false, 'file_upload' => true],
+                'tags' => [['name' => 'alpha']],
+                'knowledge' => [['id' => 'k1', 'user' => ['email' => 'a@b.dk']]],
+            ],
+            'access_grants' => [],
+            'is_active' => false,
+            'created_at' => 1749551160,
+            'updated_at' => 1750149305,
+            'user' => ['id' => 'redacted', 'email' => 'a@b.dk', 'role' => 'admin'],
+            'write_access' => true,
+        ]], \JSON_THROW_ON_ERROR);
 
-        $assistant = $this->creator->create(
-            'Pretty assistant',
-            'd',
-            'gpt-4o',
-            'openwebui',
-            [],
-            $prettyJson,
-        );
+        $assistant = $this->creator->create('Stored', 'd', 'gpt-4o', 'openwebui', [], $payload);
 
-        // The column is Doctrine `JSON` — value goes through json_decode →
-        // array → json_encode (minified) on the way to the DB. Reload from
-        // the repository to confirm the round-trip is value-stable.
         $reloaded = $this->repository->find($assistant->getId());
         self::assertNotNull($reloaded);
-        self::assertSame(
-            ['name' => 'demo', 'temperature' => 0.5, 'tags' => ['alpha', 'beta']],
-            $reloaded->getOpenwebuiConfig(),
-        );
+        self::assertSame([
+            'name' => 'Demo',
+            'base_model_id' => 'gpt-4o',
+            'params' => ['system' => 'Du er en assistent.'],
+            'meta' => [
+                'description' => 'A helpful assistant',
+                'capabilities' => ['vision' => false, 'file_upload' => true],
+                'tags' => [['name' => 'alpha']],
+            ],
+        ], $reloaded->getSourceConfig());
+    }
+
+    // Ensures a payload that parses but fails the schema (missing name) is rejected without persisting.
+    public function testCreateRejectsSchemaInvalidPayload(): void
+    {
+        try {
+            $this->creator->create('Schema rejected', 'd', 'm', 'openwebui', [], '{"base_model_id":"gpt-4o"}');
+            self::fail('Expected InvalidAssistantInputException.');
+        } catch (InvalidAssistantInputException $e) {
+            self::assertNotEmpty($e->getErrors());
+        }
+
+        self::assertNull($this->repository->findOneBy(['title' => 'Schema rejected']));
     }
 
     // Ensures malformed JSON triggers the InvalidAssistantInputException carrying the validator errors.
@@ -98,7 +112,7 @@ final class AssistantCreatorTest extends KernelTestCase
                 'Rejected',
                 'd',
                 'm',
-                'f',
+                'openwebui',
                 [],
                 '{not json',
             );
@@ -108,5 +122,18 @@ final class AssistantCreatorTest extends KernelTestCase
         }
 
         self::assertNull($this->repository->findOneBy(['title' => 'Rejected']));
+    }
+
+    // Ensures an unregistered framework id fails as a friendly InvalidAssistantInputException, not a raw 500.
+    public function testCreateRejectsUnknownFramework(): void
+    {
+        try {
+            $this->creator->create('Bad framework', 'd', 'm', 'no-such-format', [], '{"name":"demo"}');
+            self::fail('Expected InvalidAssistantInputException.');
+        } catch (InvalidAssistantInputException $e) {
+            self::assertSame(['Unknown format "no-such-format".'], $e->getErrors());
+        }
+
+        self::assertNull($this->repository->findOneBy(['title' => 'Bad framework']));
     }
 }
