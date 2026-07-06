@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Registration mail timing corrected. Signing up now fires
+  exactly one transactional mail — the single-use email
+  confirmation link. The two follow-up mails (moderator
+  moderation notification + user welcome) that previously
+  went out on the raw signup submit now dispatch from
+  `App\Security\EmailConfirmation::consume()` instead, so
+  nothing hits the moderator inbox and nothing welcomes the
+  user until the address has been verified. Each new send
+  keeps the same try/catch + logger-warning shape the signup
+  path uses, so a transient SMTP failure never undoes the
+  status transition or 500s the confirmation success page.
+  Second clicks on an already-consumed confirmation link
+  continue to render the `410 Gone` page and do not re-send
+  the two follow-up mails
+  ([#175](https://github.com/itk-dev/ai-reolen/issues/175)).
 - The transactional-mail sender (`From:`) address is now
   deploy-time-only via the `MAILER_FROM` env var; the
   editable **Afsenderadresse** field on
