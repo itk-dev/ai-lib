@@ -9,6 +9,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The share wizard (`/assistant/new`) is now format-agnostic: its labels
+  no longer say "OpenWebUI"/"JSON", the file picker accepts `.json` **and**
+  `.modelfile` (so an Ollama Modelfile fits), and the live-validation
+  endpoint detects the pasted format instead of assuming OpenWebUI. Each
+  `FormatAdapter` declares `isExperimental()`; every format except
+  OpenWebUI is flagged experimental (not manually verified), surfaced as a
+  caution on the review step when importing such a format and as a marker
+  next to its export button on the detail page (new `framework_experimental`
+  Twig filter).
+- Assistants can now be exported to four more formats and imported
+  from them: an **AI-reolen native** JSON envelope (lossless), an
+  **Ollama Modelfile** (text DSL), a **LibreChat preset**, and an
+  **OpenAI Assistants** object — each a `FormatAdapter` that
+  autoconfigures into `FormatAdapterRegistry` alongside the existing
+  OpenWebUI adapter. Detection stays deterministic via per-adapter
+  `#[AsTaggedItem(priority)]` (native → openai → librechat → openwebui
+  → ollama). The JSON tab on the detail page offers a download link per
+  target format. A new `JsonSchemaConfigValidator` base holds the shared
+  syntax + JSON-Schema pipeline (OpenWebUI's validator is now a thin
+  subclass), with new schemas under `config/schema/`.
+- Base models are translated across systems via a curated
+  `config/model_map.yaml` and a new `ModelMap` service: a source model
+  is folded onto a neutral canonical id and rendered to each target's
+  own model id on export. A model with no equivalent in a target (e.g.
+  GPT-4o for Ollama) is passed through unchanged and flagged with a
+  non-blocking warning — shown beneath the detail-page download links
+  and in an `X-Export-Warning` response header — rather than silently
+  swapped for a different model. The create wizard's language-model
+  field is now a free-text input backed by a `<datalist>` of known
+  models, defaulting to the detected model's canonical id. On top of
+  that datalist, a Choices.js Stimulus controller
+  (`assets/controllers/language_model_picker_controller.js`) turns the
+  input into a tag-based combobox: the dropdown offers the union of
+  the canonical shortlist and every `languageModel` value already in
+  the catalogue (case-insensitive dedup, canonical spelling wins), and
+  aliases from `model_map.yaml` fuel a fuzzy search so typing
+  `openai/gpt` narrows the dropdown to `gpt-4o`. `AssistantCreator`
+  folds aliases and legacy spellings to their canonical id on persist,
+  keeping the catalogue's language-model facet deduplicated even when
+  curators submit variant spellings. The pill shows whatever the
+  curator typed. A new `AssistantRepository::persistedLanguageModels()`
+  feeds the union list and a new `ModelMap::aliasesFor()` exposes the
+  per-canonical alias tokens the picker searches on.
+- Exports are validated against the target format's own rules before
+  download, so a broken payload is never emitted; `FormatAdapter` gains
+  `requiredCanonicalFields()` and the registry a `requiredForAnyExport()`
+  union so the wizard can guarantee the fields any target needs
+  ([#23](https://github.com/itk-dev/ai-reolen/issues/23)).
 - Added prod config for tailwind bundle.
 - Registration mail timing corrected. Signing up now fires
   exactly one transactional mail — the single-use email
@@ -117,7 +165,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `white-space: pre-wrap`
   ([#20](https://github.com/itk-dev/ai-reolen/issues/20),
   [#21](https://github.com/itk-dev/ai-reolen/issues/21)).
-
 - `/assistant/new` is now a three-step wizard: **Indsæt JSON**
   → **Gennemgang** → **Kvittering**. The user pastes / uploads
   an OpenWebUI export on step 1, reviews auto-extracted metadata

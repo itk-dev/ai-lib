@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Assistant\AssistantExporter;
+use App\Assistant\Format\FormatAdapterRegistry;
 use App\Entity\Assistant;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -25,7 +26,7 @@ final class AssistantController extends AbstractController
     private const string DEFAULT_TAB = 'beskrivelse';
 
     #[Route(path: '/assistant/{id}', name: 'app_assistant_show', requirements: ['id' => Requirement::ULID], methods: ['GET'])]
-    public function show(Assistant $assistant, Request $request): Response
+    public function show(Assistant $assistant, Request $request, AssistantExporter $exporter, FormatAdapterRegistry $formats): Response
     {
         $tab = (string) $request->query->get('tab', self::DEFAULT_TAB);
         if (!\in_array($tab, self::DETAIL_TABS, true)) {
@@ -36,6 +37,8 @@ final class AssistantController extends AbstractController
             'assistant' => $assistant,
             'tab' => $tab,
             'tabs' => self::DETAIL_TABS,
+            'exportFormats' => $formats->all(),
+            'exportWarnings' => $exporter->warningsByFormat($assistant),
         ]);
     }
 
@@ -58,6 +61,9 @@ final class AssistantController extends AbstractController
             'Content-Disposition',
             HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $filename),
         );
+        if ([] !== $exported->warnings) {
+            $response->headers->set('X-Export-Warning', implode(' ', $exported->warnings));
+        }
 
         return $response;
     }

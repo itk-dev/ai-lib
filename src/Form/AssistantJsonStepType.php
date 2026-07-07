@@ -12,13 +12,14 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Step 1 of the assistant-create wizard — "Indsæt JSON".
+ * Step 1 of the assistant-create wizard — paste or upload a config.
  *
- * Just the OpenWebUI JSON textarea. The dropzone / file input is
- * a client-side enhancement layered on top by the
- * `assistant-config-upload` Stimulus controller; the browser
- * still submits the JSON as the textarea's value, so no separate
- * form field is needed here.
+ * A single textarea holding the assistant configuration in any
+ * supported format; the format is detected on submit, so no format
+ * choice is asked here. The dropzone / file input is a client-side
+ * enhancement layered on top by the `assistant-config-upload` Stimulus
+ * controller; the browser still submits the config as the textarea's
+ * value, so no separate form field is needed here.
  *
  * `sourceConfig` maps to {@see \App\Assistant\AssistantDraft::$sourceConfig}
  * so state persists across step transitions via
@@ -46,6 +47,13 @@ final class AssistantJsonStepType extends AbstractType
                 ),
                 new ValidAssistantConfig(groups: ['json']),
             ],
+            // Bubble the config's validation errors up to the flow root
+            // so the wizard's shell renders them once in its alert box
+            // instead of rendering them there AND next to the textarea.
+            // The parent step has `inherit_data: true`, whose default
+            // `error_bubbling` is true, so the errors continue past the
+            // step compound and land on `flow` automatically.
+            'error_bubbling' => true,
             'attr' => [
                 'class' => self::INPUT_CLASS,
                 'rows' => 10,

@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Assistant\Model\ModelMap;
+use App\Repository\AssistantRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -34,6 +38,16 @@ final class AssistantMetadataStepType extends AbstractType
     private const string INPUT_CLASS = 'rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40';
     private const string LABEL_CLASS = 'block font-medium text-ink';
     private const string ROW_CLASS = 'grid gap-1 text-sm';
+
+    /**
+     * @param ModelMap            $modelMap   canonical model catalog backing the picker
+     * @param AssistantRepository $assistants source of legacy/free-typed language-model values already in use
+     */
+    public function __construct(
+        private readonly ModelMap $modelMap,
+        private readonly AssistantRepository $assistants,
+    ) {
+    }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -68,6 +82,7 @@ final class AssistantMetadataStepType extends AbstractType
             ])
             ->add('languageModel', TextType::class, [
                 'label' => 'assistant.new.step_metadata.language_model_label',
+                'help' => 'assistant.new.step_metadata.language_model_help',
                 'required' => true,
                 'empty_data' => '',
                 'constraints' => [
@@ -76,6 +91,12 @@ final class AssistantMetadataStepType extends AbstractType
                         groups: ['metadata'],
                     ),
                 ],
+                // TextType so free-typed values (unknown models) round-
+                // trip verbatim; the step-2 template renders a `<select>`
+                // in place of the default `<input>` so a Choices.js
+                // Stimulus controller can enhance it into a searchable
+                // combobox seeded with the canonical shortlist and every
+                // previously-persisted value.
                 'attr' => ['class' => self::INPUT_CLASS],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
@@ -101,6 +122,58 @@ final class AssistantMetadataStepType extends AbstractType
                 )),
             ))
         ;
+    }
+
+    /**
+     * Expose the known-model choices and their aliases to the language-model
+     * field so the template can render a searchable picker on top of it.
+     *
+     * The choice list unions {@see ModelMap::choices()} with the distinct
+     * `languageModel` values already persisted in the catalogue, so legacy
+     * or curator-typed values remain reachable even when they are not part
+     * of the canonical shortlist. Case-insensitive dedup applies, and the
+     * canonical spelling wins any tie — the catalog view stays coherent
+     * even when the persisted value differs only by case.
+     *
+     * Aliases are exposed as canonical-id => list<string> so the client can
+     * search-match by alias (e.g. typing `openai/gpt-4o` filters to the
+     * `gpt-4o` entry) without storing the alias as its own choice.
+     *
+     * Runs in `finishView` (not `buildView`) because child views only
+     * exist once they are built. The flow builds this step's fields only
+     * while it is the active step, so the child is absent on other steps'
+     * renders — skip it then.
+     */
+    public function finishView(FormView $view, FormInterface $form, array $options): void
+    {
+        $languageModel = $view->children['languageModel'] ?? null;
+        if (null === $languageModel) {
+            return;
+        }
+
+        $canonicalChoices = $this->modelMap->choices();
+        $seen = [];
+        $choices = [];
+        foreach ($canonicalChoices as $label => $id) {
+            $seen[strtolower($id)] = true;
+            $choices[$label] = $id;
+        }
+        foreach ($this->assistants->persistedLanguageModels() as $stored) {
+            $key = strtolower($stored);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $choices[$stored] = $stored;
+        }
+
+        $aliases = [];
+        foreach ($canonicalChoices as $id) {
+            $aliases[$id] = $this->modelMap->aliasesFor($id);
+        }
+
+        $languageModel->vars['model_choices'] = $choices;
+        $languageModel->vars['model_aliases'] = $aliases;
     }
 
     public function configureOptions(OptionsResolver $resolver): void

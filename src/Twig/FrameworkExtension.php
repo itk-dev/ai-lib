@@ -9,13 +9,13 @@ use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 
 /**
- * Exposes a `framework_label` Twig filter that resolves the
- * stored format id (`openwebui`) to the readable display label
- * (`Open WebUI`) of its {@see \App\Assistant\Format\FormatAdapter}.
+ * Exposes Twig filters over the {@see \App\Assistant\Format\FormatAdapter}
+ * registry: `framework_label` resolves a stored format id (`openwebui`) to
+ * its readable label (`Open WebUI`), and `framework_experimental` reports
+ * whether that format's import/export is experimental.
  *
- * Falls back to the id for anything without a registered adapter,
- * so a legacy row whose format was removed still renders something
- * meaningful in the catalog facet.
+ * Both fall back gracefully for anything without a registered adapter, so
+ * a legacy row whose format was removed still renders something meaningful.
  */
 final class FrameworkExtension extends AbstractExtension
 {
@@ -33,6 +33,7 @@ final class FrameworkExtension extends AbstractExtension
     {
         return [
             new TwigFilter('framework_label', $this->label(...)),
+            new TwigFilter('framework_experimental', $this->experimental(...)),
         ];
     }
 
@@ -46,5 +47,20 @@ final class FrameworkExtension extends AbstractExtension
     public function label(string $id): string
     {
         return $this->formats->label($id);
+    }
+
+    /**
+     * Whether the format behind a stored id is experimental.
+     *
+     * An unregistered id is treated as non-experimental so a legacy row
+     * renders without a spurious caution.
+     *
+     * @param string $id the stored format identifier
+     *
+     * @return bool true when the format is registered and experimental
+     */
+    public function experimental(string $id): bool
+    {
+        return $this->formats->has($id) && $this->formats->get($id)->isExperimental();
     }
 }

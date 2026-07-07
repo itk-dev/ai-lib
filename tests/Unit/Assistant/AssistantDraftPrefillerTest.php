@@ -8,6 +8,7 @@ use App\Assistant\AssistantDraft;
 use App\Assistant\AssistantDraftPrefiller;
 use App\Assistant\Format\FormatAdapterRegistry;
 use App\Assistant\Format\OpenWebUiAdapter;
+use App\Assistant\Model\ModelMap;
 use App\Assistant\OpenWebUiConfigSanitizer;
 use App\Assistant\OpenWebUiModelNormalizer;
 use App\Validator\OpenWebUiConfigValidator;
@@ -20,13 +21,17 @@ final class AssistantDraftPrefillerTest extends TestCase
 {
     private function prefiller(): AssistantDraftPrefiller
     {
-        return new AssistantDraftPrefiller(new FormatAdapterRegistry([
-            new OpenWebUiAdapter(
-                new OpenWebUiConfigValidator(\dirname(__DIR__, 3).'/config/schema/openwebui-model.json'),
-                new OpenWebUiModelNormalizer(),
-                new OpenWebUiConfigSanitizer(),
-            ),
-        ]));
+        return new AssistantDraftPrefiller(
+            new FormatAdapterRegistry([
+                new OpenWebUiAdapter(
+                    new OpenWebUiConfigValidator(\dirname(__DIR__, 3).'/config/schema/openwebui-model.json'),
+                    new OpenWebUiModelNormalizer(),
+                    new OpenWebUiConfigSanitizer(),
+                    new ModelMap(\dirname(__DIR__, 3).'/config/model_map.yaml'),
+                ),
+            ]),
+            new ModelMap(\dirname(__DIR__, 3).'/config/model_map.yaml'),
+        );
     }
 
     // Verifies an empty draft is filled from the detected format and records the format id.
@@ -71,6 +76,17 @@ final class AssistantDraftPrefillerTest extends TestCase
         $this->prefiller()->prefill($draft);
 
         self::assertSame('llama3.1:70b', $draft->languageModel);
+    }
+
+    // Verifies the detected model is folded onto its canonical id for the selector default.
+    public function testLanguageModelIsNormalisedToCanonicalId(): void
+    {
+        $draft = new AssistantDraft();
+        $draft->sourceConfig = json_encode(['name' => 'Demo', 'base_model_id' => 'llama3.2:latest'], \JSON_THROW_ON_ERROR);
+
+        $this->prefiller()->prefill($draft);
+
+        self::assertSame('llama-3.2', $draft->languageModel);
     }
 
     // Verifies pre-set fields survive a re-run so Back→edit→Next doesn't clobber user input.

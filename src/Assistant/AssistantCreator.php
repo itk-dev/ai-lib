@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Assistant;
 
 use App\Assistant\Format\FormatAdapterRegistry;
+use App\Assistant\Model\ModelMap;
 use App\Entity\Assistant;
 use App\Entity\Tag;
 use App\Repository\TagRepository;
@@ -24,11 +25,13 @@ final class AssistantCreator
      * @param FormatAdapterRegistry  $formats       resolves the adapter that validates and parses the upload
      * @param EntityManagerInterface $entityManager Doctrine entity manager that persists the Assistant
      * @param TagRepository          $tags          resolves tag names to shared Tag entities
+     * @param ModelMap               $modelMap      folds alias/legacy model ids to their canonical form on persist
      */
     public function __construct(
         private readonly FormatAdapterRegistry $formats,
         private readonly EntityManagerInterface $entityManager,
         private readonly TagRepository $tags,
+        private readonly ModelMap $modelMap,
     ) {
     }
 
@@ -72,10 +75,16 @@ final class AssistantCreator
 
         $source = $this->formats->get($framework)->parseToSource($rawConfig);
 
+        // Fold aliases and legacy spellings to the canonical id defined
+        // in config/model_map.yaml, so the catalogue's language-model
+        // facet stays deduplicated no matter which spelling a curator
+        // typed. Unknown/free-typed values pass through untouched.
+        $canonicalModel = $this->modelMap->normalise($languageModel) ?? $languageModel;
+
         $assistant = new Assistant(
             title: $title,
             description: $description,
-            languageModel: $languageModel,
+            languageModel: $canonicalModel,
             framework: $framework,
             tags: $this->resolveTags($tags),
         );

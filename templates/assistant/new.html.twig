@@ -32,32 +32,58 @@
             <section class="max-w-2xl">
                 {{ form_start(flow, {attr: {class: 'grid gap-4'}}) }}
 
-                {% if not flow.vars.valid %}
-                    <div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
-                        {{ form_errors(flow) }}
-                    </div>
+                {#
+                    Flow-level errors rendered as a flat bulleted list.
+                    Tailwind's preflight sets `list-style: none` on every
+                    `<ul>`, so `list-disc` doesn't win — draw the bullet
+                    ourselves via a `::before` pseudo-element on each
+                    `<li>` instead. Wrapped in the shared alert component.
+                #}
+                {% set flow_errors = flow.vars.errors %}
+                {% if flow_errors|length > 0 %}
+                    <twig:Alert type="error">
+                        <ul class="space-y-1">
+                            {% for error in flow_errors %}
+                                <li class="relative pl-4 before:absolute before:left-0 before:text-text before:content-['•']">
+                                    {{ error.message }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </twig:Alert>
                 {% endif %}
 
                 {% if 'json' == current_step %}
                     {{ include('assistant/_new_step_json.html.twig', {flow: flow, checks: checks}) }}
                 {% elseif 'metadata' == current_step %}
-                    {{ include('assistant/_new_step_metadata.html.twig', {flow: flow}) }}
+                    {{ include('assistant/_new_step_metadata.html.twig', {flow: flow, draft: draft}) }}
                 {% elseif 'receipt' == current_step %}
-                    {{ include('assistant/_new_step_receipt.html.twig', {draft: draft}) }}
+                    {{ include('assistant/_new_step_receipt.html.twig', {flow: flow, draft: draft}) }}
                 {% endif %}
 
-                <div class="flex flex-wrap items-center gap-4">
-                    {#
-                        The navigator's Previous / Next / Finish buttons self-hide via
-                        their `include_if` callbacks (Previous on step 1, Next on step
-                        3, Finish on any non-last step). `form_end()` below emits the
-                        still-unrendered fields — the navigator group and the CSRF
-                        token — so we only need to render the Cancel link inline here.
-                    #}
-                    <a class="text-sm text-text underline hover:text-primary" href="{{ path('app_frontpage') }}">
-                        {{ 'assistant.new.action.cancel'|trans }}
-                    </a>
-                </div>
+                {#
+                    Navigator on the non-receipt steps: Previous / Next
+                    right-aligned. On the receipt step the three actions
+                    (Go to assistant / Share another / Back to catalog)
+                    are left-aligned and rendered inside the partial
+                    itself so they can sit alongside the non-form
+                    anchor links.
+                #}
+                {% if 'receipt' != current_step %}
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                        {% if flow.navigator.previous is defined %}
+                            {{ form_widget(flow.navigator.previous, {
+                                label: 'assistant.new.action.previous'|trans,
+                                attr: {class: 'rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-primary/40'},
+                            }) }}
+                        {% endif %}
+                        {% if flow.navigator.next is defined %}
+                            {{ form_widget(flow.navigator.next, {
+                                label: 'assistant.new.action.next'|trans,
+                                attr: {class: 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40'},
+                            }) }}
+                        {% endif %}
+                    </div>
+                {% endif %}
 
                 {{ form_end(flow) }}
             </section>
