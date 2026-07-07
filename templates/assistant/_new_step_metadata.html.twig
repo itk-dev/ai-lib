@@ -49,5 +49,8 @@
         {% endif %}
         {{ form_errors(language_model) }}
     </div>
+    {# Manually rendered above — mark the child as rendered so form_end()
+       doesn't emit a duplicate `<input>` with the same label. #}
+    {% do language_model.setRendered %}
     {{ form_row(flow.metadata.tags) }}
 </div>

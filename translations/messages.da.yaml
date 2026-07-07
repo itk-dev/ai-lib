@@ -446,11 +446,10 @@ assistant:
             go_to_assistant: "Gå til assistent"
             back_to_catalog: "Tilbage til kataloget"
         action:
-            previous: "← Forrige trin"
+            previous: "Indsæt anden JSON"
             next: "Næste trin"
             finish: "Afslut"
             share_another: "Del en til"
-            cancel: "Annuller"
         responsibility:
             heading: "Ansvar"
             body: "Du har som deler ansvaret for, at assistenten kan deles, og at det beskrevne datagrundlag ikke indeholder data, der ikke må deles. Selve videns- og datafiler deles ikke — kun konfigurationen og en opskrift på datagrundlaget."
