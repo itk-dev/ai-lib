@@ -365,7 +365,6 @@ assistant:
         framework_label: "Framework"
         language_model_label: "Sprogmodel"
         tags_heading: "Tags"
-        export: "Download konfiguration"
         experimental: "eksperimentel"
         tabs_label: "Assistentdetaljer"
         tab:
@@ -384,7 +383,7 @@ assistant:
         no_data_sensitivity: "Ikke klassificeret"
         actions_heading: "Handlinger"
         action:
-            export: "Hjemtag konfiguration"
+            export: "Hjemtag (Eksportér JSON)"
         modelkort:
             heading: "Modelkort"
             lead: "Sprogmodel %model% og hensyn ved brug af assistenten."

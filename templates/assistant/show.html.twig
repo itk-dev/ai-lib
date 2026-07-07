@@ -97,10 +97,15 @@
                         </twig:DescriptionList:Item>
                     {% endif %}
                 </twig:DescriptionList:List>
-                <a class="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-ink no-underline transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40"
+            </twig:Box>
+        </twig:block>
+
+        <twig:block name="actions">
+            <twig:Box eyebrow="assistant.detail.actions_heading">
+                <a class="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-ink no-underline transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40"
                    href="{{ path('app_assistant_export', {id: assistant.id}) }}"
                    download>
-                    {{ 'assistant.detail.export'|trans }}
+                    {{ 'assistant.detail.action.export'|trans }}
                 </a>
             </twig:Box>
         </twig:block>
