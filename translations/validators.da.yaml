@@ -8,7 +8,7 @@ assistant:
     new:
         step_json:
             required: "Indsæt eller upload en assistent-konfiguration."
-            invalid_config: "Filen er ikke en gyldig assistent-konfiguration. {{ errors }}"
+            invalid_config: "Filen er ikke en gyldig assistent-konfiguration:"
         step_metadata:
             title_required: "Angiv en titel."
             description_required: "Angiv en beskrivelse."

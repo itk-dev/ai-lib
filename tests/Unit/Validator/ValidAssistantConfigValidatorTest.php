@@ -16,6 +16,7 @@ use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
 use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @extends ConstraintValidatorTestCase<ValidAssistantConfigValidator>
@@ -36,7 +37,13 @@ final class ValidAssistantConfigValidatorTest extends ConstraintValidatorTestCas
 
     protected function createValidator(): ValidAssistantConfigValidator
     {
-        return new ValidAssistantConfigValidator($this->registry());
+        // Passthrough translator: `trans($id, …)` returns the id
+        // untouched, letting the tests assert against the raw
+        // adapter error strings without wiring a real catalogue.
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnArgument(0);
+
+        return new ValidAssistantConfigValidator($this->registry(), $translator);
     }
 
     // Tests that a payload a registered format accepts passes without a violation.
@@ -47,29 +54,33 @@ final class ValidAssistantConfigValidatorTest extends ConstraintValidatorTestCas
         $this->assertNoViolation();
     }
 
-    // Ensures a schema-invalid payload raises the violation carrying the aggregated errors.
+    // Ensures a schema-invalid payload raises the localised intro plus one violation per deduped detail line so the form template renders them as a list.
     public function testSchemaInvalidRaisesViolation(): void
     {
         $json = '{"base_model_id":"gpt-4o"}';
-        $expected = implode('; ', array_values(array_unique($this->registry()->get('openwebui')->validate($json)->getErrors())));
+        $errors = array_values(array_unique($this->registry()->get('openwebui')->validate($json)->getErrors()));
 
         $this->validator->validate($json, new ValidAssistantConfig());
 
-        $this->buildViolation('assistant.new.step_json.invalid_config')
-            ->setParameter('{{ errors }}', $expected)
-            ->assertRaised();
+        $assertion = $this->buildViolation('assistant.new.step_json.invalid_config');
+        foreach ($errors as $error) {
+            $assertion = $assertion->buildNextViolation($error);
+        }
+        $assertion->assertRaised();
     }
 
-    // Ensures malformed input raises a violation (no format recognises it).
+    // Ensures malformed input raises the intro plus one per JsonException detail line, translated through the assistant_validation domain.
     public function testMalformedInputRaisesViolation(): void
     {
+        $errors = array_values(array_unique($this->registry()->get('openwebui')->validate('{not json')->getErrors()));
+
         $this->validator->validate('{not json', new ValidAssistantConfig());
 
-        $this->buildViolation('assistant.new.step_json.invalid_config')->setParameters([
-            '{{ errors }}' => implode('; ', array_values(array_unique(
-                $this->registry()->get('openwebui')->validate('{not json')->getErrors(),
-            ))),
-        ])->assertRaised();
+        $assertion = $this->buildViolation('assistant.new.step_json.invalid_config');
+        foreach ($errors as $error) {
+            $assertion = $assertion->buildNextViolation($error);
+        }
+        $assertion->assertRaised();
     }
 
     // Verifies null values pass — the constraint intentionally lets NotBlank pair with it.

@@ -1,0 +1,21 @@
+# Danish translations for per-error strings emitted by
+# App\Validator\ValidAssistantConfigValidator when a step-1 upload
+# fails validation. The wrapper "Filen er ikke en gyldig
+# assistent-konfiguration:" lives in validators.da.yaml under the
+# `validators` domain — this file holds only the technical detail
+# lines each violation carries.
+#
+# Only PHP's JsonException family is translated here (finite,
+# stable). Opis JsonSchema errors carry interpolated
+# `{property}`/`{path}` context and fall through this catalogue as
+# English, since a keyword-level mapping would need re-visiting
+# whenever the library bumps.
+
+"Syntax error": "JSON-syntaksfejl."
+"State mismatch (invalid or malformed JSON)": "Ugyldigt eller misdannet JSON."
+"Control character error, possibly incorrectly encoded": "Fejl i kontroltegn — filen er muligvis forkert enkodet."
+"Malformed UTF-8 characters, possibly incorrectly encoded": "Misdannede UTF-8-tegn — filen er muligvis forkert enkodet."
+"Maximum stack depth exceeded": "For dybt indlejret JSON."
+"The decoded property name is invalid": "Et af feltnavnene i JSON er ugyldigt."
+"Single unpaired UTF-16 surrogate in unicode escape": "Ubalanceret UTF-16-surrogat i unicode-escape."
+"Malformed UTF-16 characters, possibly incorrectly encoded": "Misdannede UTF-16-tegn — filen er muligvis forkert enkodet."
