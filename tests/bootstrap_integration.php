@@ -35,9 +35,13 @@ $schemaTool = new SchemaTool($em);
 $schemaTool->dropDatabase();
 $schemaTool->createSchema($em->getMetadataFactory()->getAllMetadata());
 
+// AssistantFixtures declares OrganizationFixtures as a dependency
+// (each row's `organization` column is resolved by name from the
+// seeded rows), so organizations must land in the DB before the
+// assistant fixture runs its `findAll()` lookup.
 $container->get(UserFixtures::class)->load($em);
 $container->get(SettingFixtures::class)->load($em);
-$container->get(AssistantFixtures::class)->load($em);
 $container->get(OrganizationFixtures::class)->load($em);
+$container->get(AssistantFixtures::class)->load($em);
 
 $kernel->shutdown();

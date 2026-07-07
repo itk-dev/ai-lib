@@ -38,7 +38,7 @@ final class AssistantControllerTest extends WebTestCase
         $this->client->loginUser($alice);
     }
 
-    // Tests that GET /assistant/{id} renders the title, description flow, meta aside, and tab bar.
+    // Tests that GET /assistant/{id} renders the title, description flow, meta aside, and tab bar with real organization / tagline / data-sensitivity values from the persisted row.
     public function testRendersDefaultTab(): void
     {
         $repository = self::getContainer()->get(AssistantRepository::class);
@@ -50,25 +50,61 @@ final class AssistantControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Borgerservice-vejviser');
 
-        // Runtime + tags moved into the `meta` / `actions` slots of
-        // `<twig:Layout:ContentWithAsides>`, so they are siblings of
-        // `<article>` rather than children. Scope to the layout
-        // container instead. Framework renders through the
-        // `framework_label` filter so the machine name resolves to
-        // the readable "Open WebUI" from SUPPORTED_FRAMEWORKS.
+        // Header eyebrow now reads the real organisation name
+        // (Aarhus Kommune for this fixture row) + the language model,
+        // and the header's tagline paragraph renders the entity's
+        // stored tagline.
+        $article = $crawler->filter('article')->text();
+        self::assertStringContainsString('Aarhus Kommune', $article, 'header + breadcrumb render the real organisation name');
+        self::assertStringContainsString($assistant->getTagline(), $article, 'tagline paragraph renders');
+
+        // Data-sensitivity chip in the header + sidebar uses the
+        // translated label from the DataSensitivity enum, not a
+        // placeholder. Fortrolige data == DataSensitivity::Confidential.
+        self::assertStringContainsString('Fortrolige data', $article);
+
+        // Meta aside carries the same real values.
         $runtime = $crawler->filter('.layout-content-with-asides dl')->text();
         self::assertStringContainsString('Open WebUI', $runtime);
         self::assertStringContainsString('gpt-4o', $runtime);
+        self::assertStringContainsString('Aarhus Kommune', $runtime, 'meta aside "Oprindelseskommune" renders the real organisation');
+        self::assertStringContainsString('Fortrolige data', $runtime, 'meta aside "Datafølsomhed" renders the enum label');
+
+        // "Godkendt til" is retired — the sidebar must no longer show it.
+        self::assertStringNotContainsString('Godkendt til', $runtime);
 
         // Default tab (beskrivelse) shows the description + tag chips.
-        $article = $crawler->filter('article')->text();
         self::assertStringContainsString('Hjælper sagsbehandlere', $article);
         self::assertStringContainsString('borgerservice', $article);
         self::assertStringContainsString('social', $article);
 
+        // The old AI-tags-placeholder line is gone from the Beskrivelse tab.
+        self::assertStringNotContainsString('AI-foreslåede tags', $article);
+
         // Tabs render as anchors with ?tab= query strings and mark the current one.
         self::assertSelectorExists('nav[aria-label="Assistentdetaljer"] a[aria-current="page"]');
         self::assertSelectorTextContains('nav[aria-label="Assistentdetaljer"] a[aria-current="page"]', 'Beskrivelse');
+    }
+
+    // Verifies the fallback copy renders on the header + sidebar when an assistant carries no organisation and no data-sensitivity classification.
+    public function testFallbackCopyForUnattachedAssistant(): void
+    {
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $tagless = $repository->findOneBy(['title' => 'Uden kategorier']);
+        self::assertNotNull($tagless, 'fixture baseline must include the tagless edge-case entry');
+        // Force the fallback branches: strip the fixture's default
+        // organisation + data-sensitivity so both aside slots hit the
+        // "no value" copy.
+        $tagless->setOrganization(null);
+        $tagless->setDataSensitivity(null);
+        self::getContainer()->get('doctrine.orm.entity_manager')->flush();
+
+        $crawler = $this->client->request('GET', '/assistant/'.$tagless->getId());
+
+        self::assertResponseIsSuccessful();
+        $body = $crawler->filter('body')->text();
+        self::assertStringContainsString('Ingen tilknyttet organisation', $body);
+        self::assertStringContainsString('Ikke klassificeret', $body);
     }
 
     // Verifies each whitelisted ?tab= value renders the matching partial heading.
