@@ -1,5 +1,22 @@
 {% extends 'base.html.twig' %}
 
+{# Override the default `form_errors` render for this form only so
+   `<ul>` gets disc bullets + a left inset — Tailwind's preflight
+   strips list styling globally, which is fine everywhere except in
+   the wizard's alert box where the config-validator emits one
+   violation per detail line. #}
+{% form_theme flow _self %}
+
+{% block form_errors %}
+    {%- if errors|length > 0 %}
+        <ul class="list-disc space-y-1 pl-5">
+            {%- for error in errors %}
+                <li>{{ error.message }}</li>
+            {%- endfor %}
+        </ul>
+    {%- endif %}
+{% endblock %}
+
 {% block main_max_width %}max-w-wide{% endblock %}
 
 {% block title %}{{ 'assistant.new.title'|trans({'%brand%': brand_name}) }}{% endblock %}
