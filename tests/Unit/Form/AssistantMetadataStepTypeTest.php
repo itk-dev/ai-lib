@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Form;
 use App\Assistant\Model\ModelMap;
 use App\Form\AssistantMetadataStepType;
 use App\Repository\AssistantRepository;
+use App\Repository\OrganizationRepository;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
@@ -32,10 +33,13 @@ final class AssistantMetadataStepTypeTest extends TestCase
     {
         $repository = $this->createMock(AssistantRepository::class);
         $repository->method('persistedLanguageModels')->willReturn($persistedModels);
+        $organizations = $this->createStub(OrganizationRepository::class);
+        $organizations->method('findAll')->willReturn([]);
 
         return new AssistantMetadataStepType(
             new ModelMap(\dirname(__DIR__, 3).'/config/model_map.yaml'),
             $repository,
+            $organizations,
         );
     }
 

@@ -6,6 +6,9 @@ namespace App\Assistant;
 
 use App\Assistant\Format\FormatAdapterRegistry;
 use App\Assistant\Model\ModelMap;
+use App\Entity\User;
+use App\Repository\OrganizationRepository;
+use Symfony\Bundle\SecurityBundle\Security;
 
 /**
  * Pre-fills step 2 of the create wizard from the config pasted on
@@ -25,12 +28,16 @@ use App\Assistant\Model\ModelMap;
 final class AssistantDraftPrefiller
 {
     /**
-     * @param FormatAdapterRegistry $formats  detects the format and converts it to the canonical model
-     * @param ModelMap              $modelMap folds the detected base model onto its canonical id
+     * @param FormatAdapterRegistry  $formats       detects the format and converts it to the canonical model
+     * @param ModelMap               $modelMap      folds the detected base model onto its canonical id
+     * @param OrganizationRepository $organizations looked up when defaulting the draft's organization from the acting user's e-mail domain
+     * @param Security               $security      resolves the currently-authenticated user for the organization default
      */
     public function __construct(
         private readonly FormatAdapterRegistry $formats,
         private readonly ModelMap $modelMap,
+        private readonly OrganizationRepository $organizations,
+        private readonly Security $security,
     ) {
     }
 
@@ -75,5 +82,45 @@ final class AssistantDraftPrefiller
         if ([] === $draft->tags && [] !== $canonical->tags) {
             $draft->tags = $canonical->tags;
         }
+
+        if (null === $draft->organizationId) {
+            $organization = $this->resolveOrganizationFromActingUser();
+            if (null !== $organization) {
+                $draft->organizationId = (string) $organization->getId();
+            }
+        }
+    }
+
+    /**
+     * Look up an organisation to default the draft's owner from.
+     *
+     * The acting user's e-mail domain — the substring after the last
+     * `@` — is fed to
+     * {@see OrganizationRepository::findOneByEmailDomain()}. Anonymous
+     * requests, users with a missing/malformed e-mail, or a domain no
+     * organisation claims all resolve to `null` so the curator sees an
+     * empty picker and can still submit.
+     *
+     * @return \App\Entity\Organization|null the matching organisation,
+     *                                        or `null` when the acting
+     *                                        user has no e-mail domain
+     *                                        or no organisation claims it
+     */
+    private function resolveOrganizationFromActingUser(): ?\App\Entity\Organization
+    {
+        $user = $this->security->getUser();
+        if (!$user instanceof User) {
+            return null;
+        }
+
+        $email = (string) $user->getEmail();
+        $atPosition = strrpos($email, '@');
+        if (false === $atPosition) {
+            return null;
+        }
+
+        $domain = substr($email, $atPosition + 1);
+
+        return $this->organizations->findOneByEmailDomain($domain);
     }
 }

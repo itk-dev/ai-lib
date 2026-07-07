@@ -20,6 +20,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class SettingFixturesTest extends TestCase
 {
+    // Ensures the fixture is grouped under `default` so the stg pipeline can load it with `--group=default`.
+    public function testBelongsToDefaultGroup(): void
+    {
+        self::assertSame(['default'], SettingFixtures::getGroups());
+    }
+
     // Verifies load() calls one setter per SettingsManager key currently defined.
     public function testLoadCallsOneSetterPerKey(): void
     {

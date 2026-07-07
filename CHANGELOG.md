@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Four new curator-facing metadata fields on the create wizard's step 2
+  ([`assistant/new`](src/Controller/AssistantCreateController.php)) — `organization`
+  (nullable `ManyToOne` to `Organization`), `tagline` (nullable string),
+  `knowledgeDescription` (nullable text), and `dataSensitivity` (new
+  `App\Enum\DataSensitivity` enum with `public / internal / personal /
+  sensitive_personal`). The organization picker pre-fills from the
+  logged-in user's e-mail domain via a new
+  `OrganizationRepository::findOneByEmailDomain()` and a new
+  `ModelMap::aliasesFor()`-style path in `AssistantDraftPrefiller`.
+  `AssistantCreator::create()` folds blank strings on the three
+  nullable columns to `null` on persist and ignores malformed /
+  unknown organization ULIDs so tampered POSTs land safely. Fixtures
+  seed realistic values for all four fields and every enum case is
+  represented in the generated catalogue. Migration
+  `Version20260707084856` adds the columns.
 - The share wizard (`/assistant/new`) is now format-agnostic: its labels
   no longer say "OpenWebUI"/"JSON", the file picker accepts `.json` **and**
   `.modelfile` (so an Ollama Modelfile fits), and the live-validation

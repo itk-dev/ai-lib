@@ -19,6 +19,38 @@ class OrganizationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Look up the organisation that claims the given e-mail domain.
+     *
+     * The `email_domains` column is a JSON list, and MariaDB / MySQL
+     * cannot equality-index into JSON values from Doctrine's DQL layer
+     * without extension functions. Load the small candidate set and
+     * scan in PHP — the `organization` table is expected to stay
+     * small (one row per municipality). Matching is case-insensitive
+     * against the trimmed input.
+     *
+     * @param string $domain the domain to match, e.g. `aarhus.dk`
+     *
+     * @return Organization|null the first organisation claiming the
+     *                           domain, or `null` when no row matches
+     *                           or the input trims to empty
+     */
+    public function findOneByEmailDomain(string $domain): ?Organization
+    {
+        $normalised = strtolower(trim($domain));
+        if ('' === $normalised) {
+            return null;
+        }
+
+        foreach ($this->findAll() as $organization) {
+            if (\in_array($normalised, $organization->getEmailDomains(), true)) {
+                return $organization;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Flatten every organisation's `emailDomains` into the union
      * allow-list that {@see \App\Security\AllowedEmailDomains}
      * consults at registration time.

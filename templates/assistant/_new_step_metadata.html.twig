@@ -52,5 +52,9 @@
     {# Manually rendered above — mark the child as rendered so form_end()
        doesn't emit a duplicate `<input>` with the same label. #}
     {% do language_model.setRendered %}
+    {{ form_row(flow.metadata.tagline) }}
+    {{ form_row(flow.metadata.knowledgeDescription) }}
+    {{ form_row(flow.metadata.organizationId) }}
+    {{ form_row(flow.metadata.dataSensitivity) }}
     {{ form_row(flow.metadata.tags) }}
 </div>
