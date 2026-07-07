@@ -40,13 +40,7 @@ final class AssistantMetadataStepType extends AbstractType
     private const string ROW_CLASS = 'grid gap-1 text-sm';
 
     /**
-     * The datalist id shared between the model input and its `<datalist>`
-     * of known models rendered by the step-2 template.
-     */
-    public const string MODEL_DATALIST_ID = 'metadata-model-options';
-
-    /**
-     * @param ModelMap            $modelMap  canonical model catalog backing the datalist
+     * @param ModelMap            $modelMap   canonical model catalog backing the picker
      * @param AssistantRepository $assistants source of legacy/free-typed language-model values already in use
      */
     public function __construct(
@@ -97,11 +91,13 @@ final class AssistantMetadataStepType extends AbstractType
                         groups: ['metadata'],
                     ),
                 ],
-                // A free-text input backed by a datalist of known models:
-                // the curator picks a recognised model (stored as its
-                // canonical id, which maps cleanly on export) or types a
-                // custom one.
-                'attr' => ['class' => self::INPUT_CLASS, 'list' => self::MODEL_DATALIST_ID],
+                // TextType so free-typed values (unknown models) round-
+                // trip verbatim; the step-2 template renders a `<select>`
+                // in place of the default `<input>` so a Choices.js
+                // Stimulus controller can enhance it into a searchable
+                // combobox seeded with the canonical shortlist and every
+                // previously-persisted value.
+                'attr' => ['class' => self::INPUT_CLASS],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
@@ -178,7 +174,6 @@ final class AssistantMetadataStepType extends AbstractType
 
         $languageModel->vars['model_choices'] = $choices;
         $languageModel->vars['model_aliases'] = $aliases;
-        $languageModel->vars['model_datalist_id'] = self::MODEL_DATALIST_ID;
     }
 
     public function configureOptions(OptionsResolver $resolver): void

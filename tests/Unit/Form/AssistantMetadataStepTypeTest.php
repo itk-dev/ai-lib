@@ -39,7 +39,7 @@ final class AssistantMetadataStepTypeTest extends TestCase
         );
     }
 
-    // Verifies finishView() exposes the canonical choices, aliases, and datalist id when the field is present.
+    // Verifies finishView() exposes the canonical choices and aliases when the field is present.
     public function testFinishViewExposesCanonicalChoicesAndAliases(): void
     {
         $view = new FormView();
@@ -52,7 +52,6 @@ final class AssistantMetadataStepTypeTest extends TestCase
         self::assertContains('gpt-4o', $vars['model_choices'], 'canonical ids appear as choice values');
         self::assertArrayHasKey('gpt-4o', $vars['model_aliases']);
         self::assertContains('openai/gpt-4o', $vars['model_aliases']['gpt-4o']);
-        self::assertSame('metadata-model-options', $vars['model_datalist_id']);
     }
 
     // Ensures persisted values absent from the canonical map are appended so legacy rows stay pickable.

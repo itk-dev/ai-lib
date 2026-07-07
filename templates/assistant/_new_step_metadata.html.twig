@@ -3,14 +3,10 @@
     Every input is pre-filled from the DTO the flow's step-1
     listener populated from the detected source format.
 #}
-{% set picker_choices = [] %}
-{% for label, id in flow.metadata.languageModel.vars.model_choices %}
-    {% set picker_choices = picker_choices|merge([{
-        value: id,
-        label: label,
-        aliases: flow.metadata.languageModel.vars.model_aliases[id] ?? [],
-    }]) %}
-{% endfor %}
+{% set language_model = flow.metadata.languageModel %}
+{% set language_model_current = language_model.vars.value %}
+{% set language_model_choices = language_model.vars.model_choices %}
+{% set language_model_value_in_choices = language_model_current in language_model_choices %}
 <div class="grid gap-4">
     {% if draft.framework|framework_experimental %}
         <div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="note">
@@ -19,19 +15,31 @@
     {% endif %}
     {{ form_row(flow.metadata.title) }}
     {{ form_row(flow.metadata.description) }}
-    {{ form_row(flow.metadata.languageModel, {
-        attr: flow.metadata.languageModel.vars.attr|merge({
-            'data-controller': 'language-model-picker',
-            'data-language-model-picker-choices-value': picker_choices|json_encode,
-            'data-language-model-picker-placeholder-value': 'assistant.new.step_metadata.language_model_placeholder'|trans,
-            'data-language-model-picker-add-item-text-value': 'assistant.new.step_metadata.language_model_add_item'|trans,
-        }),
-    }) }}
-    {# Known models offered as a native fallback when Choices.js is unavailable. #}
-    <datalist id="{{ flow.metadata.languageModel.vars.model_datalist_id }}">
-        {% for label, id in flow.metadata.languageModel.vars.model_choices %}
-            <option value="{{ id }}">{{ label }}</option>
-        {% endfor %}
-    </datalist>
+    <div class="grid gap-1 text-sm">
+        <label for="{{ language_model.vars.id }}" class="block font-medium text-ink">
+            {{ language_model.vars.label|trans }}
+        </label>
+        <select
+            id="{{ language_model.vars.id }}"
+            name="{{ language_model.vars.full_name }}"
+            data-controller="language-model-picker"
+            data-language-model-picker-aliases-value="{{ language_model.vars.model_aliases|json_encode }}"
+            data-language-model-picker-placeholder-value="{{ 'assistant.new.step_metadata.language_model_placeholder'|trans }}"
+            data-language-model-picker-add-item-text-value="{{ 'assistant.new.step_metadata.language_model_add_item'|trans }}"
+            class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40"
+        >
+            <option value=""></option>
+            {% for label, id in language_model_choices %}
+                <option value="{{ id }}"{{ id == language_model_current ? ' selected' }}>{{ label }}</option>
+            {% endfor %}
+            {% if language_model_current is not empty and not language_model_value_in_choices %}
+                <option value="{{ language_model_current }}" selected>{{ language_model_current }}</option>
+            {% endif %}
+        </select>
+        {% if language_model.vars.help %}
+            <small class="text-text">{{ language_model.vars.help|trans }}</small>
+        {% endif %}
+        {{ form_errors(language_model) }}
+    </div>
     {{ form_row(flow.metadata.tags) }}
 </div>
