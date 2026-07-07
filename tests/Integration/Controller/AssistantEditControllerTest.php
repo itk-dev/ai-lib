@@ -197,9 +197,9 @@ final class AssistantEditControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/assistant/'.$assistant->getId().'/edit');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
         $crawler = $this->client->submit($stepOne);
-        self::assertStringNotContainsString(
-            'Ændret',
-            $crawler->filter('body')->text(),
+        self::assertCount(
+            0,
+            $crawler->filter('label span'),
             'no badge before any change lands on the derived fields',
         );
 
@@ -214,8 +214,12 @@ final class AssistantEditControllerTest extends WebTestCase
         ], \JSON_THROW_ON_ERROR);
         $crawler = $this->client->submit($stepOneAgain);
 
-        // Step 2 now diverges from the entity — the badge appears.
-        self::assertStringContainsString('Ændret', $crawler->filter('body')->text());
+        // Step 2 now diverges from the entity — the badge appears as
+        // a real `<label><span>Ændret</span></label>` structure, not
+        // an escaped literal.
+        $badges = $crawler->filter('label span');
+        self::assertGreaterThan(0, $badges->count(), 'at least one label carries the changed badge');
+        self::assertSame('Ændret', trim($badges->first()->text()));
     }
 
     // Verifies stepping through step 1 without changing the JSON leaves the entity-hydrated metadata intact.

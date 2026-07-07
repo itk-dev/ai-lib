@@ -21,7 +21,11 @@
 {% macro fieldLabel(key, translation, draft, badge) %}
     {%- set label = translation|trans -%}
     {%- if draft.jsonBaseline[key] is defined and attribute(draft, key) != draft.jsonBaseline[key] -%}
-        {{- label ~ badge|raw -}}
+        {#- `|e('html')` guards the translation in case it ever carries
+            an HTML-relevant character; concatenating with the badge
+            markup and marking the whole thing `|raw` stops the outer
+            `{{ }}` from re-escaping the span tags. -#}
+        {{- (label|e('html') ~ badge)|raw -}}
     {%- else -%}
         {{- label -}}
     {%- endif -%}
