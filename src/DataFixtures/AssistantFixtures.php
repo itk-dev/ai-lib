@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Assistant;
+use App\Entity\Organization;
 use App\Entity\Tag;
 use App\Entity\User;
+use App\Enum\DataSensitivity;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -62,11 +64,46 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
         // and reused so every assistant shares the same managed instances.
         $creators = FixtureCreators::resolve($manager);
 
+        // Resolve the sharing organizations up front so the detailed and
+        // generated batches can attach each row's kommune without touching
+        // the manager repeatedly. `resolveOrganizations()` returns an
+        // empty array when the manager can't hydrate them (the unit test
+        // uses a mocked object manager), so a null organization is fine.
+        $organizations = $this->resolveOrganizations($manager);
+
         // A running index across both batches drives the round-robin
         // creator assignment: detailed entries take 0–5, generated 6–20.
-        $index = $this->loadDetailed($manager, $creators, 0);
-        $this->loadGenerated($manager, $creators, $index);
+        $index = $this->loadDetailed($manager, $creators, $organizations, 0);
+        $this->loadGenerated($manager, $creators, $organizations, $index);
         $manager->flush();
+    }
+
+    /**
+     * Resolve `name → Organization` for the seeded organisations.
+     *
+     * The `Aarhus / Aalborg / Odense / Eksempel` rows are already
+     * persisted by {@see OrganizationFixtures}; look them up by name so
+     * detailed entries can attach the matching organisation without
+     * hard-coding a ULID. Returns an empty array when the manager can't
+     * hydrate rows (the unit test uses a mocked `ObjectManager` whose
+     * repository returns an empty result set) — the detailed rows then
+     * fall back to a null organisation.
+     *
+     * @param ObjectManager $manager object manager used to look up organisations
+     *
+     * @return array<string, Organization> keyed by `Organization::name`
+     */
+    private function resolveOrganizations(ObjectManager $manager): array
+    {
+        $repository = $manager->getRepository(Organization::class);
+        $organizations = $repository->findAll();
+        $byName = [];
+        foreach ($organizations as $organization) {
+            \assert($organization instanceof Organization);
+            $byName[$organization->getName()] = $organization;
+        }
+
+        return $byName;
     }
 
     /**
@@ -80,19 +117,20 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
      */
     public function getDependencies(): array
     {
-        return [UserFixtures::class];
+        return [UserFixtures::class, OrganizationFixtures::class];
     }
 
     /**
      * Persist the six hand-written catalogue entries.
      *
-     * @param ObjectManager $manager  Doctrine object manager the entries are persisted into
-     * @param list<User>    $creators round-robin creators, or empty when users are unavailable
-     * @param int           $index    running index of the first entry, for creator round-robin
+     * @param ObjectManager                 $manager       Doctrine object manager the entries are persisted into
+     * @param list<User>                    $creators      round-robin creators, or empty when users are unavailable
+     * @param array<string, Organization>   $organizations resolved organizations keyed by name (may be empty in unit tests)
+     * @param int                           $index         running index of the first entry, for creator round-robin
      *
      * @return int the next free index after the persisted entries
      */
-    private function loadDetailed(ObjectManager $manager, array $creators, int $index): int
+    private function loadDetailed(ObjectManager $manager, array $creators, array $organizations, int $index): int
     {
         $entries = [
             new Assistant(
@@ -101,6 +139,10 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 languageModel: 'gpt-4o',
                 framework: 'openwebui',
                 tags: $this->tags(['borgerservice', 'social', 'jura']),
+                organization: $organizations['Aarhus Kommune'] ?? null,
+                tagline: 'Foreslår paragrafhjemler i sociale sager.',
+                knowledgeDescription: 'Kommunens egne vejledninger og praksisnotater samt lov om social service og lov om aktiv socialpolitik.',
+                dataSensitivity: DataSensitivity::Internal,
             ),
             new Assistant(
                 title: 'Mødereferent',
@@ -108,6 +150,10 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 languageModel: 'gpt-4o-mini',
                 framework: 'openwebui',
                 tags: $this->tags(['mødeledelse', 'dokumentation', 'produktivitet']),
+                organization: null,
+                tagline: 'Genererer strukturerede mødereferater med handlepunkter.',
+                knowledgeDescription: 'Mødeoptag / transskriptioner. Ingen ekstern videns- eller dataindlæsning ud over selve mødets indhold.',
+                dataSensitivity: DataSensitivity::Internal,
             ),
             new Assistant(
                 title: 'Journaliseringsassistent',
@@ -115,6 +161,10 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 languageModel: 'llama-3.1',
                 framework: 'openwebui',
                 tags: $this->tags(['dokumentation', 'journalisering', 'arkiv']),
+                organization: $organizations['Odense Kommune'] ?? null,
+                tagline: 'Foreslår journalplan-numre til godkendelse i ét klik.',
+                knowledgeDescription: 'Kommunens klassifikationsstruktur og et anonymiseret udsnit af historiske sager med journalplan-numre.',
+                dataSensitivity: DataSensitivity::Personal,
             ),
             new Assistant(
                 title: 'Skole- og dagtilbudssvar',
@@ -122,6 +172,10 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 languageModel: 'llama-3.2',
                 framework: 'openwebui',
                 tags: $this->tags(['skole', 'dagtilbud', 'kommunikation']),
+                organization: null,
+                tagline: 'Drafter svar til forældrehenvendelser med kildehenvisninger.',
+                knowledgeDescription: 'Kommunens vejledningssamling på skole- og dagtilbudsområdet, gældende lovgivning og det enkelte dagtilbuds praksisnotater.',
+                dataSensitivity: DataSensitivity::Internal,
             ),
             new Assistant(
                 title: 'Tilsynsrapport-assistent',
@@ -129,12 +183,20 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 languageModel: 'mistral',
                 framework: 'openwebui',
                 tags: $this->tags(['sundhed', 'tilsyn', 'plejehjem']),
+                organization: $organizations['Aalborg Kommune'] ?? null,
+                tagline: 'Fremhæver afvigelser og opfølgningspunkter i tilsynsrapporter.',
+                knowledgeDescription: 'Styrelsen for Patientsikkerheds tilsynsdata suppleret med den enkelte kommunes plejehjemsdata.',
+                dataSensitivity: DataSensitivity::SensitivePersonal,
             ),
             new Assistant(
                 title: 'Uden kategorier',
                 description: 'Pladsholder uden tags — bruges til at vise hvordan detaljevisningen håndterer en helt umarkeret post.',
                 languageModel: 'gpt-4o',
                 framework: 'openwebui',
+                organization: null,
+                tagline: null,
+                knowledgeDescription: null,
+                dataSensitivity: DataSensitivity::Public,
             ),
         ];
 
@@ -149,11 +211,12 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
     /**
      * Persist the fifteen deterministically generated entries.
      *
-     * @param ObjectManager $manager  Doctrine object manager the entries are persisted into
-     * @param list<User>    $creators round-robin creators, or empty when users are unavailable
-     * @param int           $index    running index of the first entry, for creator round-robin
+     * @param ObjectManager               $manager       Doctrine object manager the entries are persisted into
+     * @param list<User>                  $creators      round-robin creators, or empty when users are unavailable
+     * @param array<string, Organization> $organizations resolved organizations keyed by name (may be empty in unit tests)
+     * @param int                         $index         running index of the first entry, for creator round-robin
      */
-    private function loadGenerated(ObjectManager $manager, array $creators, int $index): void
+    private function loadGenerated(ObjectManager $manager, array $creators, array $organizations, int $index): void
     {
         $topics = [
             [
@@ -220,14 +283,27 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
             'mistral',
         ];
 
+        // Data-sensitivity rotates through the four enum cases so every
+        // classification is represented in the seeded catalogue — useful
+        // for design review and for tests that count buckets. The order
+        // matches the enum declaration so the rotation stays predictable.
+        $sensitivities = [
+            DataSensitivity::Public,
+            DataSensitivity::Internal,
+            DataSensitivity::Personal,
+            DataSensitivity::SensitivePersonal,
+        ];
+
         $topicCount = count($topics);
         $kommuneCount = count($kommunes);
         $modelCount = count($languageModels);
+        $sensitivityCount = count($sensitivities);
 
         for ($i = 0; $i < 15; ++$i) {
             $topic = $topics[$i % $topicCount];
             $kommune = $kommunes[$i % $kommuneCount];
             $languageModel = $languageModels[$i % $modelCount];
+            $sensitivity = $sensitivities[$i % $sensitivityCount];
 
             $assistant = new Assistant(
                 title: $topic['title'].' – '.$kommune,
@@ -235,6 +311,10 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 languageModel: $languageModel,
                 framework: 'openwebui',
                 tags: $this->tags($topic['tags']),
+                organization: $organizations[$kommune] ?? null,
+                tagline: $topic['title'].' — genereret demo-post.',
+                knowledgeDescription: 'Genereret demo-post. Videns- og datagrundlag udfyldes normalt af den delende kommune ved oprettelse.',
+                dataSensitivity: $sensitivity,
             );
             FixtureCreators::assign($creators, $assistant, $index + $i);
             $manager->persist($assistant);

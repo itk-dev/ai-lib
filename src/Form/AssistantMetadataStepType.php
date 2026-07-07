@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Assistant\Model\ModelMap;
+use App\Entity\Organization;
+use App\Enum\DataSensitivity;
 use App\Repository\AssistantRepository;
+use App\Repository\OrganizationRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -40,12 +45,14 @@ final class AssistantMetadataStepType extends AbstractType
     private const string ROW_CLASS = 'grid gap-1 text-sm';
 
     /**
-     * @param ModelMap            $modelMap   canonical model catalog backing the picker
-     * @param AssistantRepository $assistants source of legacy/free-typed language-model values already in use
+     * @param ModelMap               $modelMap      canonical model catalog backing the picker
+     * @param AssistantRepository    $assistants    source of legacy/free-typed language-model values already in use
+     * @param OrganizationRepository $organizations backs the organization picker's choice list
      */
     public function __construct(
         private readonly ModelMap $modelMap,
         private readonly AssistantRepository $assistants,
+        private readonly OrganizationRepository $organizations,
     ) {
     }
 
@@ -97,6 +104,51 @@ final class AssistantMetadataStepType extends AbstractType
                 // Stimulus controller can enhance it into a searchable
                 // combobox seeded with the canonical shortlist and every
                 // previously-persisted value.
+                'attr' => ['class' => self::INPUT_CLASS],
+                'label_attr' => ['class' => self::LABEL_CLASS],
+                'row_attr' => ['class' => self::ROW_CLASS],
+            ])
+            ->add('tagline', TextType::class, [
+                'label' => 'assistant.new.step_metadata.tagline_label',
+                'help' => 'assistant.new.step_metadata.tagline_help',
+                'required' => false,
+                'empty_data' => '',
+                'attr' => ['class' => self::INPUT_CLASS, 'maxlength' => 255],
+                'label_attr' => ['class' => self::LABEL_CLASS],
+                'row_attr' => ['class' => self::ROW_CLASS],
+            ])
+            ->add('knowledgeDescription', TextareaType::class, [
+                'label' => 'assistant.new.step_metadata.knowledge_description_label',
+                'help' => 'assistant.new.step_metadata.knowledge_description_help',
+                'required' => false,
+                'empty_data' => '',
+                'attr' => ['class' => self::INPUT_CLASS, 'rows' => 4],
+                'label_attr' => ['class' => self::LABEL_CLASS],
+                'row_attr' => ['class' => self::ROW_CLASS],
+            ])
+            ->add('organizationId', ChoiceType::class, [
+                'label' => 'assistant.new.step_metadata.organization_label',
+                'help' => 'assistant.new.step_metadata.organization_help',
+                'required' => false,
+                'placeholder' => 'assistant.new.step_metadata.organization_placeholder',
+                'choices' => $this->organizationChoices(),
+                'attr' => ['class' => self::INPUT_CLASS],
+                'label_attr' => ['class' => self::LABEL_CLASS],
+                'row_attr' => ['class' => self::ROW_CLASS],
+            ])
+            ->add('dataSensitivity', EnumType::class, [
+                'class' => DataSensitivity::class,
+                'label' => 'assistant.new.step_metadata.data_sensitivity_label',
+                'help' => 'assistant.new.step_metadata.data_sensitivity_help',
+                'required' => true,
+                'placeholder' => 'assistant.new.step_metadata.data_sensitivity_placeholder',
+                'choice_label' => static fn (DataSensitivity $case): string => 'assistant.data_sensitivity.'.$case->value,
+                'constraints' => [
+                    new Assert\NotNull(
+                        message: 'assistant.new.step_metadata.data_sensitivity_required',
+                        groups: ['metadata'],
+                    ),
+                ],
                 'attr' => ['class' => self::INPUT_CLASS],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
@@ -182,5 +234,31 @@ final class AssistantMetadataStepType extends AbstractType
             'inherit_data' => true,
             'validation_groups' => ['Default', 'metadata'],
         ]);
+    }
+
+    /**
+     * Build the `<option>` list for the organization picker.
+     *
+     * Each seeded {@see Organization} contributes `name => ULID (string)`
+     * so the DTO's `organizationId` — a ULID string — round-trips
+     * through the form. Organisations are ordered by name so the
+     * picker reads alphabetically.
+     *
+     * @return array<string, string> `name => ULID` in name-A→Å order
+     */
+    private function organizationChoices(): array
+    {
+        $organizations = $this->organizations->findAll();
+        usort(
+            $organizations,
+            static fn (Organization $a, Organization $b): int => strcasecmp($a->getName(), $b->getName()),
+        );
+
+        $choices = [];
+        foreach ($organizations as $organization) {
+            $choices[$organization->getName()] = (string) $organization->getId();
+        }
+
+        return $choices;
     }
 }

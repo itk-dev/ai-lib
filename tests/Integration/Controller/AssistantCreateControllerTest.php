@@ -152,6 +152,10 @@ final class AssistantCreateControllerTest extends WebTestCase
         $tagsField = $this->findFieldName($stepTwo->all(), '[tags]');
         self::assertSame('alpha, beta', $stepTwo[$tagsField]->getValue());
 
+        // `dataSensitivity` is required — pick a value before advancing.
+        $sensitivityField = $this->findFieldName($stepTwo->all(), '[dataSensitivity]');
+        $stepTwo[$sensitivityField] = 'public';
+
         // Advance to step 3 with the pre-filled values.
         $crawler = $this->client->submit($stepTwo);
 
@@ -210,6 +214,8 @@ final class AssistantCreateControllerTest extends WebTestCase
         ], \JSON_THROW_ON_ERROR);
         $crawler = $this->client->submit($stepOne);
         $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $sensitivityField = $this->findFieldName($stepTwo->all(), '[dataSensitivity]');
+        $stepTwo[$sensitivityField] = 'public';
         $this->client->submit($stepTwo);
 
         // Same session, fresh GET — should land on step 1 again.

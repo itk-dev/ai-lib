@@ -7,7 +7,9 @@ namespace App\Tests\Integration\Assistant;
 use App\Assistant\AssistantCreator;
 use App\Assistant\InvalidAssistantInputException;
 use App\Entity\Tag;
+use App\Enum\DataSensitivity;
 use App\Repository\AssistantRepository;
+use App\Repository\OrganizationRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -50,6 +52,88 @@ final class AssistantCreatorTest extends KernelTestCase
             array_map(static fn (Tag $t) => $t->getName(), $assistant->getTags()->toArray()),
         );
         self::assertSame(['name' => 'demo', 'base_model_id' => 'gpt-4o'], $assistant->getSourceConfig());
+    }
+
+    // Ensures the four metadata-field parameters land verbatim on the persisted row when the curator supplies them.
+    public function testCreatePersistsMetadataFields(): void
+    {
+        $organizations = self::getContainer()->get(OrganizationRepository::class);
+        $organization = $organizations->findOneBy(['name' => 'Aarhus Kommune']);
+        self::assertNotNull($organization);
+
+        $assistant = $this->creator->create(
+            'Assistant with metadata',
+            'A description',
+            'gpt-4o',
+            'openwebui',
+            [],
+            '{"name":"demo","base_model_id":"gpt-4o"}',
+            (string) $organization->getId(),
+            '  Kort tagline  ',
+            'Videns-grundlaget beskrives her.',
+            DataSensitivity::Personal,
+        );
+
+        self::assertSame($organization->getId(), $assistant->getOrganization()?->getId());
+        self::assertSame('Kort tagline', $assistant->getTagline(), 'tagline is trimmed on persist');
+        self::assertSame('Videns-grundlaget beskrives her.', $assistant->getKnowledgeDescription());
+        self::assertSame(DataSensitivity::Personal, $assistant->getDataSensitivity());
+    }
+
+    // Verifies null / empty metadata inputs persist as null on the row, keeping the "curator left blank" convention explicit.
+    public function testCreateFoldsBlankMetadataToNull(): void
+    {
+        $assistant = $this->creator->create(
+            'Assistant with blanks',
+            'A description',
+            'gpt-4o',
+            'openwebui',
+            [],
+            '{"name":"demo","base_model_id":"gpt-4o"}',
+            organizationId: null,
+            tagline: '   ',
+            knowledgeDescription: '',
+            dataSensitivity: null,
+        );
+
+        self::assertNull($assistant->getOrganization());
+        self::assertNull($assistant->getTagline());
+        self::assertNull($assistant->getKnowledgeDescription());
+        self::assertNull($assistant->getDataSensitivity());
+    }
+
+    // Verifies a malformed organization ULID resolves to null rather than raising, so tampered POST data doesn't 500.
+    public function testCreateIgnoresInvalidOrganizationUlid(): void
+    {
+        $assistant = $this->creator->create(
+            'Assistant with bad org id',
+            'A description',
+            'gpt-4o',
+            'openwebui',
+            [],
+            '{"name":"demo","base_model_id":"gpt-4o"}',
+            organizationId: 'not-a-ulid',
+            dataSensitivity: DataSensitivity::Public,
+        );
+
+        self::assertNull($assistant->getOrganization());
+    }
+
+    // Verifies a well-formed ULID that no organization row matches resolves to null.
+    public function testCreateIgnoresUnknownOrganizationUlid(): void
+    {
+        $assistant = $this->creator->create(
+            'Assistant with unknown org id',
+            'A description',
+            'gpt-4o',
+            'openwebui',
+            [],
+            '{"name":"demo","base_model_id":"gpt-4o"}',
+            organizationId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+            dataSensitivity: DataSensitivity::Public,
+        );
+
+        self::assertNull($assistant->getOrganization());
     }
 
     // Ensures a submitted alias is folded to its canonical id before persistence, keeping the language-model facet deduplicated.

@@ -13,3 +13,4 @@ assistant:
             title_required: "Angiv en titel."
             description_required: "Angiv en beskrivelse."
             language_model_required: "Angiv en sprogmodel."
+            data_sensitivity_required: "Vælg en klassifikation af datafølsomhed."

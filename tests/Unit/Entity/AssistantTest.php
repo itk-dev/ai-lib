@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Entity;
 
 use App\Entity\Assistant;
+use App\Entity\Organization;
 use App\Entity\Tag;
+use App\Enum\DataSensitivity;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Ulid;
 
@@ -81,5 +83,53 @@ final class AssistantTest extends TestCase
 
         self::assertSame($assistant, $assistant->removeTag($tag));
         self::assertCount(0, $assistant->getTags());
+    }
+
+    // Verifies the metadata-field constructor arguments land verbatim on the entity and default to null when omitted.
+    public function testMetadataFieldsRoundTripThroughConstructorAndAccessors(): void
+    {
+        $organization = new Organization('Aarhus Kommune', ['aarhus.dk'], 'openwebui');
+
+        $assistant = new Assistant(
+            'Title',
+            'Description',
+            'gpt-4o',
+            'openwebui',
+            [],
+            $organization,
+            'Tagline',
+            'Videns-grundlaget beskrives.',
+            DataSensitivity::Internal,
+        );
+
+        self::assertSame($organization, $assistant->getOrganization());
+        self::assertSame('Tagline', $assistant->getTagline());
+        self::assertSame('Videns-grundlaget beskrives.', $assistant->getKnowledgeDescription());
+        self::assertSame(DataSensitivity::Internal, $assistant->getDataSensitivity());
+
+        $blank = new Assistant('t', 'd', 'lm', 'fw');
+        self::assertNull($blank->getOrganization());
+        self::assertNull($blank->getTagline());
+        self::assertNull($blank->getKnowledgeDescription());
+        self::assertNull($blank->getDataSensitivity());
+    }
+
+    // Verifies each metadata-field setter mutates its column and returns `$this`.
+    public function testMetadataFieldSettersMutateAndReturnStatic(): void
+    {
+        $assistant = new Assistant('t', 'd', 'lm', 'fw');
+        $organization = new Organization('Odense Kommune', ['odense.dk'], 'openwebui');
+
+        self::assertSame($assistant, $assistant->setOrganization($organization));
+        self::assertSame($organization, $assistant->getOrganization());
+
+        self::assertSame($assistant, $assistant->setTagline('Ny tagline'));
+        self::assertSame('Ny tagline', $assistant->getTagline());
+
+        self::assertSame($assistant, $assistant->setKnowledgeDescription('Ny beskrivelse'));
+        self::assertSame('Ny beskrivelse', $assistant->getKnowledgeDescription());
+
+        self::assertSame($assistant, $assistant->setDataSensitivity(DataSensitivity::Personal));
+        self::assertSame(DataSensitivity::Personal, $assistant->getDataSensitivity());
     }
 }

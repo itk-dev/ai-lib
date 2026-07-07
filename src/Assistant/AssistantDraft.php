@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Assistant;
 
+use App\Enum\DataSensitivity;
+
 /**
  * In-flight state carried across the three steps of the
  * "share an assistant" wizard.
@@ -49,6 +51,38 @@ final class AssistantDraft
      * @var list<string> zero or more tag names as typed on step 2
      */
     public array $tags = [];
+
+    /**
+     * ULID (as a string) of the {@see \App\Entity\Organization} the
+     * assistant is being shared on behalf of. The wizard's metadata
+     * step defaults this from the logged-in user's e-mail domain and
+     * lets the curator override it. `null` means "unset" — the
+     * detail page renders "ingen tilknyttet organisation" for those.
+     */
+    public ?string $organizationId = null;
+
+    /**
+     * Short one-line tagline shown alongside the title in list views.
+     * Empty string means the curator left the field blank on step 2;
+     * {@see AssistantCreator::create()} normalises empty strings to
+     * `null` on persist so DB queries don't need `LENGTH(...) > 0`
+     * guards.
+     */
+    public string $tagline = '';
+
+    /**
+     * Free-form description of the knowledge base / data grounding the
+     * assistant. Same empty-string-means-unset convention as
+     * {@see self::$tagline}.
+     */
+    public string $knowledgeDescription = '';
+
+    /**
+     * Data-sensitivity classification chosen on step 2. `null` when the
+     * curator hasn't picked one yet — the form validates it as required
+     * before advancing to step 3.
+     */
+    public ?DataSensitivity $dataSensitivity = null;
 
     /**
      * ULID of the persisted assistant, written by the controller

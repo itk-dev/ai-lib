@@ -79,6 +79,10 @@ final class AssistantCreateController extends AbstractController
                 $draft->framework,
                 $draft->tags,
                 $draft->sourceConfig,
+                $draft->organizationId,
+                $draft->tagline,
+                $draft->knowledgeDescription,
+                $draft->dataSensitivity,
             );
             $draft->createdAssistantId = (string) $assistant->getId();
 
