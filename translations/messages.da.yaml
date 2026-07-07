@@ -384,6 +384,7 @@ assistant:
         actions_heading: "Handlinger"
         action:
             export: "Hjemtag konfiguration"
+            edit: "Rediger assistent"
         modelkort:
             heading: "Modelkort"
             lead: "Sprogmodel %model% og hensyn ved brug af assistenten."
@@ -458,6 +459,21 @@ assistant:
         responsibility:
             heading: "Ansvar"
             body: "Du har som deler ansvaret for, at assistenten kan deles, og at det beskrevne datagrundlag ikke indeholder data, der ikke må deles. Selve videns- og datafiler deles ikke — kun konfigurationen og en opskrift på datagrundlaget."
+    edit:
+        title: "Rediger assistent – %brand%"
+        eyebrow: "Rediger assistent"
+        heading: 'Rediger "%title%"'
+        step_json:
+            rail_label: "Ret konfiguration"
+        step_receipt:
+            rail_label: "Kvittering"
+            rail_hint: "Ændringer gemt"
+            heading: "Ændringer er gemt"
+            body: '"%title%" er opdateret i biblioteket.'
+        action:
+            previous: "Ret konfiguration"
+            next: "Næste trin"
+            save: "Gem ændringer"
     data_sensitivity:
         ordinary_personal:
             label: "Almindelige personoplysninger"

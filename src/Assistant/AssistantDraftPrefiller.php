@@ -50,10 +50,21 @@ final class AssistantDraftPrefiller
      * when the source carries no explicit description. A payload no
      * adapter recognises is a no-op.
      *
+     * Skipped entirely when `$draft->editingAssistantId` is set: the
+     * edit controller has already seeded the draft from the persisted
+     * entity, and re-detecting the format would overwrite the curator's
+     * own metadata with values re-derived from the raw config (and,
+     * worse, attach the acting user's organisation on top of the
+     * assistant's own).
+     *
      * @param AssistantDraft $draft the DTO to mutate in place
      */
     public function prefill(AssistantDraft $draft): void
     {
+        if (null !== $draft->editingAssistantId) {
+            return;
+        }
+
         $adapter = $this->formats->detect($draft->sourceConfig);
         if (null === $adapter) {
             return;

@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Edit-an-assistant wizard at `/assistant/{id}/edit`, reusing the
+  create wizard's three-step shell (`json → metadata → receipt`).
+  Access is gated by a new `EditAssistantVoter` that grants the
+  assistant's original curator (`createdBy` blame) plus site admins;
+  everyone else is denied. The draft is seeded from the persisted
+  entity — the prefiller skips its own detection/organisation-default
+  passes when the DTO carries `editingAssistantId`, so the curator's
+  values are never clobbered by re-derivation from the acting user.
+  New `AssistantEditor::update()` applies the DTO to the entity with
+  the same normalisation rules as `AssistantCreator::create()`
+  (canonical model, blank-to-null, ULID resolution). The step
+  partials `_new_step_*.html.twig` are renamed to `_step_*.html.twig`
+  to reflect their shared scope; a dedicated `edit.html.twig` shell
+  drives the edit-specific copy (`assistant.edit.*` translation keys)
+  and re-uses the three partials. The detail page grows a "Rediger
+  assistent" affordance visible to the same audience the voter gates
+  on. Migration `Version20260707111627` sets the `organization` FK
+  to `ON DELETE SET NULL` so the admin can delete an organisation
+  without hitting a constraint from the seeded assistants that
+  reference it.
 - Four new curator-facing metadata fields on the create wizard's step 2
   ([`assistant/new`](src/Controller/AssistantCreateController.php)) — `organization`
   (nullable `ManyToOne` to `Organization`), `tagline` (nullable string),

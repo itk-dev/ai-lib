@@ -91,4 +91,20 @@ final class AssistantDraft
      * permalink.
      */
     public ?string $createdAssistantId = null;
+
+    /**
+     * ULID of the assistant being edited, set by
+     * {@see \App\Controller\AssistantEditController} when the
+     * wizard is invoked as an edit rather than a create. Presence
+     * flips two behaviours:
+     *
+     * 1. {@see AssistantDraftPrefiller::prefill()} skips its own
+     *    metadata / organization / language-model defaults so the
+     *    curator's own edits are never clobbered by re-detection.
+     * 2. The controller routes the metadata → receipt transition
+     *    through {@see AssistantEditor::update()} instead of
+     *    {@see AssistantCreator::create()}, updating the existing
+     *    row in place.
+     */
+    public ?string $editingAssistantId = null;
 }

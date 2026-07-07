@@ -99,6 +99,11 @@
                     <twig:Form:Button href="{{ path('app_assistant_export', {id: assistant.id}) }}">
                         {{ 'assistant.detail.action.export'|trans }}
                     </twig:Form:Button>
+                    {% if is_granted(constant('App\\Security\\Voter\\EditAssistantVoter::EDIT'), assistant) %}
+                        <twig:Form:Button href="{{ path('app_assistant_edit', {id: assistant.id}) }}" variant="ghost">
+                            {{ 'assistant.detail.action.edit'|trans }}
+                        </twig:Form:Button>
+                    {% endif %}
                 </div>
             </twig:Box>
         </twig:block>

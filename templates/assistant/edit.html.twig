@@ -2,14 +2,14 @@
 
 {% block main_max_width %}max-w-wide{% endblock %}
 
-{% block title %}{{ 'assistant.new.title'|trans({'%brand%': brand_name}) }}{% endblock %}
+{% block title %}{{ 'assistant.edit.title'|trans({'%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
     {% set current_step = flow.vars.cursor.currentStep %}
     {% set step_definitions = [
-        {name: 'json', label: 'assistant.new.step_json.rail_label', hint: 'assistant.new.step_json.rail_hint'},
+        {name: 'json', label: 'assistant.edit.step_json.rail_label', hint: 'assistant.new.step_json.rail_hint'},
         {name: 'metadata', label: 'assistant.new.step_metadata.rail_label', hint: 'assistant.new.step_metadata.rail_hint'},
-        {name: 'receipt', label: 'assistant.new.step_receipt.rail_label', hint: 'assistant.new.step_receipt.rail_hint'},
+        {name: 'receipt', label: 'assistant.edit.step_receipt.rail_label', hint: 'assistant.edit.step_receipt.rail_hint'},
     ] %}
 
     <aside class="mx-auto mb-6 max-w-wide rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="note">
@@ -21,8 +21,8 @@
         <twig:block name="start">
             <div class="grid gap-6">
                 <div>
-                    <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.new.eyebrow'|trans }}</twig:Eyebrow>
-                    <twig:Heading level="1" size="md">{{ 'assistant.new.heading'|trans }}</twig:Heading>
+                    <twig:Eyebrow as="p" class="mb-4">{{ 'assistant.edit.eyebrow'|trans }}</twig:Eyebrow>
+                    <twig:Heading level="1" size="md">{{ 'assistant.edit.heading'|trans({'%title%': draft.title}) }}</twig:Heading>
                 </div>
                 <twig:StepRail steps="{{ step_definitions }}" currentStep="{{ current_step }}" />
             </div>
@@ -32,13 +32,6 @@
             <section class="max-w-2xl">
                 {{ form_start(flow, {attr: {class: 'grid gap-4'}}) }}
 
-                {#
-                    Flow-level errors rendered as a flat bulleted list.
-                    Tailwind's preflight sets `list-style: none` on every
-                    `<ul>`, so `list-disc` doesn't win — draw the bullet
-                    ourselves via a `::before` pseudo-element on each
-                    `<li>` instead. Wrapped in the shared alert component.
-                #}
                 {% set flow_errors = flow.vars.errors %}
                 {% if flow_errors|length > 0 %}
                     <twig:Alert type="error">
@@ -61,24 +54,23 @@
                 {% endif %}
 
                 {#
-                    Navigator on the non-receipt steps: Previous / Next
-                    right-aligned. On the receipt step the three actions
-                    (Go to assistant / Share another / Back to catalog)
-                    are left-aligned and rendered inside the partial
-                    itself so they can sit alongside the non-form
-                    anchor links.
+                    Navigator on the non-receipt steps. Same right-aligned
+                    Previous / Next pair as the create wizard, but the
+                    Next button on the metadata step reads "Gem
+                    ændringer" instead of "Næste trin" — this is the
+                    commit moment for an edit.
                 #}
                 {% if 'receipt' != current_step %}
                     <div class="flex flex-wrap items-center justify-end gap-2">
                         {% if flow.navigator.previous is defined %}
                             {{ form_widget(flow.navigator.previous, {
-                                label: 'assistant.new.action.previous'|trans,
+                                label: 'assistant.edit.action.previous'|trans,
                                 attr: {class: 'rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-primary/40'},
                             }) }}
                         {% endif %}
                         {% if flow.navigator.next is defined %}
                             {{ form_widget(flow.navigator.next, {
-                                label: 'assistant.new.action.next'|trans,
+                                label: ('metadata' == current_step ? 'assistant.edit.action.save' : 'assistant.edit.action.next')|trans,
                                 attr: {class: 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40'},
                             }) }}
                         {% endif %}
