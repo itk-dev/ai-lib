@@ -25,6 +25,12 @@ final class UserFixturesTest extends TestCase
 {
     private const int EXPECTED_USER_COUNT = 8;
 
+    // Ensures the fixture is grouped under `default` so the stg pipeline can load it with `--group=default`.
+    public function testBelongsToDefaultGroup(): void
+    {
+        self::assertSame(['default'], UserFixtures::getGroups());
+    }
+
     // Tests that load() persists every Roles::* and every UserStatus case, hashing the shared fixture password.
     public function testLoadPersistsEveryRoleAndStatusCombination(): void
     {

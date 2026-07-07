@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\DataSensitivity;
 use App\Repository\AssistantRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -59,6 +60,43 @@ class Assistant extends AbstractEntity
     private ?array $sourceConfig = null;
 
     /**
+     * Organization that shared the assistant.
+     *
+     * Nullable so catalogue rows imported before the metadata-fields
+     * release don't need a synthetic organization. Curators pick one on
+     * the create wizard's metadata step, defaulted from the logged-in
+     * user's e-mail domain via
+     * {@see \App\Repository\OrganizationRepository::findOneByEmailDomain()}.
+     */
+    #[ORM\ManyToOne(targetEntity: Organization::class)]
+    #[ORM\JoinColumn(name: 'organization_id', referencedColumnName: 'id', nullable: true)]
+    private ?Organization $organization = null;
+
+    /**
+     * Short one-line tagline surfaced in list views. Nullable so
+     * pre-metadata-release rows aren't forced to synthesise one.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $tagline = null;
+
+    /**
+     * Free-form description of the knowledge base and data the assistant
+     * relies on. Nullable for the same pre-release reason as
+     * {@see self::$tagline}.
+     */
+    #[ORM\Column(name: 'knowledge_description', type: Types::TEXT, nullable: true)]
+    private ?string $knowledgeDescription = null;
+
+    /**
+     * Data-sensitivity classification for the assistant's knowledge base
+     * and prompt content. Persisted as the enum's backing string on the
+     * `data_sensitivity` column so pre-metadata-release rows keep their
+     * `null` value until a curator classifies them.
+     */
+    #[ORM\Column(name: 'data_sensitivity', type: Types::STRING, length: 32, enumType: DataSensitivity::class, nullable: true)]
+    private ?DataSensitivity $dataSensitivity = null;
+
+    /**
      * @param iterable<Tag> $tags tags to attach on creation
      */
     public function __construct(
@@ -67,6 +105,10 @@ class Assistant extends AbstractEntity
         string $languageModel,
         string $framework,
         iterable $tags = [],
+        ?Organization $organization = null,
+        ?string $tagline = null,
+        ?string $knowledgeDescription = null,
+        ?DataSensitivity $dataSensitivity = null,
     ) {
         parent::__construct();
         $this->title = $title;
@@ -77,6 +119,10 @@ class Assistant extends AbstractEntity
         foreach ($tags as $tag) {
             $this->addTag($tag);
         }
+        $this->organization = $organization;
+        $this->tagline = $tagline;
+        $this->knowledgeDescription = $knowledgeDescription;
+        $this->dataSensitivity = $dataSensitivity;
     }
 
     public function getTitle(): string
@@ -184,6 +230,54 @@ class Assistant extends AbstractEntity
     public function setSourceConfig(?array $sourceConfig): static
     {
         $this->sourceConfig = $sourceConfig;
+
+        return $this;
+    }
+
+    public function getOrganization(): ?Organization
+    {
+        return $this->organization;
+    }
+
+    public function setOrganization(?Organization $organization): static
+    {
+        $this->organization = $organization;
+
+        return $this;
+    }
+
+    public function getTagline(): ?string
+    {
+        return $this->tagline;
+    }
+
+    public function setTagline(?string $tagline): static
+    {
+        $this->tagline = $tagline;
+
+        return $this;
+    }
+
+    public function getKnowledgeDescription(): ?string
+    {
+        return $this->knowledgeDescription;
+    }
+
+    public function setKnowledgeDescription(?string $knowledgeDescription): static
+    {
+        $this->knowledgeDescription = $knowledgeDescription;
+
+        return $this;
+    }
+
+    public function getDataSensitivity(): ?DataSensitivity
+    {
+        return $this->dataSensitivity;
+    }
+
+    public function setDataSensitivity(?DataSensitivity $dataSensitivity): static
+    {
+        $this->dataSensitivity = $dataSensitivity;
 
         return $this;
     }

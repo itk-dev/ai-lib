@@ -5,7 +5,7 @@
 {% set userMenuSections = this.sections %}
 <div class="relative"
      data-controller="user-menu"
-     data-action="keydown.escape@window->user-menu#close click@window->user-menu#closeOnOutsideClick">
+     data-action="keydown.esc@window->user-menu#close click@window->user-menu#closeOnOutsideClick">
     <twig:Form:Button type="button"
                       variant="ghost"
                       size="sm"

@@ -9,6 +9,7 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Delegates {@see ValidAssistantConfig}'s check to the
@@ -19,10 +20,23 @@ use Symfony\Component\Validator\Exception\UnexpectedValueException;
 final class ValidAssistantConfigValidator extends ConstraintValidator
 {
     /**
-     * @param FormatAdapterRegistry $formats the registry whose adapters validate the payload
+     * Translation domain the per-error strings are looked up in.
+     *
+     * Kept separate from the `validators` domain so the finite set of
+     * JSON-decoder messages can be localised without cluttering the
+     * general validator catalogue. Errors not present in the catalogue
+     * pass through verbatim.
      */
-    public function __construct(private readonly FormatAdapterRegistry $formats)
-    {
+    public const string ERRORS_TRANSLATION_DOMAIN = 'assistant_validation';
+
+    /**
+     * @param FormatAdapterRegistry $formats    the registry whose adapters validate the payload
+     * @param TranslatorInterface   $translator localises each per-error string against the {@see self::ERRORS_TRANSLATION_DOMAIN} catalogue
+     */
+    public function __construct(
+        private readonly FormatAdapterRegistry $formats,
+        private readonly TranslatorInterface $translator,
+    ) {
     }
 
     /**
@@ -63,8 +77,17 @@ final class ValidAssistantConfigValidator extends ConstraintValidator
             $errors = [...$errors, ...$this->formats->get($id)->validate($value)->getErrors()];
         }
 
-        $this->context->buildViolation($constraint->message)
-            ->setParameter('{{ errors }}', implode('; ', array_values(array_unique($errors))))
-            ->addViolation();
+        // First violation is the localised intro ("Filen er ikke en
+        // gyldig assistent-konfiguration."), then one violation per
+        // deduped detail line so the default `form_errors` template
+        // renders the whole thing as a `<ul>` with each reason on its
+        // own row instead of a `; `-joined single line.
+        $this->context->buildViolation($constraint->message)->addViolation();
+
+        foreach (array_values(array_unique($errors)) as $error) {
+            $this->context->buildViolation(
+                $this->translator->trans($error, [], self::ERRORS_TRANSLATION_DOMAIN),
+            )->addViolation();
+        }
     }
 }

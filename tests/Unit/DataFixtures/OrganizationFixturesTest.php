@@ -18,6 +18,12 @@ final class OrganizationFixturesTest extends TestCase
         self::assertSame([UserFixtures::class], (new OrganizationFixtures())->getDependencies());
     }
 
+    // Ensures the fixture is grouped under `default` so the stg pipeline can load it with `--group=default`.
+    public function testBelongsToDefaultGroup(): void
+    {
+        self::assertSame(['default'], OrganizationFixtures::getGroups());
+    }
+
     // Tests that load() persists the four baseline organisations (three Danish municipalities + the test-friendly Eksempel row) with the expected names and default framework.
     public function testLoadPersistsBaselineOrganizations(): void
     {
