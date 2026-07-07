@@ -11,6 +11,7 @@ use App\Entity\Assistant;
 use App\Entity\Tag;
 use App\Form\AssistantCreateFlowType;
 use App\Security\Voter\EditAssistantVoter;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Flow\DataStorage\SessionDataStorage;
@@ -19,6 +20,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
@@ -35,14 +37,16 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class AssistantEditController extends AbstractController
 {
     /**
-     * @param FormatAdapterRegistry $formats      backs the step-1 upload progress + acts as the format id source for the flow
-     * @param AssistantEditor       $editor       applies the DTO to the entity on the `metadata → receipt` transition
-     * @param RequestStack          $requestStack backs the per-assistant session data storage that isolates edits from each other and from the create flow
+     * @param FormatAdapterRegistry  $formats       backs the step-1 upload progress + acts as the format id source for the flow
+     * @param AssistantEditor        $editor        applies the DTO to the entity on the `metadata → receipt` transition
+     * @param RequestStack           $requestStack  backs the per-assistant session data storage that isolates edits from each other and from the create flow
+     * @param EntityManagerInterface $entityManager Doctrine entity manager the `delete` action removes rows through
      */
     public function __construct(
         private readonly FormatAdapterRegistry $formats,
         private readonly AssistantEditor $editor,
         private readonly RequestStack $requestStack,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -109,6 +113,39 @@ final class AssistantEditController extends AbstractController
         }
 
         return $this->renderStep($stepForm);
+    }
+
+    /**
+     * Delete `$assistant` after CSRF + voter checks.
+     *
+     * Gated by {@see EditAssistantVoter::DELETE} — same audience as
+     * edit (author + admins). The action requires a valid CSRF
+     * token scoped to `assistant-delete-<ULID>`, so the trash-icon
+     * button on the detail / "Mine assistenter" surfaces must
+     * carry a matching `_token` hidden field. On success flashes a
+     * confirmation and redirects to the personal inventory; a bad
+     * token returns 403 without touching the row.
+     *
+     * @param Assistant $assistant the row being deleted, resolved by `MapEntity`
+     * @param Request   $request   the current HTTP request; used to read the CSRF token
+     *
+     * @return Response redirect to `app_user_assistants` on success, 403 on token mismatch
+     */
+    #[Route(path: '/assistant/{id}/delete', name: 'app_assistant_delete', requirements: ['id' => Requirement::ULID], methods: ['POST'])]
+    #[IsGranted(EditAssistantVoter::DELETE, subject: 'assistant')]
+    public function delete(#[MapEntity] Assistant $assistant, Request $request): Response
+    {
+        $tokenId = 'assistant-delete-'.$assistant->getId();
+        if (!$this->isCsrfTokenValid($tokenId, (string) $request->request->get('_token'))) {
+            return new Response('', Response::HTTP_FORBIDDEN);
+        }
+
+        $this->entityManager->remove($assistant);
+        $this->entityManager->flush();
+
+        $this->addFlash('success', 'assistant.detail.flash.deleted');
+
+        return $this->redirectToRoute('app_user_assistants');
     }
 
     /**

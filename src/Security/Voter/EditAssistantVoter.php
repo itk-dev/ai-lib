@@ -13,19 +13,26 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * Authorises editing a persisted {@see Assistant}.
+ * Authorises managing (editing / deleting) a persisted {@see Assistant}.
  *
- * Grants the `EDIT_ASSISTANT` attribute when the actor is either
- * the assistant's original curator (matched via
- * {@see Assistant::$createdBy}) or a site administrator
- * ({@see Roles::ADMIN}). Everyone else is denied — the edit
- * wizard is not open to same-organisation colleagues by design,
- * to keep the change history unambiguous and match the wording
- * of the "Rediger" affordance on the detail page.
+ * Grants the `EDIT_ASSISTANT` and `DELETE_ASSISTANT` attributes
+ * when the actor is either the assistant's original curator
+ * (matched via {@see Assistant::$createdBy}) or a site
+ * administrator ({@see Roles::ADMIN}). Everyone else is denied
+ * — both actions are limited to the same audience so the change
+ * history stays unambiguous and matches the wording of the
+ * "Rediger" and "Slet" affordances on the detail / "Mine
+ * assistenter" surfaces.
  */
 final class EditAssistantVoter extends Voter
 {
     public const string EDIT = 'EDIT_ASSISTANT';
+    public const string DELETE = 'DELETE_ASSISTANT';
+
+    /**
+     * @var list<string>
+     */
+    private const array SUPPORTED = [self::EDIT, self::DELETE];
 
     /**
      * @param AccessDecisionManagerInterface $accessDecisionManager used to evaluate the actor's roles via the configured role hierarchy
@@ -36,8 +43,8 @@ final class EditAssistantVoter extends Voter
     }
 
     /**
-     * Vote only on the `EDIT_ASSISTANT` attribute with an
-     * {@see Assistant} subject. Any other combination defers.
+     * Vote on the `EDIT_ASSISTANT` and `DELETE_ASSISTANT` attributes
+     * with an {@see Assistant} subject. Any other combination defers.
      *
      * @param string $attribute the attribute being checked
      * @param mixed  $subject   the object the attribute is checked against
@@ -46,7 +53,7 @@ final class EditAssistantVoter extends Voter
      */
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return self::EDIT === $attribute && $subject instanceof Assistant;
+        return $subject instanceof Assistant && \in_array($attribute, self::SUPPORTED, true);
     }
 
     /**

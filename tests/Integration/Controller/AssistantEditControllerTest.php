@@ -270,6 +270,53 @@ final class AssistantEditControllerTest extends WebTestCase
         self::assertSame($assistant->getTitle(), $stepTwo[$titleField]->getValue());
     }
 
+    // Verifies POST /assistant/{id}/delete via the rendered trash-icon form removes the row and redirects to the personal inventory.
+    public function testDeleteRemovesEntity(): void
+    {
+        $alice = $this->userByEmail(UserFixtures::ALICE_EMAIL);
+        $assistant = $this->assistantOwnedBy($alice);
+        $id = $assistant->getId();
+        $this->client->loginUser($alice);
+
+        // Submit the rendered form so its baked-in CSRF token is
+        // used verbatim — the token manager needs an active session
+        // to mint a value, which the client only spins up on first
+        // request.
+        $crawler = $this->client->request('GET', '/mine/assistenter');
+        $form = $crawler->filter('form[action="/assistant/'.$id.'/delete"]')->form();
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/mine/assistenter');
+        self::assertNull(self::getContainer()->get(AssistantRepository::class)->find($id));
+    }
+
+    // Ensures POST /assistant/{id}/delete with a bad CSRF token returns 403 and does not remove the row.
+    public function testDeleteRejectsInvalidCsrfToken(): void
+    {
+        $alice = $this->userByEmail(UserFixtures::ALICE_EMAIL);
+        $assistant = $this->assistantOwnedBy($alice);
+        $id = $assistant->getId();
+        $this->client->loginUser($alice);
+
+        $this->client->request('POST', '/assistant/'.$id.'/delete', ['_token' => 'wrong']);
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertNotNull(self::getContainer()->get(AssistantRepository::class)->find($id));
+    }
+
+    // Denies deletion to a signed-in user who is neither the author nor an admin. The voter runs before the CSRF check, so any token value produces the same 403.
+    public function testDeleteForbidsUnrelatedSignedInUser(): void
+    {
+        $alice = $this->userByEmail(UserFixtures::ALICE_EMAIL);
+        $assistant = $this->assistantOwnedBy($alice);
+        $bob = $this->userByEmail(UserFixtures::BOB_EMAIL);
+        $this->client->loginUser($bob);
+
+        $this->client->request('POST', '/assistant/'.$assistant->getId().'/delete', ['_token' => 'irrelevant']);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
     // Full happy path: step 1 → step 2 (pre-filled) → step 3, ending with the row updated in place.
     public function testHappyPathUpdatesRowInPlace(): void
     {

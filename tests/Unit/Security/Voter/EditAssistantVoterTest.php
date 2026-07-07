@@ -15,7 +15,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
 final class EditAssistantVoterTest extends TestCase
 {
-    // Defers when the attribute is anything other than EDIT_ASSISTANT.
+    // Defers when the attribute is anything other than EDIT_ASSISTANT or DELETE_ASSISTANT.
     public function testAbstainsForUnsupportedAttribute(): void
     {
         $voter = $this->voterWithRoles([]);
@@ -23,7 +23,20 @@ final class EditAssistantVoterTest extends TestCase
 
         self::assertSame(
             VoterInterface::ACCESS_ABSTAIN,
-            $voter->vote($token, $this->assistantOwnedBy($this->user()), ['DELETE_ASSISTANT']),
+            $voter->vote($token, $this->assistantOwnedBy($this->user()), ['ARCHIVE_ASSISTANT']),
+        );
+    }
+
+    // Grants the assistant's author the DELETE_ASSISTANT attribute — same rule as EDIT_ASSISTANT.
+    public function testGrantsDeleteToTheAssistantAuthor(): void
+    {
+        $author = $this->user();
+        $voter = $this->voterWithRoles([]);
+        $token = $this->tokenFor($author);
+
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($token, $this->assistantOwnedBy($author), [EditAssistantVoter::DELETE]),
         );
     }
 

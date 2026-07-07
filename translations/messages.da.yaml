@@ -350,6 +350,12 @@ user:
         heading: "Assistenter du har delt"
         lead: "Assistenter du har uploadet til biblioteket. Nye tilføjelser via »Del assistent« vises her."
         list_label: "Mine assistenter"
+        updated_at: "Opdateret %date%"
+        action:
+            view: "Gå til assistent"
+            edit: "Rediger assistent"
+            delete: "Slet assistent"
+            delete_confirm: "Slet »%title%«? Handlingen kan ikke fortrydes."
         empty:
             heading: "Ingen assistenter endnu"
             help: "Du har ikke delt en assistent endnu. Klik på »Del assistent« for at komme i gang."
@@ -385,6 +391,8 @@ assistant:
         action:
             export: "Hjemtag konfiguration"
             edit: "Rediger assistent"
+        flash:
+            deleted: "Assistenten er slettet."
         modelkort:
             heading: "Modelkort"
             lead: "Sprogmodel %model% og hensyn ved brug af assistenten."
