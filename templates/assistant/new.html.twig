@@ -33,29 +33,23 @@
                 {{ form_start(flow, {attr: {class: 'grid gap-4'}}) }}
 
                 {#
-                    Flow-level errors: the config-validator emits an intro
-                    violation ("Filen er ikke en gyldig assistent-
-                    konfiguration:") plus one violation per deduped detail
-                    line. Render the first as a paragraph heading and the
-                    rest as a disc-bulleted list so the intro reads like
-                    a summary and the details sit under it. Bypasses
-                    `form_errors` because Tailwind's preflight strips the
-                    default theme's `<ul>` styling.
+                    Flow-level errors — rendered as a plain bulleted
+                    list inside the shared `<twig:Alert>` component so
+                    every error is treated the same (any of them could
+                    be a lone entry). Tailwind's preflight strips
+                    `<ul>` styling, so `list-disc` + `pl-5` re-establish
+                    disc bullets and their left inset; `marker:text-…`
+                    tints the bullets to match the surrounding text.
                 #}
                 {% set flow_errors = flow.vars.errors %}
                 {% if flow_errors|length > 0 %}
-                    <div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
-                        <p class="font-medium">{{ (flow_errors|first).message }}</p>
-                        {% if flow_errors|length > 1 %}
-                            <ul class="mt-1 list-disc space-y-1 pl-5">
-                                {% for error in flow_errors %}
-                                    {% if not loop.first %}
-                                        <li>{{ error.message }}</li>
-                                    {% endif %}
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
+                    <twig:Alert type="error">
+                        <ul class="list-disc space-y-1 pl-5 marker:text-text">
+                            {% for error in flow_errors %}
+                                <li>{{ error.message }}</li>
+                            {% endfor %}
+                        </ul>
+                    </twig:Alert>
                 {% endif %}
 
                 {% if 'json' == current_step %}
