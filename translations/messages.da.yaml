@@ -459,10 +459,15 @@ assistant:
             heading: "Ansvar"
             body: "Du har som deler ansvaret for, at assistenten kan deles, og at det beskrevne datagrundlag ikke indeholder data, der ikke må deles. Selve videns- og datafiler deles ikke — kun konfigurationen og en opskrift på datagrundlaget."
     data_sensitivity:
-        public: "Offentlig"
-        internal: "Intern"
-        personal: "Personoplysninger"
-        sensitive_personal: "Følsomme personoplysninger"
+        ordinary_personal:
+            label: "Almindelige personoplysninger"
+            description: "Beregnet til almindelige personoplysninger og ikke-følsomt indhold."
+        confidential:
+            label: "Fortrolige data"
+            description: "Beregnet til fortrolige data — kræver passende organisatoriske foranstaltninger."
+        sensitive_personal:
+            label: "Personfølsomme data"
+            description: "Beregnet til personfølsomme oplysninger (særlige kategorier) — kræver skærpet beskyttelse."
 
 frontpage:
     title: "%brand% – forhåndsvisning"

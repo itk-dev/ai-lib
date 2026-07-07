@@ -99,13 +99,13 @@ final class AssistantTest extends TestCase
             $organization,
             'Tagline',
             'Videns-grundlaget beskrives.',
-            DataSensitivity::Internal,
+            DataSensitivity::Confidential,
         );
 
         self::assertSame($organization, $assistant->getOrganization());
         self::assertSame('Tagline', $assistant->getTagline());
         self::assertSame('Videns-grundlaget beskrives.', $assistant->getKnowledgeDescription());
-        self::assertSame(DataSensitivity::Internal, $assistant->getDataSensitivity());
+        self::assertSame(DataSensitivity::Confidential, $assistant->getDataSensitivity());
 
         $blank = new Assistant('t', 'd', 'lm', 'fw');
         self::assertNull($blank->getOrganization());
@@ -129,7 +129,7 @@ final class AssistantTest extends TestCase
         self::assertSame($assistant, $assistant->setKnowledgeDescription('Ny beskrivelse'));
         self::assertSame('Ny beskrivelse', $assistant->getKnowledgeDescription());
 
-        self::assertSame($assistant, $assistant->setDataSensitivity(DataSensitivity::Personal));
-        self::assertSame(DataSensitivity::Personal, $assistant->getDataSensitivity());
+        self::assertSame($assistant, $assistant->setDataSensitivity(DataSensitivity::OrdinaryPersonal));
+        self::assertSame(DataSensitivity::OrdinaryPersonal, $assistant->getDataSensitivity());
     }
 }

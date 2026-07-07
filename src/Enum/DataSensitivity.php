@@ -10,31 +10,49 @@ namespace App\Enum;
  *
  * Curators pick one entry on the create-wizard's metadata step; the value
  * is persisted verbatim on the row and drives reviewer guidance around
- * whether the assistant is safe to share with a wider audience. The
- * ordering (public → sensitive_personal) is intentional: it goes from the
- * least to the most restrictive category.
+ * whether the assistant is safe to share with a wider audience. Every
+ * case's short label and longer descriptive text is exposed as a
+ * translation key via {@see self::label()} / {@see self::description()}
+ * so form widgets and detail-page copy can call the translator without
+ * duplicating the mapping.
  */
 enum DataSensitivity: string
 {
     /**
-     * No personal or sensitive information — freely shareable content.
+     * Ordinary personal information covered by GDPR articles 6 and 7 —
+     * routine, non-sensitive personal data.
      */
-    case Public = 'public';
+    case OrdinaryPersonal = 'ordinary_personal';
 
     /**
-     * Internal-use information — sharable across the municipality but not
-     * with the public.
+     * Confidential data — not personal but requires organisational
+     * safeguards (contracts, tender material, internal memos).
      */
-    case Internal = 'internal';
+    case Confidential = 'confidential';
 
     /**
-     * Ordinary personal information covered by GDPR articles 6 & 7.
-     */
-    case Personal = 'personal';
-
-    /**
-     * Special-category personal information covered by GDPR article 9
+     * Special-category personal data covered by GDPR article 9
      * (health, ethnicity, religious beliefs, etc.).
      */
     case SensitivePersonal = 'sensitive_personal';
+
+    /**
+     * Translation key for this case's short label.
+     *
+     * @return string a translator id under the default catalogue
+     */
+    public function label(): string
+    {
+        return 'assistant.data_sensitivity.'.$this->value.'.label';
+    }
+
+    /**
+     * Translation key for this case's longer descriptive text.
+     *
+     * @return string a translator id under the default catalogue
+     */
+    public function description(): string
+    {
+        return 'assistant.data_sensitivity.'.$this->value.'.description';
+    }
 }

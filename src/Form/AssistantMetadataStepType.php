@@ -142,7 +142,7 @@ final class AssistantMetadataStepType extends AbstractType
                 'help' => 'assistant.new.step_metadata.data_sensitivity_help',
                 'required' => true,
                 'placeholder' => 'assistant.new.step_metadata.data_sensitivity_placeholder',
-                'choice_label' => static fn (DataSensitivity $case): string => 'assistant.data_sensitivity.'.$case->value,
+                'choice_label' => static fn (DataSensitivity $case): string => $case->label(),
                 'constraints' => [
                     new Assert\NotNull(
                         message: 'assistant.new.step_metadata.data_sensitivity_required',

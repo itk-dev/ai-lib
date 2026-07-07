@@ -81,13 +81,12 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
     /**
      * Resolve `name → Organization` for the seeded organisations.
      *
-     * The `Aarhus / Aalborg / Odense / Eksempel` rows are already
-     * persisted by {@see OrganizationFixtures}; look them up by name so
-     * detailed entries can attach the matching organisation without
-     * hard-coding a ULID. Returns an empty array when the manager can't
-     * hydrate rows (the unit test uses a mocked `ObjectManager` whose
-     * repository returns an empty result set) — the detailed rows then
-     * fall back to a null organisation.
+     * Load whatever organisations {@see OrganizationFixtures} has already
+     * persisted and index them by name so detailed entries can attach
+     * the matching organisation without hard-coding a ULID. Returns an
+     * empty array when the manager can't hydrate rows (the unit test
+     * uses a mocked object manager whose repository returns an empty
+     * result set) — detailed rows then fall back to a null organisation.
      *
      * @param ObjectManager $manager object manager used to look up organisations
      *
@@ -142,7 +141,7 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 organization: $organizations['Aarhus Kommune'] ?? null,
                 tagline: 'Foreslår paragrafhjemler i sociale sager.',
                 knowledgeDescription: 'Kommunens egne vejledninger og praksisnotater samt lov om social service og lov om aktiv socialpolitik.',
-                dataSensitivity: DataSensitivity::Internal,
+                dataSensitivity: DataSensitivity::Confidential,
             ),
             new Assistant(
                 title: 'Mødereferent',
@@ -153,7 +152,7 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 organization: null,
                 tagline: 'Genererer strukturerede mødereferater med handlepunkter.',
                 knowledgeDescription: 'Mødeoptag / transskriptioner. Ingen ekstern videns- eller dataindlæsning ud over selve mødets indhold.',
-                dataSensitivity: DataSensitivity::Internal,
+                dataSensitivity: DataSensitivity::Confidential,
             ),
             new Assistant(
                 title: 'Journaliseringsassistent',
@@ -164,7 +163,7 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 organization: $organizations['Odense Kommune'] ?? null,
                 tagline: 'Foreslår journalplan-numre til godkendelse i ét klik.',
                 knowledgeDescription: 'Kommunens klassifikationsstruktur og et anonymiseret udsnit af historiske sager med journalplan-numre.',
-                dataSensitivity: DataSensitivity::Personal,
+                dataSensitivity: DataSensitivity::OrdinaryPersonal,
             ),
             new Assistant(
                 title: 'Skole- og dagtilbudssvar',
@@ -175,7 +174,7 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 organization: null,
                 tagline: 'Drafter svar til forældrehenvendelser med kildehenvisninger.',
                 knowledgeDescription: 'Kommunens vejledningssamling på skole- og dagtilbudsområdet, gældende lovgivning og det enkelte dagtilbuds praksisnotater.',
-                dataSensitivity: DataSensitivity::Internal,
+                dataSensitivity: DataSensitivity::OrdinaryPersonal,
             ),
             new Assistant(
                 title: 'Tilsynsrapport-assistent',
@@ -196,7 +195,7 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
                 organization: null,
                 tagline: null,
                 knowledgeDescription: null,
-                dataSensitivity: DataSensitivity::Public,
+                dataSensitivity: DataSensitivity::OrdinaryPersonal,
             ),
         ];
 
@@ -283,14 +282,13 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
             'mistral',
         ];
 
-        // Data-sensitivity rotates through the four enum cases so every
+        // Data-sensitivity rotates through the three enum cases so every
         // classification is represented in the seeded catalogue — useful
         // for design review and for tests that count buckets. The order
         // matches the enum declaration so the rotation stays predictable.
         $sensitivities = [
-            DataSensitivity::Public,
-            DataSensitivity::Internal,
-            DataSensitivity::Personal,
+            DataSensitivity::OrdinaryPersonal,
+            DataSensitivity::Confidential,
             DataSensitivity::SensitivePersonal,
         ];
 
