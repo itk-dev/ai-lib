@@ -19,23 +19,31 @@
         <label for="{{ language_model.vars.id }}" class="block font-medium text-ink">
             {{ language_model.vars.label|trans }}
         </label>
-        <select
-            id="{{ language_model.vars.id }}"
-            name="{{ language_model.vars.full_name }}"
+        {# The Stimulus controller sits on this wrapper (not the <select>)
+           because Choices.js re-parents the <select> into its own DOM
+           wrapper on init — with the controller on the <select> itself
+           Stimulus would see the node leave the tree, disconnect, then
+           reconnect on re-insertion, looping the init forever. #}
+        <div
             data-controller="language-model-picker"
             data-language-model-picker-aliases-value="{{ language_model.vars.model_aliases|json_encode }}"
             data-language-model-picker-placeholder-value="{{ 'assistant.new.step_metadata.language_model_placeholder'|trans }}"
             data-language-model-picker-add-item-text-value="{{ 'assistant.new.step_metadata.language_model_add_item'|trans }}"
-            class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40"
         >
-            <option value=""></option>
-            {% for label, id in language_model_choices %}
-                <option value="{{ id }}"{{ id == language_model_current ? ' selected' }}>{{ label }}</option>
-            {% endfor %}
-            {% if language_model_current is not empty and not language_model_value_in_choices %}
-                <option value="{{ language_model_current }}" selected>{{ language_model_current }}</option>
-            {% endif %}
-        </select>
+            <select
+                id="{{ language_model.vars.id }}"
+                name="{{ language_model.vars.full_name }}"
+                class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+                <option value=""></option>
+                {% for label, id in language_model_choices %}
+                    <option value="{{ id }}"{{ id == language_model_current ? ' selected' }}>{{ label }}</option>
+                {% endfor %}
+                {% if language_model_current is not empty and not language_model_value_in_choices %}
+                    <option value="{{ language_model_current }}" selected>{{ language_model_current }}</option>
+                {% endif %}
+            </select>
+        </div>
         {% if language_model.vars.help %}
             <small class="text-text">{{ language_model.vars.help|trans }}</small>
         {% endif %}

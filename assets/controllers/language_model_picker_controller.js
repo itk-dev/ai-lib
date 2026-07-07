@@ -36,7 +36,14 @@ export default class extends Controller {
     };
 
     connect() {
-        this.select = this.element;
+        // The controller is bound to a wrapper `<div>` (not the `<select>`
+        // itself) so Choices.js can re-parent the select into its own DOM
+        // wrapper without dragging the controller node out of the tree —
+        // that would fire disconnect/connect in a loop.
+        this.select = this.element.querySelector("select");
+        if (!this.select) {
+            return;
+        }
 
         // Snapshot the pre-rendered option list so the search hook
         // can rebuild the choice list from a stable source of truth.
