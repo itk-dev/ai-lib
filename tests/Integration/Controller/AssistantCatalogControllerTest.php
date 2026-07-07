@@ -50,10 +50,10 @@ final class AssistantCatalogControllerTest extends WebTestCase
     // Tests that ?language_model[]=… narrows the card list to the matching facet count and renders the active-filter chip.
     public function testLanguageModelFilterNarrowsResults(): void
     {
-        $expected = self::getContainer()->get(AssistantRepository::class)->languageModelFacetCounts()['Mistral 24b'] ?? 0;
-        self::assertGreaterThan(0, $expected, 'fixture baseline must include Mistral 24b rows');
+        $expected = self::getContainer()->get(AssistantRepository::class)->languageModelFacetCounts()['gpt-4o'] ?? 0;
+        self::assertGreaterThan(0, $expected, 'fixture baseline must include gpt-4o rows');
 
-        $crawler = $this->client->request('GET', '/search?language_model%5B%5D=Mistral%2024b');
+        $crawler = $this->client->request('GET', '/search?language_model%5B%5D=gpt-4o');
 
         self::assertResponseIsSuccessful();
         self::assertSame(
@@ -61,7 +61,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
             $crawler->filter('.assistant-card')->count(),
             'card count must match the gpt-4o fixture facet count',
         );
-        self::assertSelectorTextContains('[aria-label="Aktive filtre"]', 'Mistral 24b');
+        self::assertSelectorTextContains('[aria-label="Aktive filtre"]', 'gpt-4o');
     }
 
     // Ensures a filter value that matches nothing renders the empty-state copy and zero card links.
@@ -100,15 +100,15 @@ final class AssistantCatalogControllerTest extends WebTestCase
     {
         $crawler = $this->client->request(
             'GET',
-            '/search?language_model%5B%5D=Mistral%2024b&framework%5B%5D=openwebui',
+            '/search?language_model%5B%5D=gpt-4o&framework%5B%5D=openwebui',
         );
 
         self::assertResponseIsSuccessful();
 
         $chip = $crawler->filter('[aria-label="Aktive filtre"] a')->reduce(static function ($node) {
-            return str_contains((string) $node->attr('aria-label'), 'Mistral 24b');
+            return str_contains((string) $node->attr('aria-label'), 'gpt-4o');
         });
-        self::assertCount(1, $chip, 'a removal chip for Mistral 24b must be rendered');
+        self::assertCount(1, $chip, 'a removal chip for gpt-4o must be rendered');
 
         $params = [];
         parse_str(parse_url((string) $chip->attr('href'), \PHP_URL_QUERY) ?? '', $params);
@@ -207,12 +207,12 @@ final class AssistantCatalogControllerTest extends WebTestCase
     // Ensures the sort form carries the active facet as a hidden input so changing the order preserves the filter.
     public function testSortFormPreservesActiveFilters(): void
     {
-        $crawler = $this->client->request('GET', '/search?language_model%5B%5D=Mistral%2024b');
+        $crawler = $this->client->request('GET', '/search?language_model%5B%5D=gpt-4o');
 
         self::assertResponseIsSuccessful();
         $hidden = $crawler->filter('aside[aria-label="Sortering"] input[type="hidden"][name="language_model[]"]');
         self::assertCount(1, $hidden, 'the sort form mirrors the active facet as a hidden input');
-        self::assertSame('Mistral 24b', $hidden->attr('value'));
+        self::assertSame('gpt-4o', $hidden->attr('value'));
     }
 
     // Ensures the filter form carries the active sort as a hidden input so toggling a facet preserves the ordering.

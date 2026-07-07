@@ -58,7 +58,7 @@ final class AssistantControllerTest extends WebTestCase
         // the readable "Open WebUI" from SUPPORTED_FRAMEWORKS.
         $runtime = $crawler->filter('.layout-content-with-asides dl')->text();
         self::assertStringContainsString('Open WebUI', $runtime);
-        self::assertStringContainsString('Mistral 24b', $runtime);
+        self::assertStringContainsString('gpt-4o', $runtime);
 
         // Default tab (beskrivelse) shows the description + tag chips.
         $article = $crawler->filter('article')->text();

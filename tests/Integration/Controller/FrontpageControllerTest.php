@@ -79,17 +79,17 @@ final class FrontpageControllerTest extends WebTestCase
         self::assertSelectorTextContains('[aria-label="Aktive filtre"]', '"journaliseringsassistent"');
     }
 
-    // Verifies the stats block reflects the fixture totals (21 assistants, 4 distinct language models).
+    // Verifies the stats block reflects the fixture totals (21 assistants, 6 distinct language models).
     public function testStatsReflectFixtureCatalogueCounts(): void
     {
         $crawler = $this->client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
         $statsText = $crawler->filter('dl')->text();
-        // AssistantFixtures seeds 21 rows across 4 distinct language
-        // models — the four names on SUPPORTED_LANGUAGE_MODELS
-        // (Mistral 24b, GPT-OSS-120B, Gemma 4, Qwen3.5-122b).
+        // AssistantFixtures seeds 21 rows across 6 distinct canonical
+        // model ids drawn from config/model_map.yaml (gpt-4o,
+        // gpt-4o-mini, o3-mini, llama-3.1, llama-3.2, mistral).
         self::assertStringContainsString('21', $statsText, 'Assistanter count = 21');
-        self::assertStringContainsString('4', $statsText, 'Sprogmodeller count = 4');
+        self::assertStringContainsString('6', $statsText, 'Sprogmodeller count = 6');
     }
 }

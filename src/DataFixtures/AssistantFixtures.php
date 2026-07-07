@@ -84,42 +84,42 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
             new Assistant(
                 title: 'Borgerservice-vejviser',
                 description: 'Hjælper sagsbehandlere i borgerservice med at finde den rigtige paragraf i lov om social service og lov om aktiv socialpolitik. Tager udgangspunkt i en kort beskrivelse af borgerens situation og foreslår relevante lovhjemler, sagskategorier og næste skridt. Indeholder kommunens egne vejledninger og praksisnotater som baggrundsviden. Delt af Aarhus Kommune.',
-                languageModel: 'Mistral 24b',
+                languageModel: 'gpt-4o',
                 framework: 'openwebui',
                 tags: $this->tags(['borgerservice', 'social', 'jura']),
             ),
             new Assistant(
                 title: 'Mødereferent',
                 description: 'Tager udgangspunkt i et indtalt eller transskriberet mødeoptag og leverer et struktureret referat med beslutninger, ansvarsfordeling og deadlines. Identificerer automatisk handlepunkter og foreslår opfølgningstidspunkter. Bruges på direktionsmøder, projektmøder og udvalgsmøder. Delt af Københavns Kommune.',
-                languageModel: 'GPT-OSS-120B',
+                languageModel: 'gpt-4o-mini',
                 framework: 'openwebui',
                 tags: $this->tags(['mødeledelse', 'dokumentation', 'produktivitet']),
             ),
             new Assistant(
                 title: 'Journaliseringsassistent',
                 description: 'Foreslår journalplan-numre og overskrifter ud fra dokumentets indhold, så fagmedarbejdere kan godkende i ét klik. Tager højde for kommunens egen klassifikationsstruktur og henter forslag fra historiske, lignende sager. Reducerer den tid medarbejdere bruger på korrekt arkivering markant. Delt af Odense Kommune.',
-                languageModel: 'Gemma 4',
+                languageModel: 'llama-3.1',
                 framework: 'openwebui',
                 tags: $this->tags(['dokumentation', 'journalisering', 'arkiv']),
             ),
             new Assistant(
                 title: 'Skole- og dagtilbudssvar',
                 description: 'Drafter svar til forældrehenvendelser på skole- og dagtilbudsområdet. Bygger svaret på kommunens egen vejledningssamling, gældende lovgivning på området og det specifikke dagtilbuds praksis. Vedhæfter kildehenvisninger så medarbejderen kan tjekke baggrunden inden afsendelse. Delt af Vejle Kommune.',
-                languageModel: 'Qwen3.5-122b',
+                languageModel: 'llama-3.2',
                 framework: 'openwebui',
                 tags: $this->tags(['skole', 'dagtilbud', 'kommunikation']),
             ),
             new Assistant(
                 title: 'Tilsynsrapport-assistent',
                 description: 'Læser plejehjemstilsynsrapporter og fremhæver afvigelser, opfølgningspunkter og udvikling over tid. Sammenligner det enkelte plejehjems resultater med kommune- og landsgennemsnit og foreslår fokusområder til det næste tilsyn. Bygger på Styrelsen for Patientsikkerheds tilsynsdata. Delt af Aalborg Kommune.',
-                languageModel: 'Mistral 24b',
+                languageModel: 'mistral',
                 framework: 'openwebui',
                 tags: $this->tags(['sundhed', 'tilsyn', 'plejehjem']),
             ),
             new Assistant(
                 title: 'Uden kategorier',
                 description: 'Pladsholder uden tags — bruges til at vise hvordan detaljevisningen håndterer en helt umarkeret post.',
-                languageModel: 'GPT-OSS-120B',
+                languageModel: 'gpt-4o',
                 framework: 'openwebui',
             ),
         ];
@@ -192,16 +192,18 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
             'Horsens Kommune',
         ];
 
-        // Matches the deploy-time SUPPORTED_LANGUAGE_MODELS env-var
-        // shipped in .env so the picker's defaults and the fixture's
-        // custom values overlap on a fresh checkout. Order kept
-        // stable so the deterministic round-robin below produces the
-        // same title/model pairing every load.
+        // Canonical model ids drawn from config/model_map.yaml so
+        // the fixtures use the same shortlist the picker + exporter
+        // recognise. Order kept stable so the deterministic round-
+        // robin below produces the same title/model pairing every
+        // load.
         $languageModels = [
-            'Mistral 24b',
-            'GPT-OSS-120B',
-            'Gemma 4',
-            'Qwen3.5-122b',
+            'gpt-4o',
+            'gpt-4o-mini',
+            'o3-mini',
+            'llama-3.1',
+            'llama-3.2',
+            'mistral',
         ];
 
         $topicCount = count($topics);

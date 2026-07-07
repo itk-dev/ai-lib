@@ -149,20 +149,4 @@ final class AssistantMetadataStepType extends AbstractType
             'validation_groups' => ['Default', 'metadata'],
         ]);
     }
-
-    /**
-     * Expose the resolved language-model options list onto the
-     * field's view vars so the template can render a `<select>`
-     * seeded with the SUPPORTED_LANGUAGE_MODELS ∪
-     * previously-persisted-values shortlist without pulling the
-     * service in as a Twig global.
-     *
-     * @param array<string, mixed> $options the resolved form options (unused here — kept for signature parity)
-     */
-    public function finishView(FormView $view, FormInterface $form, array $options): void
-    {
-        if (isset($view['languageModel'])) {
-            $view['languageModel']->vars['language_model_options'] = $this->languageModels->list();
-        }
-    }
 }

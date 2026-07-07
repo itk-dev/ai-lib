@@ -3,14 +3,6 @@
     Every input is pre-filled from the DTO the flow's step-1
     listener populated from the detected source format.
 #}
-{% set lm = flow.metadata.languageModel %}
-{% set lm_options = lm.vars.language_model_options %}
-{% set lm_value = lm.vars.value %}
-{% set lm_full_name = lm.vars.full_name %}
-{% set lm_id = lm.vars.id %}
-{% set lm_row_class = 'grid gap-1 text-sm' %}
-{% set lm_label_class = 'block font-medium text-ink' %}
-{% set lm_input_class = 'rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40' %}
 <div class="grid gap-4">
     {% if draft.framework|framework_experimental %}
         <div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="note">
