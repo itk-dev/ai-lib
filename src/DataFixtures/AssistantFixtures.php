@@ -8,6 +8,7 @@ use App\Entity\Assistant;
 use App\Entity\Tag;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 
@@ -22,8 +23,21 @@ use Doctrine\Persistence\ObjectManager;
  * run, no randomness — so test assertions and design previews stay
  * reproducible.
  */
-final class AssistantFixtures extends Fixture implements DependentFixtureInterface
+final class AssistantFixtures extends Fixture implements DependentFixtureInterface, FixtureGroupInterface
 {
+    /**
+     * Belong to the `default` group so the Woodpecker stg pipeline can
+     * load the general fixture set without also seeding
+     * {@see LocalUserFixtures}' personal-inbox accounts (`--group=default`
+     * then `--group=local --append`).
+     *
+     * @return list<string> group identifiers the fixtures bundle filters on
+     */
+    public static function getGroups(): array
+    {
+        return ['default'];
+    }
+
     /**
      * Per-load de-duplication cache of tag name → managed {@see Tag}.
      *

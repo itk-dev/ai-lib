@@ -8,6 +8,7 @@ use App\Enum\UserStatus;
 use App\Security\Roles;
 use App\Security\UserManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
 
 /**
@@ -24,8 +25,21 @@ use Doctrine\Persistence\ObjectManager;
  * domains that line up with {@see OrganizationFixtures} so
  * `ManageUserVoter` has something to scope against.
  */
-final class UserFixtures extends Fixture
+final class UserFixtures extends Fixture implements FixtureGroupInterface
 {
+    /**
+     * Belong to the `default` group so the Woodpecker stg pipeline can
+     * load the general fixture set without also seeding
+     * {@see LocalUserFixtures}' personal-inbox accounts (`--group=default`
+     * then `--group=local --append`).
+     *
+     * @return list<string> group identifiers the fixtures bundle filters on
+     */
+    public static function getGroups(): array
+    {
+        return ['default'];
+    }
+
     /**
      * E-mail of the first baseline user, shared with the fixtures that look
      * her up to assign as a creating user.

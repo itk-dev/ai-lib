@@ -6,6 +6,7 @@ namespace App\DataFixtures;
 
 use App\Entity\Organization;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 
@@ -17,8 +18,21 @@ use Doctrine\Persistence\ObjectManager;
  * counts) can be wired up against consistent data once the
  * `User → Organization` relation lands.
  */
-final class OrganizationFixtures extends Fixture implements DependentFixtureInterface
+final class OrganizationFixtures extends Fixture implements DependentFixtureInterface, FixtureGroupInterface
 {
+    /**
+     * Belong to the `default` group so the Woodpecker stg pipeline can
+     * load the general fixture set without also seeding
+     * {@see LocalUserFixtures}' personal-inbox accounts (`--group=default`
+     * then `--group=local --append`).
+     *
+     * @return list<string> group identifiers the fixtures bundle filters on
+     */
+    public static function getGroups(): array
+    {
+        return ['default'];
+    }
+
     public function load(ObjectManager $manager): void
     {
         $entries = [

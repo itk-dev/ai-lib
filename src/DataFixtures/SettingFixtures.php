@@ -6,6 +6,7 @@ namespace App\DataFixtures;
 
 use App\Settings\SettingsManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
 
 /**
@@ -24,8 +25,21 @@ use Doctrine\Persistence\ObjectManager;
  * No fixture dependency declared — settings stand on their own
  * and don't reference Users, Organizations, or Assistants.
  */
-final class SettingFixtures extends Fixture
+final class SettingFixtures extends Fixture implements FixtureGroupInterface
 {
+    /**
+     * Belong to the `default` group so the Woodpecker stg pipeline can
+     * load the general fixture set without also seeding
+     * {@see LocalUserFixtures}' personal-inbox accounts (`--group=default`
+     * then `--group=local --append`).
+     *
+     * @return list<string> group identifiers the fixtures bundle filters on
+     */
+    public static function getGroups(): array
+    {
+        return ['default'];
+    }
+
     /**
      * @param SettingsManager $settingsManager service that owns the persistence + flush
      */
