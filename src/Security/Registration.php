@@ -6,12 +6,10 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Enum\UserStatus;
-use App\Notification\AdminRegistrationNotifier;
 use App\Notification\EmailConfirmationNotifier;
-use App\Notification\RegistrationConfirmationNotifier;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 /**
@@ -30,14 +28,16 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
  * 5. The name must be non-empty (rule shared with {@see UserManager}).
  *
  * On success the new {@see User} is persisted with
- * `status = AwaitingEmailConfirmation`. Three transactional emails
- * are dispatched: the admin moderator notification, a "thanks for
- * registering" courtesy message to the user, and the single-use
- * confirmation link that flips the status to `Pending` once
- * clicked. The {@see \App\Security\AccountStatusChecker} keeps the
- * user out of the login flow at every status below `Approved`, so
- * the moderator queue still gates site access regardless of
- * whether the user has confirmed their email yet.
+ * `status = AwaitingEmailConfirmation` and exactly one transactional
+ * email is dispatched: the single-use confirmation link that flips
+ * the status to `Pending` once clicked. The moderator notification
+ * and the user welcome mail are deliberately deferred to
+ * {@see EmailConfirmation::consume()} — nothing lands in the
+ * moderator inbox and nothing welcomes the user until the address
+ * has been verified. The {@see \App\Security\AccountStatusChecker}
+ * keeps the user out of the login flow at every status below
+ * `Approved`, so the moderator queue still gates site access
+ * regardless of whether the user has confirmed their email yet.
  *
  * On a duplicate e-mail the method is intentionally idempotent — it
  * returns `null` rather than throwing, so the controller can render
@@ -47,20 +47,16 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 final class Registration
 {
     /**
-     * @param UserManager                      $userManager            owns the persistence + password-hashing step
-     * @param AllowedEmailDomains              $allowedEmailDomains    domain allow-list parsed from the env var
-     * @param AdminRegistrationNotifier        $adminNotifier          fires the moderator-inbox notification
-     * @param RegistrationConfirmationNotifier $confirmationNotifier   fires the user-facing courtesy confirmation
-     * @param EmailConfirmationNotifier        $emailLinkNotifier      fires the single-use email-confirmation link
-     * @param LoggerInterface                  $logger                 receives a warning on transient mailer failures
-     * @param RateLimiterFactoryInterface      $registrationPerIp      per-IP rate limiter (10/day by default)
-     * @param RateLimiterFactoryInterface      $registrationSystemWide system-wide rate limiter (100/day by default)
+     * @param UserManager                 $userManager            owns the persistence + password-hashing step
+     * @param AllowedEmailDomains         $allowedEmailDomains    domain allow-list parsed from the env var
+     * @param EmailConfirmationNotifier   $emailLinkNotifier      fires the single-use email-confirmation link
+     * @param LoggerInterface             $logger                 receives a warning on transient mailer failures
+     * @param RateLimiterFactoryInterface $registrationPerIp      per-IP rate limiter (10/day by default)
+     * @param RateLimiterFactoryInterface $registrationSystemWide system-wide rate limiter (100/day by default)
      */
     public function __construct(
         private readonly UserManager $userManager,
         private readonly AllowedEmailDomains $allowedEmailDomains,
-        private readonly AdminRegistrationNotifier $adminNotifier,
-        private readonly RegistrationConfirmationNotifier $confirmationNotifier,
         private readonly EmailConfirmationNotifier $emailLinkNotifier,
         private readonly LoggerInterface $logger,
         #[Autowire(service: 'limiter.registration_per_ip')]
@@ -166,36 +162,21 @@ final class Registration
     }
 
     /**
-     * Fire the three transactional emails triggered by a fresh signup.
+     * Fire the single transactional email triggered by a fresh signup.
      *
-     * Each send is wrapped in its own try/catch around the mailer
-     * transport — a transient delivery failure must not undo the
-     * persisted user (the moderator can still review and approve
-     * the row through `/admin/users`, and a confirmation link can
-     * be re-issued), so failures are logged and swallowed.
+     * Only the confirmation link goes out here — the moderator
+     * notification and user welcome mail are deferred to
+     * {@see EmailConfirmation::consume()} so nothing hits either
+     * recipient before the address is verified. The send is wrapped
+     * in its own try/catch around the mailer transport — a transient
+     * delivery failure must not undo the persisted user (a fresh
+     * confirmation link can be re-issued), so failures are logged
+     * and swallowed.
      *
      * @param User $user the freshly-created `AwaitingEmailConfirmation` user
      */
     private function dispatchNotifications(User $user): void
     {
-        try {
-            $this->adminNotifier->notifyOfNewRegistration($user);
-        } catch (TransportExceptionInterface $e) {
-            $this->logger->warning('Failed to deliver admin registration notification.', [
-                'user_email' => $user->getUserIdentifier(),
-                'exception' => $e,
-            ]);
-        }
-
-        try {
-            $this->confirmationNotifier->confirmRegistration($user);
-        } catch (TransportExceptionInterface $e) {
-            $this->logger->warning('Failed to deliver registration confirmation mail.', [
-                'user_email' => $user->getUserIdentifier(),
-                'exception' => $e,
-            ]);
-        }
-
         try {
             $this->emailLinkNotifier->sendConfirmationLink($user);
         } catch (TransportExceptionInterface $e) {

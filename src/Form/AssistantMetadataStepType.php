@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use App\Framework\SupportedFrameworks;
-use App\Model\SupportedLanguageModels;
-use App\Validator\SupportedFramework;
+use App\Assistant\Model\ModelMap;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -24,15 +21,12 @@ use Symfony\Component\Validator\Constraints as Assert;
  * The metadata fields the user reviews and edits before saving.
  * All fields inherit their initial values from the DTO, which
  * the flow's step-1 `POST_SUBMIT` listener pre-populated from
- * the OpenWebUI JSON. Validation lives in the `metadata` group
- * so step 1's `Json` constraint doesn't re-run on every step-2
- * submit.
+ * the uploaded config. Validation lives in the `metadata` group
+ * so step 1's constraints don't re-run on every step-2 submit.
  *
- * `framework` is a `<select>` backed by
- * {@see SupportedFrameworks}, which reads the deploy-time
- * `SUPPORTED_FRAMEWORKS` env var. The choice list mirrors the
- * one on the admin organisation form and shares the same
- * `SupportedFramework` machine-name validator.
+ * The framework is not chosen here — it is the format the upload
+ * was detected as on step 1, recorded on the DTO — so this step
+ * carries no framework field.
  *
  * `tags` is a comma-separated textbox transformed to / from the
  * DTO's `list<string>` shape, matching the pattern the pre-flow
@@ -45,12 +39,13 @@ final class AssistantMetadataStepType extends AbstractType
     private const string ROW_CLASS = 'grid gap-1 text-sm';
 
     /**
-     * @param SupportedFrameworks     $frameworks     deploy-time list feeding the framework `<select>` choices + validator
-     * @param SupportedLanguageModels $languageModels deploy-time defaults + user-contributed values feeding the language-model picker
+     * The datalist id shared between the model input and its `<datalist>`
+     * of known models rendered by the step-2 template.
      */
+    public const string MODEL_DATALIST_ID = 'metadata-model-options';
+
     public function __construct(
-        private readonly SupportedFrameworks $frameworks,
-        private readonly SupportedLanguageModels $languageModels,
+        private readonly ModelMap $modelMap,
     ) {
     }
 
@@ -96,25 +91,11 @@ final class AssistantMetadataStepType extends AbstractType
                         groups: ['metadata'],
                     ),
                 ],
-                'attr' => ['class' => self::INPUT_CLASS],
-                'label_attr' => ['class' => self::LABEL_CLASS],
-                'row_attr' => ['class' => self::ROW_CLASS],
-            ])
-            ->add('framework', ChoiceType::class, [
-                'label' => 'assistant.new.step_metadata.framework_label',
-                'help' => 'assistant.new.step_metadata.framework_help',
-                'choices' => $this->frameworks->list(),
-                'placeholder' => false,
-                'required' => true,
-                'empty_data' => $this->frameworks->default(),
-                'constraints' => [
-                    new Assert\NotBlank(
-                        message: 'assistant.new.step_metadata.framework_required',
-                        groups: ['metadata'],
-                    ),
-                    new SupportedFramework(groups: ['metadata']),
-                ],
-                'attr' => ['class' => self::INPUT_CLASS],
+                // A free-text input backed by a datalist of known models:
+                // the curator picks a recognised model (stored as its
+                // canonical id, which maps cleanly on export) or types a
+                // custom one.
+                'attr' => ['class' => self::INPUT_CLASS, 'list' => self::MODEL_DATALIST_ID],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
@@ -139,6 +120,26 @@ final class AssistantMetadataStepType extends AbstractType
                 )),
             ))
         ;
+    }
+
+    /**
+     * Expose the known-model choices to the language-model field so the
+     * template can render them as a `<datalist>` for the input.
+     *
+     * Runs in `finishView` (not `buildView`) because child views only
+     * exist once they are built. The flow builds this step's fields only
+     * while it is the active step, so the child is absent on other steps'
+     * renders — skip it then.
+     */
+    public function finishView(FormView $view, FormInterface $form, array $options): void
+    {
+        $languageModel = $view->children['languageModel'] ?? null;
+        if (null === $languageModel) {
+            return;
+        }
+
+        $languageModel->vars['model_choices'] = $this->modelMap->choices();
+        $languageModel->vars['model_datalist_id'] = self::MODEL_DATALIST_ID;
     }
 
     public function configureOptions(OptionsResolver $resolver): void

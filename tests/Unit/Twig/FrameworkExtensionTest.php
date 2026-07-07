@@ -4,38 +4,63 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Twig;
 
-use App\Framework\SupportedFrameworks;
+use App\Assistant\Format\FormatAdapterRegistry;
+use App\Assistant\Format\NativeAdapter;
+use App\Assistant\Format\OpenWebUiAdapter;
+use App\Assistant\Model\ModelMap;
+use App\Assistant\OpenWebUiConfigSanitizer;
+use App\Assistant\OpenWebUiModelNormalizer;
 use App\Twig\FrameworkExtension;
+use App\Validator\NativeConfigValidator;
+use App\Validator\OpenWebUiConfigValidator;
 use PHPUnit\Framework\TestCase;
 use Twig\TwigFilter;
 
 final class FrameworkExtensionTest extends TestCase
 {
-    // Verifies the extension registers a `framework_label` filter.
-    public function testGetFiltersRegistersFrameworkLabel(): void
+    private function extension(): FrameworkExtension
     {
-        $extension = new FrameworkExtension(new SupportedFrameworks('Open WebUI:openwebui'));
+        $root = \dirname(__DIR__, 3);
 
-        $filters = $extension->getFilters();
-
-        self::assertCount(1, $filters);
-        self::assertInstanceOf(TwigFilter::class, $filters[0]);
-        self::assertSame('framework_label', $filters[0]->getName());
+        return new FrameworkExtension(new FormatAdapterRegistry([
+            new OpenWebUiAdapter(
+                new OpenWebUiConfigValidator($root.'/config/schema/openwebui-model.json'),
+                new OpenWebUiModelNormalizer(),
+                new OpenWebUiConfigSanitizer(),
+                new ModelMap($root.'/config/model_map.yaml'),
+            ),
+            new NativeAdapter(new NativeConfigValidator($root.'/config/schema/native-assistant.json')),
+        ]));
     }
 
-    // Tests that the filter resolves a known machine name to its readable label.
-    public function testLabelResolvesKnownMachineName(): void
+    // Verifies the extension registers the framework filters.
+    public function testGetFiltersRegistersFrameworkFilters(): void
     {
-        $extension = new FrameworkExtension(new SupportedFrameworks('Open WebUI:openwebui,Custom GPT:custom_gpt'));
+        $names = array_map(static fn (TwigFilter $f): string => $f->getName(), $this->extension()->getFilters());
 
-        self::assertSame('Custom GPT', $extension->label('custom_gpt'));
+        self::assertContains('framework_label', $names);
+        self::assertContains('framework_experimental', $names);
     }
 
-    // Ensures the filter falls back to the machine name for legacy / unknown values.
-    public function testLabelFallsBackToMachineNameForUnknown(): void
+    // Tests that the filter resolves a registered format id to its adapter label.
+    public function testLabelResolvesRegisteredFormat(): void
     {
-        $extension = new FrameworkExtension(new SupportedFrameworks('Open WebUI:openwebui'));
+        self::assertSame('Open WebUI', $this->extension()->label('openwebui'));
+    }
 
-        self::assertSame('legacy_thing', $extension->label('legacy_thing'));
+    // Ensures the filter falls back to the id for legacy / unregistered values.
+    public function testLabelFallsBackToIdForUnknown(): void
+    {
+        self::assertSame('legacy_thing', $this->extension()->label('legacy_thing'));
+    }
+
+    // Verifies experimental() reflects the adapter flag and is false for unknown ids.
+    public function testExperimentalReflectsAdapterFlag(): void
+    {
+        $extension = $this->extension();
+
+        self::assertFalse($extension->experimental('openwebui'));
+        self::assertTrue($extension->experimental('native'));
+        self::assertFalse($extension->experimental('legacy_thing'));
     }
 }

@@ -6,9 +6,7 @@ namespace App\Tests\Unit\Security;
 
 use App\Entity\User;
 use App\Enum\UserStatus;
-use App\Notification\AdminRegistrationNotifier;
 use App\Notification\EmailConfirmationNotifier;
-use App\Notification\RegistrationConfirmationNotifier;
 use App\Repository\OrganizationRepository;
 use App\Repository\UserRepository;
 use App\Security\AllowedEmailDomains;
@@ -102,8 +100,6 @@ final class RegistrationTest extends TestCase
         $reg = new Registration(
             new UserManager($em, $repo, $hasher),
             $this->allowedDomains(['example.test']),
-            $this->createMock(AdminRegistrationNotifier::class),
-            $this->createMock(RegistrationConfirmationNotifier::class),
             $this->createMock(EmailConfirmationNotifier::class),
             new NullLogger(),
             $this->openLimiter(),
@@ -115,7 +111,7 @@ final class RegistrationTest extends TestCase
         self::assertNull($result);
     }
 
-    // Tests the happy path: valid submission persists an AwaitingEmailConfirmation user with trimmed name and hashed password.
+    // Tests the happy path: valid submission persists an AwaitingEmailConfirmation user with trimmed name and hashed password, and dispatches only the confirmation-link mail.
     public function testPersistsAwaitingEmailConfirmationUserOnHappyPath(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);
@@ -134,18 +130,16 @@ final class RegistrationTest extends TestCase
             });
         $em->expects(self::once())->method('flush');
 
-        $adminNotifier = $this->createMock(AdminRegistrationNotifier::class);
-        $confirmationNotifier = $this->createMock(RegistrationConfirmationNotifier::class);
         $emailLinkNotifier = $this->createMock(EmailConfirmationNotifier::class);
-        $adminNotifier->expects(self::once())->method('notifyOfNewRegistration');
-        $confirmationNotifier->expects(self::once())->method('confirmRegistration');
+        // Only the confirmation-link mail fires on signup. The
+        // moderator + welcome mails have moved to
+        // EmailConfirmation::consume() so they only run once the
+        // address is verified.
         $emailLinkNotifier->expects(self::once())->method('sendConfirmationLink');
 
         $reg = new Registration(
             new UserManager($em, $repo, $hasher),
             $this->allowedDomains(['example.test']),
-            $adminNotifier,
-            $confirmationNotifier,
             $emailLinkNotifier,
             new NullLogger(),
             $this->openLimiter(),
@@ -162,7 +156,7 @@ final class RegistrationTest extends TestCase
         self::assertSame('hashed-secret', $user->getPassword());
     }
 
-    // Verifies a transport failure on any notifier is logged but doesn't undo the persisted user.
+    // Verifies a transport failure on the confirmation-link mail is logged but doesn't undo the persisted user.
     public function testNotifierTransportFailureIsSwallowed(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);
@@ -171,12 +165,6 @@ final class RegistrationTest extends TestCase
         $repo->method('findOneBy')->willReturn(null);
         $hasher->method('hashPassword')->willReturn('hashed-secret');
 
-        $adminNotifier = $this->createMock(AdminRegistrationNotifier::class);
-        $adminNotifier->method('notifyOfNewRegistration')
-            ->willThrowException(new TransportException('SMTP down'));
-        $confirmationNotifier = $this->createMock(RegistrationConfirmationNotifier::class);
-        $confirmationNotifier->method('confirmRegistration')
-            ->willThrowException(new TransportException('SMTP down'));
         $emailLinkNotifier = $this->createMock(EmailConfirmationNotifier::class);
         $emailLinkNotifier->method('sendConfirmationLink')
             ->willThrowException(new TransportException('SMTP down'));
@@ -184,8 +172,6 @@ final class RegistrationTest extends TestCase
         $reg = new Registration(
             new UserManager($em, $repo, $hasher),
             $this->allowedDomains(['example.test']),
-            $adminNotifier,
-            $confirmationNotifier,
             $emailLinkNotifier,
             new NullLogger(),
             $this->openLimiter(),
@@ -193,18 +179,17 @@ final class RegistrationTest extends TestCase
         );
 
         // No exception leaks out — the persisted user comes back even though
-        // every transport send failed.
+        // the transport send failed.
         $user = $reg->register(self::CLIENT_IP, 'carol@example.test', 'Carol', 'secret', 'secret');
         self::assertInstanceOf(User::class, $user);
     }
+
     // Verifies the per-IP limiter rejects the request before any validation runs.
     public function testRejectsWhenPerIpLimitExhausted(): void
     {
         $reg = new Registration(
             $this->buildUserManager(),
             $this->allowedDomains(['example.test']),
-            $this->createMock(AdminRegistrationNotifier::class),
-            $this->createMock(RegistrationConfirmationNotifier::class),
             $this->createMock(EmailConfirmationNotifier::class),
             new NullLogger(),
             $this->closedLimiter(),
@@ -223,8 +208,6 @@ final class RegistrationTest extends TestCase
         $reg = new Registration(
             $this->buildUserManager(),
             $this->allowedDomains(['example.test']),
-            $this->createMock(AdminRegistrationNotifier::class),
-            $this->createMock(RegistrationConfirmationNotifier::class),
             $this->createMock(EmailConfirmationNotifier::class),
             new NullLogger(),
             $this->openLimiter(),
@@ -251,8 +234,6 @@ final class RegistrationTest extends TestCase
         return new Registration(
             new UserManager($em, $repo, $hasher),
             $this->allowedDomains([$allowList]),
-            $this->createMock(AdminRegistrationNotifier::class),
-            $this->createMock(RegistrationConfirmationNotifier::class),
             $this->createMock(EmailConfirmationNotifier::class),
             new NullLogger(),
             $this->openLimiter(),

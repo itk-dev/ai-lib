@@ -4,54 +4,54 @@ declare(strict_types=1);
 
 namespace App\Assistant;
 
+use App\Assistant\Format\FormatAdapterRegistry;
 use App\Entity\Assistant;
 use App\Entity\Tag;
 use App\Repository\TagRepository;
-use App\Validator\OpenWebUiConfigValidator;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Owns the "create an assistant from form data" flow.
  *
  * Sits between {@see \App\Controller\AssistantCreateController}
- * and Doctrine + the validator so the controller stays thin: it
- * parses the request, calls one method here, and renders the
+ * and Doctrine + the format adapters so the controller stays thin:
+ * it parses the request, calls one method here, and renders the
  * response.
  */
 final class AssistantCreator
 {
     /**
-     * @param OpenWebUiConfigValidator $validator     full validation pipeline for the uploaded JSON
-     * @param EntityManagerInterface   $entityManager Doctrine entity manager that persists the Assistant
-     * @param TagRepository            $tags          resolves tag names to shared Tag entities
+     * @param FormatAdapterRegistry  $formats       resolves the adapter that validates and parses the upload
+     * @param EntityManagerInterface $entityManager Doctrine entity manager that persists the Assistant
+     * @param TagRepository          $tags          resolves tag names to shared Tag entities
      */
     public function __construct(
-        private readonly OpenWebUiConfigValidator $validator,
+        private readonly FormatAdapterRegistry $formats,
         private readonly EntityManagerInterface $entityManager,
         private readonly TagRepository $tags,
     ) {
     }
 
     /**
-     * Validate the uploaded JSON and persist a new Assistant.
+     * Validate the uploaded config and persist a new Assistant.
      *
-     * The raw config text — pretty-printed by the upload widget,
-     * pasted by hand, or whatever shape the operator typed — is
-     * decoded to a PHP array before persistence. Storage is the
-     * `openwebui_config` Doctrine `JSON` column, which re-encodes
-     * the array without whitespace, so whatever indentation the
-     * caller passed in collapses to minified JSON on disk.
+     * The raw config text is handed to the adapter for `$framework`,
+     * which validates it, reduces it to that format's model, and
+     * strips instance-specific data and PII. Only the cleaned source
+     * dict is stored in the `source_config` Doctrine `JSON` column
+     * — the uploading user's details, access grants, timestamps, and
+     * knowledge references never reach the database.
      *
      * @param string       $title                title of the assistant
      * @param string       $description          long-form description
      * @param string       $languageModel        model identifier snapshot (e.g. `gpt-4o`)
-     * @param string       $framework            framework identifier snapshot (e.g. `openwebui`)
+     * @param string       $framework            format/framework id; selects the adapter (e.g. `openwebui`)
      * @param list<string> $tags                 zero or more catalogue tags
-     * @param string       $openwebuiConfigJson  raw OpenWebUI export JSON; validated then decoded
+     * @param string       $rawConfig            raw uploaded config; validated then parsed by the adapter
      *
      * @return Assistant the persisted assistant with its id assigned
      *
-     * @throws InvalidAssistantInputException when the JSON fails validation
+     * @throws InvalidAssistantInputException when the framework has no adapter or the config fails validation
      */
     public function create(
         string $title,
@@ -59,15 +59,18 @@ final class AssistantCreator
         string $languageModel,
         string $framework,
         array $tags,
-        string $openwebuiConfigJson,
+        string $rawConfig,
     ): Assistant {
-        $result = $this->validator->validate($openwebuiConfigJson);
-        if (!$result->isValid()) {
-            throw new InvalidAssistantInputException($result->getErrors());
+        // Guard the format id here rather than letting the registry
+        // throw a raw InvalidArgumentException: create() is a public
+        // service boundary, and a tampered/unknown framework should
+        // surface as the form-rendered InvalidAssistantInputException
+        // like every other rejected input, not a 500.
+        if (!$this->formats->has($framework)) {
+            throw new InvalidAssistantInputException([\sprintf('Unknown format "%s".', $framework)]);
         }
 
-        /** @var array<string, mixed> $decoded */
-        $decoded = json_decode($openwebuiConfigJson, associative: true, flags: \JSON_THROW_ON_ERROR);
+        $source = $this->formats->get($framework)->parseToSource($rawConfig);
 
         $assistant = new Assistant(
             title: $title,
@@ -76,7 +79,7 @@ final class AssistantCreator
             framework: $framework,
             tags: $this->resolveTags($tags),
         );
-        $assistant->setOpenwebuiConfig($decoded);
+        $assistant->setSourceConfig($source);
 
         $this->entityManager->persist($assistant);
         $this->entityManager->flush();

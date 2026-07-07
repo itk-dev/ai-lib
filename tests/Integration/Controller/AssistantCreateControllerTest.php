@@ -43,11 +43,11 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         // Step 1 body: file input + a JSON textarea, no metadata fields yet.
         self::assertSelectorExists('input[type="file"]');
-        self::assertSelectorExists('textarea[name$="[openwebuiConfig]"]');
+        self::assertSelectorExists('textarea[name$="[sourceConfig]"]');
         self::assertSelectorNotExists('input[name$="[title]"]');
         // Step rail shows all three step labels.
         $body = $crawler->filter('body')->text();
-        self::assertStringContainsString('Indsæt JSON', $body);
+        self::assertStringContainsString('Indsæt konfiguration', $body);
         self::assertStringContainsString('Gennemgang', $body);
         self::assertStringContainsString('Kvittering', $body);
     }
@@ -103,13 +103,30 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertNotEmpty($payload['errors']);
     }
 
+    // Verifies a check the detected format does not define (schema on an Ollama Modelfile) counts as passed.
+    public function testValidateConfigEndpointPassesInapplicableCheckForDetectedFormat(): void
+    {
+        $this->client->request(
+            'POST',
+            '/assistant/new/validate-config',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['json' => "FROM llama3.2\nSYSTEM be nice", 'check' => 'schema'], \JSON_THROW_ON_ERROR),
+        );
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), associative: true);
+        self::assertIsArray($payload);
+        self::assertTrue($payload['valid']);
+        self::assertSame([], $payload['errors']);
+    }
+
     // Full happy-path: valid JSON on step 1 → auto-extracted metadata on step 2 → persist → step 3 receipt with permalink.
     public function testHappyPathAcrossThreeSteps(): void
     {
         // Step 1: paste a JSON payload with fields the extractor knows how to map.
         $crawler = $this->client->request('GET', '/assistant/new');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
-        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
         $stepOne[$textareaName] = json_encode([
             'name' => 'Demo assistant',
             'base_model_id' => 'gpt-4o',
@@ -152,78 +169,31 @@ final class AssistantCreateControllerTest extends WebTestCase
         );
         self::assertSame(
             ['name' => 'Demo assistant', 'base_model_id' => 'gpt-4o', 'meta' => ['description' => 'A demo assistant', 'tags' => ['alpha', 'beta']]],
-            $created->getOpenwebuiConfig(),
+            $created->getSourceConfig(),
         );
 
         // The permalink to the created row is on the receipt page.
         self::assertStringContainsString('/assistant/'.(string) $created->getId(), $body);
     }
 
-    // Verifies step 2's language-model `<select>` carries the SUPPORTED_LANGUAGE_MODELS ∪ persisted-values shortlist as options and a picker-selected value round-trips through to persistence.
-    public function testLanguageModelPickerExposesShortlistAndPersistsSelection(): void
+    // Verifies importing a non-OpenWebUI (Ollama) config detects the format, normalises the model, and flags step 2 as experimental.
+    public function testExperimentalFormatImportShowsNoticeOnStepTwo(): void
     {
         $crawler = $this->client->request('GET', '/assistant/new');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
-        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
-        $stepOne[$textareaName] = json_encode([
-            'name' => 'Picker demo',
-            'base_model_id' => 'Mistral 24b',
-            'meta' => ['description' => 'Picker demo'],
-        ], \JSON_THROW_ON_ERROR);
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
+        $stepOne[$textareaName] = "FROM llama3.2\nSYSTEM \"\"\"Du er en hjælpsom assistent.\"\"\"";
         $crawler = $this->client->submit($stepOne);
 
         self::assertResponseIsSuccessful();
+        $body = $crawler->filter('body')->text();
+        // The Ollama format is experimental, so step 2 carries the caution.
+        self::assertStringContainsString('eksperimentelt format', $body);
 
-        $selectOptions = $crawler
-            ->filter('select[name$="[languageModel]"] option')
-            ->each(static fn ($node) => (string) $node->attr('value'));
-        self::assertContains('Mistral 24b', $selectOptions);
-        self::assertContains('GPT-OSS-120B', $selectOptions);
-        self::assertContains('Gemma 4', $selectOptions);
-        self::assertContains('Qwen3.5-122b', $selectOptions);
-
-        // Pick a different picker-listed value to prove the
-        // form's submitted value drives persistence rather than
-        // the extractor's pre-fill.
+        // The detected model is folded onto its canonical id for the selector.
         $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
         $languageModelField = $this->findFieldName($stepTwo->all(), '[languageModel]');
-        $stepTwo[$languageModelField]->select('Gemma 4');
-        $this->client->submit($stepTwo);
-
-        self::assertResponseIsSuccessful();
-        $repository = self::getContainer()->get(AssistantRepository::class);
-        $created = $repository->findOneBy(['title' => 'Picker demo']);
-        self::assertNotNull($created);
-        self::assertSame('Gemma 4', $created->getLanguageModel());
-    }
-
-    // Ensures a value the extractor pulled out of the JSON that isn't on the shortlist still round-trips — the template pre-emits it as a selected `<option>` so the DTO's pre-fill survives.
-    public function testLanguageModelPickerCarriesUnknownExtractorValue(): void
-    {
-        $crawler = $this->client->request('GET', '/assistant/new');
-        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
-        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
-        $stepOne[$textareaName] = json_encode([
-            'name' => 'Unknown model demo',
-            'base_model_id' => 'brand-new-model-9000',
-            'meta' => ['description' => 'A model no fixture uses yet.'],
-        ], \JSON_THROW_ON_ERROR);
-        $crawler = $this->client->submit($stepOne);
-
-        self::assertResponseIsSuccessful();
-        $selectedOption = $crawler
-            ->filter('select[name$="[languageModel]"] option[selected]')
-            ->first();
-        self::assertSame('brand-new-model-9000', $selectedOption->attr('value'));
-
-        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
-        $this->client->submit($stepTwo);
-
-        self::assertResponseIsSuccessful();
-        $repository = self::getContainer()->get(AssistantRepository::class);
-        $created = $repository->findOneBy(['title' => 'Unknown model demo']);
-        self::assertNotNull($created);
-        self::assertSame('brand-new-model-9000', $created->getLanguageModel());
+        self::assertSame('llama-3.2', $stepTwo[$languageModelField]->getValue());
     }
 
     // Ensures a fresh GET after completing the wizard drops the receipt-state session slot and re-renders step 1.
@@ -232,7 +202,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         // Walk to the receipt (step 3) once.
         $crawler = $this->client->request('GET', '/assistant/new');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
-        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
         $stepOne[$textareaName] = json_encode([
             'name' => 'Reset assistant',
             'base_model_id' => 'gpt-4o',
@@ -246,7 +216,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/assistant/new');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('textarea[name$="[openwebuiConfig]"]');
+        self::assertSelectorExists('textarea[name$="[sourceConfig]"]');
         self::assertSelectorNotExists('input[name$="[title]"]');
         $body = $crawler->filter('body')->text();
         self::assertStringNotContainsString('Assistenten er delt', $body);
@@ -257,7 +227,7 @@ final class AssistantCreateControllerTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', '/assistant/new');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
-        $textareaName = $this->findFieldName($stepOne->all(), '[openwebuiConfig]');
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
         $stepOne[$textareaName] = '{not json';
         $this->client->submit($stepOne);
 
@@ -265,6 +235,41 @@ final class AssistantCreateControllerTest extends WebTestCase
 
         $repository = self::getContainer()->get(AssistantRepository::class);
         self::assertNull($repository->findOneBy(['title' => '{not json']));
+    }
+
+    // Ensures step 1 rejects syntactically valid JSON that fails the model schema (a two-model array), and persists nothing.
+    public function testStepOneRejectsSchemaInvalidJson(): void
+    {
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
+        $stepOne[$textareaName] = json_encode([
+            ['name' => 'First model'],
+            ['name' => 'Second model'],
+        ], \JSON_THROW_ON_ERROR);
+        $this->client->submit($stepOne);
+
+        self::assertResponseStatusCodeSame(422);
+
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        self::assertNull($repository->findOneBy(['title' => 'First model']));
+    }
+
+    // Verifies the AJAX validation endpoint runs the schema check and rejects a payload missing the required name.
+    public function testValidateConfigEndpointRejectsSchemaInvalidForSchemaCheck(): void
+    {
+        $this->client->request(
+            'POST',
+            '/assistant/new/validate-config',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['json' => '{"base_model_id":"gpt-4o"}', 'check' => 'schema'], \JSON_THROW_ON_ERROR),
+        );
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), associative: true);
+        self::assertIsArray($payload);
+        self::assertFalse($payload['valid']);
+        self::assertNotEmpty($payload['errors']);
     }
 
     // Ensures an invalid CSRF token yields 422 (Symfony Form rejects the submission before it reaches the flow's advance logic) and does not persist an Assistant.
@@ -275,7 +280,7 @@ final class AssistantCreateControllerTest extends WebTestCase
 
         $this->client->request('POST', '/assistant/new', [
             'assistant_create_flow' => [
-                'json' => ['openwebuiConfig' => '{"name":"demo"}'],
+                'json' => ['sourceConfig' => '{"name":"demo"}'],
                 'navigator' => ['next' => ''],
                 '_token' => 'nope',
             ],

@@ -6,20 +6,22 @@ namespace App\Controller;
 
 use App\Assistant\AssistantCreator;
 use App\Assistant\AssistantDraft;
+use App\Assistant\Format\FormatAdapterRegistry;
 use App\Form\AssistantCreateFlowType;
-use App\Validator\OpenWebUiConfigValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Flow\FormFlowInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class AssistantCreateController extends AbstractController
 {
     public function __construct(
-        private readonly OpenWebUiConfigValidator $validator,
+        private readonly FormatAdapterRegistry $formats,
         private readonly AssistantCreator $creator,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -76,7 +78,7 @@ final class AssistantCreateController extends AbstractController
                 $draft->languageModel,
                 $draft->framework,
                 $draft->tags,
-                $draft->openwebuiConfig,
+                $draft->sourceConfig,
             );
             $draft->createdAssistantId = (string) $assistant->getId();
 
@@ -98,14 +100,32 @@ final class AssistantCreateController extends AbstractController
         $json = (string) ($payload['json'] ?? '');
         $check = (string) ($payload['check'] ?? '');
 
-        if (!\in_array($check, $this->validator->getChecks(), true)) {
+        // Reject a check no registered format defines (a malformed client
+        // request); the client only ever sends ids from the union below.
+        if (!\in_array($check, $this->configChecks(), true)) {
             return new JsonResponse(
                 ['valid' => false, 'errors' => [\sprintf('Unknown check "%s".', $check)]],
                 Response::HTTP_BAD_REQUEST,
             );
         }
 
-        $result = $this->validator->runCheck($check, $json);
+        // Format-agnostic: detect which format the payload is, then run the
+        // requested check against that adapter. A check the detected format
+        // doesn't define (e.g. `schema` for the text-based Ollama Modelfile)
+        // counts as passed, so the client's progress steps still complete.
+        $adapter = $this->formats->detect($json);
+        if (null === $adapter) {
+            return new JsonResponse([
+                'valid' => false,
+                'errors' => [$this->translator->trans('assistant.new.step_json.unrecognised_format')],
+            ]);
+        }
+
+        if (!\in_array($check, $adapter->getChecks(), true)) {
+            return new JsonResponse(['valid' => true, 'errors' => []]);
+        }
+
+        $result = $adapter->runCheck($check, $json);
 
         return new JsonResponse([
             'valid' => $result->isValid(),
@@ -123,7 +143,28 @@ final class AssistantCreateController extends AbstractController
         return $this->render('assistant/new.html.twig', [
             'flow' => $stepForm->createView(),
             'draft' => $stepForm->getData(),
-            'checks' => $this->validator->getChecks(),
+            'checks' => $this->configChecks(),
         ], new Response('', $status));
+    }
+
+    /**
+     * The union of every registered format's validation checks, in order.
+     *
+     * Drives the step-1 upload progress bar without assuming a single
+     * format: the client walks these check ids, and the validate endpoint
+     * skips any that don't apply to the detected format.
+     *
+     * @return list<string> the deduplicated check identifiers
+     */
+    private function configChecks(): array
+    {
+        $checks = [];
+        foreach (array_keys($this->formats->all()) as $id) {
+            foreach ($this->formats->get($id)->getChecks() as $check) {
+                $checks[$check] = true;
+            }
+        }
+
+        return array_keys($checks);
     }
 }

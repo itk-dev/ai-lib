@@ -12,6 +12,7 @@
         "doctrine/orm": "^3.6",
         "itk-dev/entity-bundle": "^0.1.1",
         "league/commonmark": "^2.5",
+        "opis/json-schema": "^2.6",
         "symfony/asset": "^8.1",
         "symfony/asset-mapper": "^8.1",
         "symfony/console": "~8.1.0",
@@ -29,7 +30,7 @@
         "symfony/ux-twig-component": "^3.2",
         "symfony/validator": "~8.1.0",
         "symfony/yaml": "~8.1.0",
-        "symfonycasts/tailwind-bundle": "^0.13.0",
+        "symfonycasts/tailwind-bundle": "^0.14",
         "twig/extra-bundle": "^2.12 || ^3.0",
         "twig/twig": "^2.12 || ^3.0"
     },

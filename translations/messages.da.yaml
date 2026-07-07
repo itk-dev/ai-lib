@@ -169,7 +169,6 @@ admin:
         error:
             invalid_token: "Sessionen er udløbet. Indsend formularen igen."
             invalid_email: "Indtast en gyldig e-mailadresse."
-            invalid_sender: 'Indtast en gyldig afsenderadresse, fx noreply@example.dk eller "AI Reolen <noreply@example.dk>".'
         flash:
             saved: "Indstillingerne er gemt."
         site:
@@ -203,9 +202,6 @@ admin:
                 admin_recipient:
                     label: "E-mailadresse"
                     help: "Modtager besked når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
-                sender_address:
-                    label: "Afsenderadresse"
-                    help: 'Afsender (From:) på systemmails. Accepterer `noreply@example.dk` eller `"AI Reolen <noreply@example.dk>"`. Lad feltet stå tomt for at falde tilbage til MAILER_FROM-miljøvariablen.'
                 subject:
                     label: "Emne"
                 body:
@@ -369,6 +365,8 @@ assistant:
         framework_label: "Framework"
         language_model_label: "Sprogmodel"
         tags_heading: "Tags"
+        export: "Download konfiguration"
+        experimental: "eksperimentel"
         tabs_label: "Assistentdetaljer"
         tab:
             beskrivelse: "Beskrivelse"
@@ -385,7 +383,7 @@ assistant:
         meta_updated_at: "Dato opdateret"
         actions_heading: "Handlinger"
         action:
-            export: "Hjemtag JSON"
+            export: "Hjemtag konfiguration"
         modelkort:
             heading: "Modelkort"
             lead: "Sprogmodel %model% og hensyn ved brug af assistenten."
@@ -393,7 +391,7 @@ assistant:
             heading: "Readme"
         json:
             heading: "Eksportér konfiguration"
-            lead: "Eksportér assistentens OpenWebUI-JSON og importér filen i din egen OpenWebUI."
+            lead: "Eksportér assistentens konfiguration til et understøttet format og importér den i dit eget system."
             empty: "Ingen konfiguration gemt for denne assistent."
         placeholder_hint: "Feltet er endnu ikke understøttet af datamodellen — vises som pladsholder."
         placeholder_origin: "Oprindelseskommune (kommer senere)"
@@ -410,16 +408,17 @@ assistant:
         step_rail:
             label: "Trin i deling"
         step_json:
-            rail_label: "Indsæt JSON"
-            rail_hint: "Vælg fil eller indsæt OWUI-JSON"
-            file_label: "Upload OpenWebUI-JSON-fil"
-            dropzone_prompt: "Slip en JSON-fil her, eller klik for at vælge"
-            dropzone_hint: "OpenWebUI-export (.json)"
-            textarea_label: "…eller indsæt JSON direkte"
-            textarea_help: "Indholdet af assistentens OpenWebUI-export. Vi analyserer det og foreslår metadata i næste trin."
-            required: "Indsæt eller upload en OpenWebUI-JSON."
-            invalid: "Indholdet er ikke gyldig JSON."
-            config_help: "Slip en JSON-fil på feltet, eller indsæt JSON direkte i tekstfeltet."
+            rail_label: "Indsæt konfiguration"
+            rail_hint: "Vælg fil eller indsæt konfiguration"
+            file_label: "Upload assistent-konfiguration"
+            dropzone_prompt: "Slip en fil her, eller klik for at vælge"
+            dropzone_hint: "OpenWebUI, OpenAI, LibreChat eller AI-reolen (.json) · Ollama (.modelfile)"
+            textarea_label: "…eller indsæt konfiguration direkte"
+            textarea_help: "Indholdet af assistentens konfiguration. Vi genkender formatet automatisk og foreslår metadata i næste trin."
+            required: "Indsæt eller upload en assistent-konfiguration."
+            invalid_config: "Filen er ikke en gyldig assistent-konfiguration. {{ errors }}"
+            unrecognised_format: "Konfigurationen matcher ingen af de kendte formater."
+            config_help: "Slip en fil på feltet, eller indsæt konfigurationen direkte i tekstfeltet."
             config_validating: "Validerer konfiguration…"
             config_valid: "Konfigurationen er gyldig."
             config_invalid: "Konfigurationen er ugyldig:"
@@ -433,12 +432,9 @@ assistant:
             language_model_label: "Sprogmodel"
             language_model_help: "Vælg en sprogmodel fra listen."
             language_model_required: "Angiv en sprogmodel."
-            language_model_search_placeholder: "Søg efter en sprogmodel …"
-            framework_label: "Framework"
-            framework_help: "Framework assistenten er bygget til."
-            framework_required: "Angiv et framework."
             tags_label: "Tags"
             tags_help: "Komma-separeret. Fx borgerservice, jura."
+            experimental_notice: "%format% er et eksperimentelt format. Import og eksport er endnu ikke manuelt testet, så kontrollér resultatet før du deler."
         step_receipt:
             rail_label: "Kvittering"
             rail_hint: "Permalink til din assistent"

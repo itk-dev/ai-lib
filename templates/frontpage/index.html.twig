@@ -32,6 +32,7 @@
             {# organisation name. #}
             {% for assistant in assistants %}
                 <twig:CardRail:Card
+                    class="assistant-card"
                     kommune="{{ assistant.framework }}"
                     model="{{ assistant.languageModel }}"
                     name="{{ assistant.title }}"

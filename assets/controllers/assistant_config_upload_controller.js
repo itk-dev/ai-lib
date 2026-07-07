@@ -1,8 +1,8 @@
 import { Controller } from "@hotwired/stimulus";
 
 /*
- * Upload + validate the OpenWebUI config JSON for the assistant
- * create form.
+ * Upload + validate the assistant config for the create form, in any
+ * supported format (the server detects which one).
  *
  * Mounted on the form (`data-controller="assistant-config-upload"`).
  * The dropzone (`dropzone` target) accepts either a file drop or

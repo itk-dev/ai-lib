@@ -4,26 +4,25 @@ declare(strict_types=1);
 
 namespace App\Twig;
 
-use App\Framework\SupportedFrameworks;
+use App\Assistant\Format\FormatAdapterRegistry;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 
 /**
- * Exposes a `framework_label` Twig filter that resolves the
- * stored machine name (`openwebui`) to the readable display
- * label (`Open WebUI`) configured in `SUPPORTED_FRAMEWORKS`.
+ * Exposes Twig filters over the {@see \App\Assistant\Format\FormatAdapter}
+ * registry: `framework_label` resolves a stored format id (`openwebui`) to
+ * its readable label (`Open WebUI`), and `framework_experimental` reports
+ * whether that format's import/export is experimental.
  *
- * Falls back to the machine name for anything not on the
- * deploy-time list, so a legacy row whose framework was removed
- * from the env var still renders something meaningful in the
- * catalog facet.
+ * Both fall back gracefully for anything without a registered adapter, so
+ * a legacy row whose format was removed still renders something meaningful.
  */
 final class FrameworkExtension extends AbstractExtension
 {
     /**
-     * @param SupportedFrameworks $frameworks deploy-time list the filter delegates to
+     * @param FormatAdapterRegistry $formats registry the filter delegates label lookups to
      */
-    public function __construct(private readonly SupportedFrameworks $frameworks)
+    public function __construct(private readonly FormatAdapterRegistry $formats)
     {
     }
 
@@ -34,19 +33,34 @@ final class FrameworkExtension extends AbstractExtension
     {
         return [
             new TwigFilter('framework_label', $this->label(...)),
+            new TwigFilter('framework_experimental', $this->experimental(...)),
         ];
     }
 
     /**
-     * Resolve a stored framework machine name to its readable
-     * display label.
+     * Resolve a stored format id to its readable display label.
      *
-     * @param string $machineName the stored framework identifier
+     * @param string $id the stored format identifier
      *
-     * @return string the human-readable name, or the machine name itself when unknown
+     * @return string the human-readable label, or the id itself when no adapter is registered
      */
-    public function label(string $machineName): string
+    public function label(string $id): string
     {
-        return $this->frameworks->label($machineName);
+        return $this->formats->label($id);
+    }
+
+    /**
+     * Whether the format behind a stored id is experimental.
+     *
+     * An unregistered id is treated as non-experimental so a legacy row
+     * renders without a spurious caution.
+     *
+     * @param string $id the stored format identifier
+     *
+     * @return bool true when the format is registered and experimental
+     */
+    public function experimental(string $id): bool
+    {
+        return $this->formats->has($id) && $this->formats->get($id)->isExperimental();
     }
 }

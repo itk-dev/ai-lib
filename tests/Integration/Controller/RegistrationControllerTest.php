@@ -67,8 +67,8 @@ final class RegistrationControllerTest extends WebTestCase
         self::assertSame(UserStatus::AwaitingEmailConfirmation, $user->getStatus());
     }
 
-    // Ensures a successful self-signup fires three emails: admin notification, user-facing courtesy confirmation, and the one-time confirmation link.
-    public function testSuccessfulRegistrationFiresAllThreeEmails(): void
+    // Ensures a successful self-signup fires exactly one email — the single-use confirmation link — and nothing hits the moderator or the welcome inbox until the address is verified.
+    public function testSuccessfulRegistrationFiresConfirmationLinkOnly(): void
     {
         self::getContainer()->get(SettingsManager::class)->setAdminRecipient('ops@example.test');
 
@@ -81,7 +81,7 @@ final class RegistrationControllerTest extends WebTestCase
         $this->client->submit($form);
 
         self::assertResponseRedirects('/register/pending');
-        self::assertEmailCount(3);
+        self::assertEmailCount(1);
 
         $recipients = array_map(
             static fn (\Symfony\Component\Mime\RawMessage $message): string => method_exists($message, 'getTo')
@@ -89,10 +89,11 @@ final class RegistrationControllerTest extends WebTestCase
                 : '',
             self::getMailerMessages(),
         );
-        sort($recipients);
-        // Grace receives two messages — the courtesy confirmation and the
-        // single-use email-confirmation link — plus the admin moderator.
-        self::assertSame(['grace@example.test', 'grace@example.test', 'ops@example.test'], $recipients);
+        // The single mail goes to the signing-up user — the
+        // moderator notification and the welcome mail move to
+        // EmailConfirmation::consume() so they only fire once
+        // the address is verified.
+        self::assertSame(['grace@example.test'], $recipients);
     }
 
     // Verifies the hand-off through AccountStatusChecker: a freshly-registered user cannot log in until their email is confirmed and a moderator approves.
@@ -219,8 +220,6 @@ final class RegistrationControllerTest extends WebTestCase
         $container->set(Registration::class, new Registration(
             $container->get(\App\Security\UserManager::class),
             $container->get(\App\Security\AllowedEmailDomains::class),
-            $container->get(\App\Notification\AdminRegistrationNotifier::class),
-            $container->get(\App\Notification\RegistrationConfirmationNotifier::class),
             $container->get(\App\Notification\EmailConfirmationNotifier::class),
             new \Psr\Log\NullLogger(),
             ClosedLimiterFactory::create(),

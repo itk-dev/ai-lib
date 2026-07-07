@@ -9,39 +9,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Free-tagging language-model picker on the "Del assistent"
-  wizard's metadata step. The `languageModel` field renders
-  as a native `<input type="text" list="…">` +
-  `<datalist>` combination with the union of two option
-  sources: the deploy-time `SUPPORTED_LANGUAGE_MODELS` env
-  var (comma-separated names, e.g.
-  `gpt-4o,gpt-4o-mini,claude-3.5-sonnet`), and every distinct
-  `languageModel` value currently persisted on `Assistant`.
-  A model an operator typed in yesterday becomes a suggestion
-  for the next operator today. A new
-  `App\Model\SupportedLanguageModels` service merges the two
-  sets (defaults first in env-var order, custom values
-  appended sorted case-insensitive natural order, deduped) and
-  a new `AssistantRepository::distinctLanguageModels()` query
-  drives the custom half. `AssistantMetadataStepType` wires
-  the datalist id via `list` attribute + `finishView()` view
-  vars, and a new `language-model-picker` Stimulus controller
-  initialises **Choices.js** (in text mode with
-  `maxItemCount: 1`) so the field renders as a pill-style
-  combobox with search-as-you-type, keyboard nav, and an
-  explicit "+ Tilføj: '…'" affordance for values not on the
-  known-value list. Choices.js is pulled in via
-  `importmap:require` + a paired CSS import in
-  `assets/app.js`; no npm/webpack step. A native `<datalist>`
-  stays in the markup as the JS-off fallback — Choices.js
-  hides the original `<input>` at connect time so the two
-  surfaces don't fight each other. The server side stays a
-  plain `TextType` — free-typed values submit as-is and land
-  unchanged on `Assistant::$languageModel`.
-  Approach A (string snapshot) recorded as ADR 009; Approach
-  B (promote to entity + JSON create endpoint) is a follow-up
-  if rename / delete workflows ever justify the schema cost
-  ([#177](https://github.com/itk-dev/ai-reolen/issues/177)).
+- The share wizard (`/assistant/new`) is now format-agnostic: its labels
+  no longer say "OpenWebUI"/"JSON", the file picker accepts `.json` **and**
+  `.modelfile` (so an Ollama Modelfile fits), and the live-validation
+  endpoint detects the pasted format instead of assuming OpenWebUI. Each
+  `FormatAdapter` declares `isExperimental()`; every format except
+  OpenWebUI is flagged experimental (not manually verified), surfaced as a
+  caution on the review step when importing such a format and as a marker
+  next to its export button on the detail page (new `framework_experimental`
+  Twig filter).
+- Assistants can now be exported to four more formats and imported
+  from them: an **AI-reolen native** JSON envelope (lossless), an
+  **Ollama Modelfile** (text DSL), a **LibreChat preset**, and an
+  **OpenAI Assistants** object — each a `FormatAdapter` that
+  autoconfigures into `FormatAdapterRegistry` alongside the existing
+  OpenWebUI adapter. Detection stays deterministic via per-adapter
+  `#[AsTaggedItem(priority)]` (native → openai → librechat → openwebui
+  → ollama). The JSON tab on the detail page offers a download link per
+  target format. A new `JsonSchemaConfigValidator` base holds the shared
+  syntax + JSON-Schema pipeline (OpenWebUI's validator is now a thin
+  subclass), with new schemas under `config/schema/`.
+- Base models are translated across systems via a curated
+  `config/model_map.yaml` and a new `ModelMap` service: a source model
+  is folded onto a neutral canonical id and rendered to each target's
+  own model id on export. A model with no equivalent in a target (e.g.
+  GPT-4o for Ollama) is passed through unchanged and flagged with a
+  non-blocking warning — shown beneath the detail-page download links
+  and in an `X-Export-Warning` response header — rather than silently
+  swapped for a different model. The create wizard's language-model
+  field is now a free-text input backed by a `<datalist>` of known
+  models, defaulting to the detected model's canonical id.
+- Exports are validated against the target format's own rules before
+  download, so a broken payload is never emitted; `FormatAdapter` gains
+  `requiredCanonicalFields()` and the registry a `requiredForAnyExport()`
+  union so the wizard can guarantee the fields any target needs
+  ([#23](https://github.com/itk-dev/ai-reolen/issues/23)).
+- Added prod config for tailwind bundle.
+- Registration mail timing corrected. Signing up now fires
+  exactly one transactional mail — the single-use email
+  confirmation link. The two follow-up mails (moderator
+  moderation notification + user welcome) that previously
+  went out on the raw signup submit now dispatch from
+  `App\Security\EmailConfirmation::consume()` instead, so
+  nothing hits the moderator inbox and nothing welcomes the
+  user until the address has been verified. Each new send
+  keeps the same try/catch + logger-warning shape the signup
+  path uses, so a transient SMTP failure never undoes the
+  status transition or 500s the confirmation success page.
+  Second clicks on an already-consumed confirmation link
+  continue to render the `410 Gone` page and do not re-send
+  the two follow-up mails
+  ([#175](https://github.com/itk-dev/ai-reolen/issues/175)).
+- The transactional-mail sender (`From:`) address is now
+  deploy-time-only via the `MAILER_FROM` env var; the
+  editable **Afsenderadresse** field on
+  `/admin/settings/email` is removed. `SettingsManager::getSenderAddress()`
+  reads `MAILER_FROM` and returns `null` when the env var is
+  empty. All three registration notifiers (admin moderation,
+  user welcome, email confirmation) already skip the send +
+  log a warning when the sender resolves to `null`, so a
+  fresh install with `MAILER_FROM=` unset no longer crashes
+  the signup flow — the moderator queue still gates site
+  access through `/admin/users`. Dropped:
+  `SettingsManager::setSenderAddress()`,
+  `validateSenderAddress()`, `applySenderAddress()`, the
+  `sender_address` setting key, and the two integration tests
+  that exercised the removed UI + persistence surface.
 - Editor-experience upgrades on `/admin/settings/email`: every
   Markdown body field grows a **Markdown-oversigt** cheat-sheet
   link (opens
@@ -70,6 +103,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the same shared `csrf-protection` helper the role-picker
   uses, so the double-submit-cookie handshake stays consistent
   ([#149](https://github.com/itk-dev/ai-reolen/issues/149)).
+- [PR-162](https://github.com/itk-dev/ai-reolen/issues/162)
+  Applied the OS2ai brand: green/charcoal/sand colour tokens replace
+  the old teal/gold, self-hosted Inter + DM Serif Display replace the
+  Google Fonts stack, and the header carries the brand as a wordmark.
 - Primary site nav now carries only working destinations. **Del
   assistent** points at `/assistant/new`. **Mine assistenter**
   is a new page at `/mine/assistenter` (route
@@ -99,11 +136,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are anchor-based with the existing `<twig:Tabs>` component and
   driven by a whitelisted `?tab=` query string, so every tab is
   bookmarkable and SEO-friendly with no JavaScript required. The
-  new `/assistant/{id}/export.json` route serves the assistant's
-  OpenWebUI config as a downloadable JSON file
-  (`Content-Disposition: attachment; filename="assistant-<id>.json"`)
-  and drives the `JSON` tab's export button as well as the top-
-  level "Hjemtag" action. Fields the entity does not yet carry
+  `JSON` tab's export button and the top-level "Hjemtag" action
+  both point at the `app_assistant_export` download route (see the
+  format-abstraction entry above). Fields the entity does not yet carry
   (`tagline`, origin organisation, `dataSensitivity`,
   `approvedFor`, `modelCard`, `readme`, `knowledgeRecipe`, AI-
   tag flag) render as muted italic placeholders with a tooltip
@@ -122,11 +157,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an OpenWebUI export on step 1, reviews auto-extracted metadata
   (title, description, language model, tags) on step 2, and
   lands on step 3 with a permalink to the freshly-persisted
-  assistant. Metadata suggestions come from a new
-  `App\Assistant\OpenWebUiMetadataExtractor` that pulls values
-  from `parsed.name`, `parsed.meta.description` /
-  `parsed.params.system`, `parsed.base_model_id` /
-  `parsed.model`, and `parsed.meta.tags` — user edits on step 2
+  assistant. Metadata suggestions come from
+  `App\Assistant\AssistantDraftPrefiller`, which detects the format
+  and pulls values from the canonical model's name, description /
+  system-prompt, base model, and tags — user edits on step 2
   are preserved on Back-then-edit-then-Next round trips (empty
   fields refill, non-empty stay). The wizard uses Symfony's
   built-in `AbstractFlowType` + `SessionDataStorage` so state
@@ -164,28 +198,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   flow — now drives the failed-login response for a user who
   attempts to sign in before clicking the link
   ([#119](https://github.com/itk-dev/ai-reolen/issues/119)).
-- Deploy-time list of supported assistant frameworks. A new
-  `SUPPORTED_FRAMEWORKS` env var (comma-separated
-  `Readable Name:machine_name` pairs, shipped in `.env` with the
-  single default `Open WebUI:openwebui`) drives a new
-  `App\Framework\SupportedFrameworks` service that hands the
-  list to the `defaultFramework` `ChoiceType` on
-  `/admin/organization/new` and `/admin/organizations/{id}/edit`.
-  The stored value is the machine name (unchanged shape on the
-  entity); the `<select>` shows the readable name. A new
-  `App\Validator\SupportedFramework` constraint on
-  `Organization::$defaultFramework` closes the entity-boundary
-  path so fixtures and console writes can't leak an unknown
-  framework in either. The catalogue "Frameworks" facet renders
-  labels through a new `framework_label` Twig filter, falling
-  back to the machine name for legacy rows whose framework has
-  been removed from the list. Malformed env-var entries
-  (missing colon, empty machine name, machine name outside
-  `[a-z0-9_-]`) fail-fast at boot rather than ship a half-broken
-  config. An unset / empty env var yields an empty framework
-  list — the `<select>` renders no options, effectively blocking
-  organisation creation until the operator restores the line;
-  no hidden hard-coded fallback
+- Supported assistant frameworks are sourced from the registered
+  format adapters (see the format-abstraction entry above). The
+  `defaultFramework` `ChoiceType` on `/admin/organization/new` and
+  `/admin/organizations/{id}/edit` lists the adapter labels; the
+  stored value is the format id. A `App\Validator\SupportedFramework`
+  constraint on `Organization::$defaultFramework` closes the
+  entity-boundary path so fixtures and console writes can't leak an
+  unregistered framework. The catalogue "Frameworks" facet renders
+  labels through a `framework_label` Twig filter, falling back to the
+  id for legacy rows whose format is no longer registered
   ([#154](https://github.com/itk-dev/ai-reolen/issues/154)).
 - Public-signup allow-list now sources its domains from the
   `Organization.emailDomains` rows instead of the
@@ -481,8 +503,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   indentation the user typed (file upload, paste, hand-edit)
   collapses to minified JSON on disk
   ([#101](https://github.com/itk-dev/ai-reolen/issues/14)).
-- `Assistant.openwebui_config` JSON column for storing the
-  uploaded OpenWebUI export verbatim, plus a create form at
+- `Assistant.source_config` JSON column for storing the
+  uploaded assistant config (reduced to its format's cleaned
+  model; see the entries above), plus a create form at
   `/assistant/new` with a file-upload field that AJAX-validates
   the JSON before submit and writes the result into an editable
   textarea (users can also paste/type JSON directly). A shared
