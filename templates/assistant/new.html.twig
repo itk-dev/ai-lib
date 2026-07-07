@@ -1,22 +1,5 @@
 {% extends 'base.html.twig' %}
 
-{# Override the default `form_errors` render for this form only so
-   `<ul>` gets disc bullets + a left inset — Tailwind's preflight
-   strips list styling globally, which is fine everywhere except in
-   the wizard's alert box where the config-validator emits one
-   violation per detail line. #}
-{% form_theme flow _self %}
-
-{% block form_errors %}
-    {%- if errors|length > 0 %}
-        <ul class="list-disc space-y-1 pl-5">
-            {%- for error in errors %}
-                <li>{{ error.message }}</li>
-            {%- endfor %}
-        </ul>
-    {%- endif %}
-{% endblock %}
-
 {% block main_max_width %}max-w-wide{% endblock %}
 
 {% block title %}{{ 'assistant.new.title'|trans({'%brand%': brand_name}) }}{% endblock %}
@@ -49,9 +32,29 @@
             <section class="max-w-2xl">
                 {{ form_start(flow, {attr: {class: 'grid gap-4'}}) }}
 
-                {% if not flow.vars.valid %}
+                {#
+                    Flow-level errors: the config-validator emits an intro
+                    violation ("Filen er ikke en gyldig assistent-
+                    konfiguration:") plus one violation per deduped detail
+                    line. Render the first as a paragraph heading and the
+                    rest as a disc-bulleted list so the intro reads like
+                    a summary and the details sit under it. Bypasses
+                    `form_errors` because Tailwind's preflight strips the
+                    default theme's `<ul>` styling.
+                #}
+                {% set flow_errors = flow.vars.errors %}
+                {% if flow_errors|length > 0 %}
                     <div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
-                        {{ form_errors(flow) }}
+                        <p class="font-medium">{{ (flow_errors|first).message }}</p>
+                        {% if flow_errors|length > 1 %}
+                            <ul class="mt-1 list-disc space-y-1 pl-5">
+                                {% for error in flow_errors %}
+                                    {% if not loop.first %}
+                                        <li>{{ error.message }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </div>
                 {% endif %}
 

@@ -47,6 +47,13 @@ final class AssistantJsonStepType extends AbstractType
                 ),
                 new ValidAssistantConfig(groups: ['json']),
             ],
+            // Bubble the config's validation errors up to the flow root
+            // so the wizard's shell renders them once in its alert box
+            // instead of rendering them there AND next to the textarea.
+            // The parent step has `inherit_data: true`, whose default
+            // `error_bubbling` is true, so the errors continue past the
+            // step compound and land on `flow` automatically.
+            'error_bubbling' => true,
             'attr' => [
                 'class' => self::INPUT_CLASS,
                 'rows' => 10,
