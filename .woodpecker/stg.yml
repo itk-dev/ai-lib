@@ -28,12 +28,15 @@ steps:
               - git checkout ${CI_COMMIT_BRANCH}
               - git pull
               - itkdev-docker-compose-server up -d --force-recreate
-              - itkdev-docker-compose-server exec phpfpm composer install --no-dev -o --classmap-authoritative
-              - itkdev-docker-compose-server exec phpfpm bin/console doctrine:database:drop --force --if-exists --no-interaction
-              - itkdev-docker-compose-server exec phpfpm bin/console doctrine:database:create --no-interaction
+              # Allow installation of dev packages to load fixtures.
+              - itkdev-docker-compose-server exec phpfpm composer install -o --classmap-authoritative
+              - itkdev-docker-compose-server exec phpfpm bin/console doctrine:schema:drop --full-database --force
+              # Force dev environment for this command only.
               - itkdev-docker-compose-server exec phpfpm bin/console doctrine:migrations:migrate --no-interaction
-              - itkdev-docker-compose-server exec phpfpm bin/console doctrine:fixtures:load -no-interaction
+              - itkdev-docker-compose-server exec -e APP_ENV=dev phpfpm bin/console doctrine:fixtures:load --no-interaction
               - itkdev-docker-compose-server exec phpfpm bin/console app:user:obfuscate-passwords --force
               - itkdev-docker-compose-server exec phpfpm bin/console assets:install public
               - itkdev-docker-compose-server exec phpfpm bin/console asset-map:compile
               - itkdev-docker-compose-server exec phpfpm bin/console cache:clear
+              # Remove dev packages
+              - itkdev-docker-compose-server exec phpfpm composer install -o --no-dev --classmap-authoritative

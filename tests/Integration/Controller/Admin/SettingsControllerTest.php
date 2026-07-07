@@ -319,42 +319,15 @@ final class SettingsControllerTest extends WebTestCase
         );
     }
 
-    // Verifies a valid sender_address submission persists through SettingsManager.
-    public function testValidSenderAddressSubmitPersists(): void
+    // Ensures the email settings form no longer renders a sender-address input — MAILER_FROM is deploy-time only.
+    public function testEmailFormOmitsSenderAddressField(): void
     {
         $this->loginAsAdmin();
 
         $crawler = $this->client->request('GET', '/admin/settings/email');
-        $form = $crawler->filter('form[action$="/admin/settings/email"]')->form([
-            'sender_address' => 'AI Reolen <noreply@example.test>',
-        ]);
-        $this->client->submit($form);
 
-        self::assertResponseRedirects('/admin/settings/email');
-        self::assertSame(
-            'AI Reolen <noreply@example.test>',
-            self::getContainer()->get(SettingsManager::class)->getSenderAddress(),
-        );
-    }
-
-    // Ensures an invalid sender_address re-renders with 422 and leaves the stored value unchanged.
-    public function testInvalidSenderAddressRerendersFormWithoutPersisting(): void
-    {
-        $this->loginAsAdmin();
-        self::getContainer()->get(SettingsManager::class)->setSenderAddress('keep@example.test');
-
-        $crawler = $this->client->request('GET', '/admin/settings/email');
-        $form = $crawler->filter('form[action$="/admin/settings/email"]')->form([
-            'sender_address' => 'absolutely not an email address',
-        ]);
-        $this->client->submit($form);
-
-        self::assertResponseStatusCodeSame(422);
-        self::assertSame(
-            'keep@example.test',
-            self::getContainer()->get(SettingsManager::class)->getSenderAddress(),
-            'invalid submit must not overwrite the stored value',
-        );
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('input[name="sender_address"]'), 'sender_address must no longer be editable in the admin UI');
     }
 
     // Verifies that an invalid CSRF token on the email form returns 403 and never reaches SettingsManager.

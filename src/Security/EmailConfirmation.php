@@ -6,10 +6,14 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Enum\UserStatus;
+use App\Notification\AdminRegistrationNotifier;
+use App\Notification\RegistrationConfirmationNotifier;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
  * Owns the single-use confirmation token a newly-registered user must
@@ -19,13 +23,18 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * id — the cache row is the only mapping from token to user). It
  * lives in the dedicated `cache.email_confirmation` pool with a
  * fixed 24-hour TTL. {@see consume()} reads the row, transitions
- * the user's status to `Pending`, and deletes the row in one go —
- * the deletion is what makes the token single-use, the TTL caps
- * the lifetime if it never gets clicked.
+ * the user's status to `Pending`, deletes the row, and dispatches
+ * the two follow-up notifications (moderator inbox + user
+ * welcome). The deletion is what makes the token single-use, the
+ * TTL caps the lifetime if it never gets clicked.
  *
- * The status transition is the *only* effect of consuming a token:
- * the user is not authenticated, no session is established. The
- * caller (a public-route controller) is expected to render a
+ * Follow-up mails only fire when the transition actually happens —
+ * an already-consumed or unknown token returns `null` and sends
+ * nothing, so a second click can't spam either recipient.
+ *
+ * The status transition is the *only* auth effect of consuming a
+ * token: the user is not authenticated, no session is established.
+ * The caller (a public-route controller) is expected to render a
  * confirmation page and leave login to the form-login flow after a
  * moderator approves the user. This matches the project's "Pending
  * users have no site access" rule documented in ADR 006.
@@ -41,15 +50,21 @@ final class EmailConfirmation
     public const int TOKEN_TTL_SECONDS = 86400;
 
     /**
-     * @param CacheItemPoolInterface $tokens         dedicated cache pool storing the token → user-id mapping
-     * @param EntityManagerInterface $entityManager  Doctrine entity manager used to flush the status transition
-     * @param UserRepository         $userRepository read-side lookup of the user the token belongs to
+     * @param CacheItemPoolInterface           $tokens               dedicated cache pool storing the token → user-id mapping
+     * @param EntityManagerInterface           $entityManager        Doctrine entity manager used to flush the status transition
+     * @param UserRepository                   $userRepository       read-side lookup of the user the token belongs to
+     * @param AdminRegistrationNotifier        $adminNotifier        fires the moderator-inbox notification once the email is confirmed
+     * @param RegistrationConfirmationNotifier $confirmationNotifier fires the user-facing welcome mail once the email is confirmed
+     * @param LoggerInterface                  $logger               receives a warning on transient mailer failures for either follow-up
      */
     public function __construct(
         #[Autowire(service: 'cache.email_confirmation')]
         private readonly CacheItemPoolInterface $tokens,
         private readonly EntityManagerInterface $entityManager,
         private readonly UserRepository $userRepository,
+        private readonly AdminRegistrationNotifier $adminNotifier,
+        private readonly RegistrationConfirmationNotifier $confirmationNotifier,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -82,14 +97,18 @@ final class EmailConfirmation
 
     /**
      * Consume a confirmation token, transitioning the matched user
-     * out of `AwaitingEmailConfirmation` and into `Pending`.
+     * out of `AwaitingEmailConfirmation` and into `Pending`, and
+     * dispatching the moderator + welcome follow-up mails.
      *
      * Returns the user on success so the caller can render a
      * personalised confirmation page. Returns `null` for every
      * failure mode — unknown token, expired token, missing user
      * row, or a user whose status has already moved on — so the
      * controller surfaces a uniform "this link is no longer valid"
-     * response without leaking which specific case fired.
+     * response without leaking which specific case fired. Follow-
+     * up mails are only sent when the transition actually
+     * happens, so a second click on the same link never re-fires
+     * them.
      *
      * Successful consumption deletes the cache row, so a second
      * click on the same link lands `null` (single-use).
@@ -125,7 +144,42 @@ final class EmailConfirmation
         $user->setStatus(UserStatus::Pending);
         $this->entityManager->flush();
 
+        $this->dispatchFollowUpNotifications($user);
+
         return $user;
+    }
+
+    /**
+     * Fire the two mails that follow a confirmed email address.
+     *
+     * Each send is wrapped in its own try/catch around the mailer
+     * transport — a transient delivery failure must not undo the
+     * status transition or 500 the confirmation success page, so
+     * failures are logged and swallowed. Mirrors the try/catch
+     * shape {@see Registration::dispatchNotifications()} uses on
+     * the signup path.
+     *
+     * @param User $user the user whose status just flipped to `Pending`
+     */
+    private function dispatchFollowUpNotifications(User $user): void
+    {
+        try {
+            $this->adminNotifier->notifyOfNewRegistration($user);
+        } catch (TransportExceptionInterface $e) {
+            $this->logger->warning('Failed to deliver admin registration notification.', [
+                'user_email' => $user->getUserIdentifier(),
+                'exception' => $e,
+            ]);
+        }
+
+        try {
+            $this->confirmationNotifier->confirmRegistration($user);
+        } catch (TransportExceptionInterface $e) {
+            $this->logger->warning('Failed to deliver registration confirmation mail.', [
+                'user_email' => $user->getUserIdentifier(),
+                'exception' => $e,
+            ]);
+        }
     }
 
     /**

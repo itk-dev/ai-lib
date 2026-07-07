@@ -44,6 +44,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `requiredCanonicalFields()` and the registry a `requiredForAnyExport()`
   union so the wizard can guarantee the fields any target needs
   ([#23](https://github.com/itk-dev/ai-reolen/issues/23)).
+- Added prod config for tailwind bundle.
+- Registration mail timing corrected. Signing up now fires
+  exactly one transactional mail — the single-use email
+  confirmation link. The two follow-up mails (moderator
+  moderation notification + user welcome) that previously
+  went out on the raw signup submit now dispatch from
+  `App\Security\EmailConfirmation::consume()` instead, so
+  nothing hits the moderator inbox and nothing welcomes the
+  user until the address has been verified. Each new send
+  keeps the same try/catch + logger-warning shape the signup
+  path uses, so a transient SMTP failure never undoes the
+  status transition or 500s the confirmation success page.
+  Second clicks on an already-consumed confirmation link
+  continue to render the `410 Gone` page and do not re-send
+  the two follow-up mails
+  ([#175](https://github.com/itk-dev/ai-reolen/issues/175)).
+- The transactional-mail sender (`From:`) address is now
+  deploy-time-only via the `MAILER_FROM` env var; the
+  editable **Afsenderadresse** field on
+  `/admin/settings/email` is removed. `SettingsManager::getSenderAddress()`
+  reads `MAILER_FROM` and returns `null` when the env var is
+  empty. All three registration notifiers (admin moderation,
+  user welcome, email confirmation) already skip the send +
+  log a warning when the sender resolves to `null`, so a
+  fresh install with `MAILER_FROM=` unset no longer crashes
+  the signup flow — the moderator queue still gates site
+  access through `/admin/users`. Dropped:
+  `SettingsManager::setSenderAddress()`,
+  `validateSenderAddress()`, `applySenderAddress()`, the
+  `sender_address` setting key, and the two integration tests
+  that exercised the removed UI + persistence surface.
+- Editor-experience upgrades on `/admin/settings/email`: every
+  Markdown body field grows a **Markdown-oversigt** cheat-sheet
+  link (opens
+  <https://www.markdownguide.org/cheat-sheet/> in a new tab,
+  `rel="noopener noreferrer"`) and a **Forhåndsvis** button that
+  opens a modal showing the rendered email for the current
+  subject + body. The modal reuses
+  `App\Mail\EmailTemplateRenderer` — same pipeline the mailer
+  runs through — so the preview is by construction what the
+  recipient would see. Token substitution uses the acting
+  admin's own `name` + `email` for the greeting slot, the
+  current brand name for `%brand_name%`, and a synthetic
+  `%approval_url%` / `%confirmation_url%` pointing at
+  `/admin/users` and the frontpage respectively so URL tokens
+  render as real links. The rendered HTML lives inside an
+  `<iframe sandbox="allow-same-origin">` driven by `srcdoc` so
+  admin-typed HTML can't script the admin UI or reach out over
+  the network. A new POST endpoint
+  `/admin/settings/email/preview` backs the modal: JSON in
+  (`subject`, `body`, `_token`), JSON out (`subject`, `html`),
+  admin-gated by the class-level `IsGranted` attribute and
+  CSRF-protected against a dedicated
+  `admin-settings-email-preview` intent so a stale carrier
+  token can't invalidate an in-flight main-form submit. The
+  new `email-preview` Stimulus controller mints tokens through
+  the same shared `csrf-protection` helper the role-picker
+  uses, so the double-submit-cookie handshake stays consistent
+  ([#149](https://github.com/itk-dev/ai-reolen/issues/149)).
+- [PR-162](https://github.com/itk-dev/ai-reolen/issues/162)
+  Applied the OS2ai brand: green/charcoal/sand colour tokens replace
+  the old teal/gold, self-hosted Inter + DM Serif Display replace the
+  Google Fonts stack, and the header carries the brand as a wordmark.
 - Primary site nav now carries only working destinations. **Del
   assistent** points at `/assistant/new`. **Mine assistenter**
   is a new page at `/mine/assistenter` (route

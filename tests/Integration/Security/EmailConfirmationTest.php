@@ -9,7 +9,9 @@ use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Security\EmailConfirmation;
 use App\Security\UserManager;
+use App\Settings\SettingsManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 
 /**
  * End-to-end coverage of {@see EmailConfirmation}: issue a token,
@@ -26,6 +28,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  */
 final class EmailConfirmationTest extends KernelTestCase
 {
+    use MailerAssertionsTrait;
+
     private EmailConfirmation $emailConfirmation;
     private UserRepository $userRepository;
 
@@ -120,6 +124,38 @@ final class EmailConfirmationTest extends KernelTestCase
         $reloaded = $this->userRepository->find($user->getId());
         self::assertNotNull($reloaded);
         self::assertSame(UserStatus::Approved, $reloaded->getStatus(), 'Status must not be downgraded by a stale token.');
+    }
+
+    // Verifies consume() dispatches the moderator notification + user welcome mail after the status flip — the two mails deferred out of the signup path.
+    public function testConsumeDispatchesFollowUpMails(): void
+    {
+        self::getContainer()->get(SettingsManager::class)->setAdminRecipient('ops@example.test');
+        $user = $this->awaitingFixtureUser();
+        $token = $this->emailConfirmation->issueToken($user);
+
+        $this->emailConfirmation->consume($token);
+
+        self::assertEmailCount(2);
+        $recipients = array_map(
+            static fn (\Symfony\Component\Mime\RawMessage $message): string => method_exists($message, 'getTo')
+                ? ($message->getTo()[0]?->getAddress() ?? '')
+                : '',
+            self::getMailerMessages(),
+        );
+        sort($recipients);
+        self::assertSame(['awaiting@aalborg.dk', 'ops@example.test'], $recipients);
+    }
+
+    // Ensures a second consume() of the same token sends nothing — no re-fire of the moderator or welcome mail.
+    public function testConsumeSecondClickSendsNoFollowUpMails(): void
+    {
+        $token = $this->emailConfirmation->issueToken($this->awaitingFixtureUser());
+        $this->emailConfirmation->consume($token);
+
+        $this->emailConfirmation->consume($token);
+
+        // First consume dispatched two, second consume must add none.
+        self::assertEmailCount(2);
     }
 
     private function awaitingFixtureUser(): \App\Entity\User
