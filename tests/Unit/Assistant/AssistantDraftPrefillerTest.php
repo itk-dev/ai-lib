@@ -102,6 +102,46 @@ final class AssistantDraftPrefillerTest extends TestCase
         self::assertSame('llama-3.2', $draft->languageModel);
     }
 
+    // Verifies re-uploading a different JSON refreshes the derived fields the curator hasn't edited, and preserves the ones they have.
+    public function testRefreshesUntouchedFieldsButPreservesManualEdits(): void
+    {
+        $draft = new AssistantDraft();
+        $draft->sourceConfig = json_encode([
+            'name' => 'Original title',
+            'base_model_id' => 'gpt-4o',
+            'meta' => ['description' => 'Original description', 'tags' => ['alpha']],
+        ], \JSON_THROW_ON_ERROR);
+
+        // First upload: baseline is recorded, empty draft fields fill.
+        $this->prefiller()->prefill($draft);
+        self::assertSame('Original title', $draft->title);
+        self::assertSame('Original description', $draft->description);
+
+        // Curator edits the title on step 2; description stays as-is.
+        $draft->title = 'Curator edit';
+
+        // Curator goes back to step 1 and pastes a different JSON.
+        $draft->sourceConfig = json_encode([
+            'name' => 'Second upload',
+            'base_model_id' => 'gpt-4o-mini',
+            'meta' => ['description' => 'Second description', 'tags' => ['beta']],
+        ], \JSON_THROW_ON_ERROR);
+        $this->prefiller()->prefill($draft);
+
+        // Title stays because the curator edited it — its current value
+        // differs from the recorded baseline.
+        self::assertSame('Curator edit', $draft->title);
+        // Description / language model / tags refresh because their
+        // current values still matched the previous baseline.
+        self::assertSame('Second description', $draft->description);
+        self::assertSame('gpt-4o-mini', $draft->languageModel);
+        self::assertSame(['beta'], $draft->tags);
+        // The baseline snapshot now reflects the second upload — so
+        // subsequent "(Ændret)" comparisons on step 2 compare against
+        // the fresh JSON, not the original one.
+        self::assertSame('Second upload', $draft->jsonBaseline['title']);
+    }
+
     // Verifies pre-set fields survive a re-run so Back→edit→Next doesn't clobber user input.
     public function testDoesNotOverwriteExistingFields(): void
     {

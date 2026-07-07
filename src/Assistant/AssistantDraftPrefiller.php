@@ -44,8 +44,13 @@ final class AssistantDraftPrefiller
     /**
      * Detect `$draft->sourceConfig`'s format and pre-fill the draft.
      *
-     * Sets `$draft->framework` to the detected format id, then fills
-     * empty `title` / `description` / `languageModel` / `tags` from
+     * Sets `$draft->framework` to the detected format id, then refreshes
+     * the JSON-derived fields (`title` / `description` / `languageModel`
+     * / `tags`) against the new canonical values. A field is overwritten
+     * only when its current value still matches the previously-recorded
+     * baseline — i.e., the curator hasn't touched it since the last
+     * prefill. Manual edits are preserved. On the very first prefill
+     * the baseline is empty, so any empty draft field is filled from
      * the canonical model. Description falls back to the system prompt
      * when the source carries no explicit description. A payload no
      * adapter recognises is a no-op.
@@ -75,37 +80,45 @@ final class AssistantDraftPrefiller
         $draft->framework = $adapter->id();
         $canonical = $adapter->sourceToCanonical($adapter->parseToSource($draft->sourceConfig));
 
-        // Record the JSON-derived values as the baseline the metadata
-        // step compares against so it can flag curator edits with a
-        // "(Ændret)" badge. Recorded unconditionally — the draft
-        // fields below are only overwritten when empty, but the
-        // baseline stays a truthful snapshot of what the JSON said.
         $canonicalDescription = $canonical->description ?? $canonical->systemPrompt ?? '';
         $canonicalLanguageModel = null !== $canonical->baseModel && '' !== $canonical->baseModel
             ? ($this->modelMap->normalise($canonical->baseModel) ?? $canonical->baseModel)
             : '';
+
+        $oldBaseline = $draft->jsonBaseline;
+
+        // "Unchanged since last prefill" is the signal to overwrite —
+        // the curator hasn't manually edited the field, so refreshing
+        // from a re-uploaded JSON is safe. When the field differs from
+        // the recorded baseline the curator has touched it and we
+        // preserve their edit. The empty-string guard on the new
+        // canonical value prevents an incomplete second upload from
+        // wiping a field the first upload correctly populated.
+        if ($draft->title === ($oldBaseline['title'] ?? '') && '' !== $canonical->name) {
+            $draft->title = $canonical->name;
+        }
+
+        if ($draft->description === ($oldBaseline['description'] ?? '') && '' !== $canonicalDescription) {
+            $draft->description = $canonicalDescription;
+        }
+
+        if ($draft->languageModel === ($oldBaseline['languageModel'] ?? '') && '' !== $canonicalLanguageModel) {
+            $draft->languageModel = $canonicalLanguageModel;
+        }
+
+        if ($draft->tags === ($oldBaseline['tags'] ?? []) && [] !== $canonical->tags) {
+            $draft->tags = $canonical->tags;
+        }
+
+        // Record the new baseline last so the comparisons above see the
+        // OLD one — the metadata step then flags any post-prefill edits
+        // against the fresh JSON via the same jsonBaseline entries.
         $draft->jsonBaseline = [
             'title' => $canonical->name,
             'description' => $canonicalDescription,
             'languageModel' => $canonicalLanguageModel,
             'tags' => $canonical->tags,
         ];
-
-        if ('' === $draft->title && '' !== $canonical->name) {
-            $draft->title = $canonical->name;
-        }
-
-        if ('' === $draft->description && '' !== $canonicalDescription) {
-            $draft->description = $canonicalDescription;
-        }
-
-        if ('' === $draft->languageModel && '' !== $canonicalLanguageModel) {
-            $draft->languageModel = $canonicalLanguageModel;
-        }
-
-        if ([] === $draft->tags && [] !== $canonical->tags) {
-            $draft->tags = $canonical->tags;
-        }
 
         if (null === $draft->organizationId) {
             $organization = $this->resolveOrganizationFromActingUser();
