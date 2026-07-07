@@ -222,6 +222,31 @@ final class AssistantEditControllerTest extends WebTestCase
         self::assertSame('Ændret', trim($badges->first()->text()));
     }
 
+    // Verifies pasting a JSON without tags on step 1 of the edit wizard clears step 2's tags field — the new config is authoritative even for "cleared" fields.
+    public function testReuploadingJsonWithoutTagsClearsStepTwoTagsField(): void
+    {
+        $alice = $this->userByEmail(UserFixtures::ALICE_EMAIL);
+        $assistant = $this->assistantOwnedBy($alice);
+        // Precondition: the fixture assistant carries at least one tag.
+        self::assertGreaterThan(0, $assistant->getTags()->count(), 'the fixture row must ship at least one tag');
+        $this->client->loginUser($alice);
+
+        $crawler = $this->client->request('GET', '/assistant/'.$assistant->getId().'/edit');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $sourceField = $this->findFieldName($stepOne->all(), '[sourceConfig]');
+        // JSON without the `meta.tags` array.
+        $stepOne[$sourceField] = json_encode([
+            'name' => 'Tagless upload',
+            'base_model_id' => $assistant->getLanguageModel(),
+            'meta' => ['description' => 'No tags on this one'],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
+
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $tagsField = $this->findFieldName($stepTwo->all(), '[tags]');
+        self::assertSame('', $stepTwo[$tagsField]->getValue(), 'tags field clears when the new JSON carries no tags');
+    }
+
     // Verifies stepping through step 1 without changing the JSON leaves the entity-hydrated metadata intact.
     public function testUnchangedJsonPreservesEntityHydratedMetadata(): void
     {

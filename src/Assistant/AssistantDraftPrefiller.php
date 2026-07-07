@@ -111,6 +111,12 @@ final class AssistantDraftPrefiller
         $draft->framework = $adapter->id();
         $canonical = $adapter->sourceToCanonical($adapter->parseToSource($draft->sourceConfig));
 
+        // The new JSON is the source of truth. For the three
+        // form-required fields (title / description / language
+        // model), only overwrite when the canonical provides a
+        // non-empty value — an incomplete config would otherwise
+        // leave the metadata step failing NotBlank validation on
+        // fields the entity already carried valid values for.
         if ('' !== $canonical->name) {
             $draft->title = $canonical->name;
         }
@@ -124,9 +130,11 @@ final class AssistantDraftPrefiller
             $draft->languageModel = $this->modelMap->normalise($canonical->baseModel) ?? $canonical->baseModel;
         }
 
-        if ([] !== $canonical->tags) {
-            $draft->tags = $canonical->tags;
-        }
+        // Tags is the exception — it carries no form-level
+        // required constraint, and a curator who pastes a config
+        // with no tags means "clear the tags", not "keep what was
+        // already there".
+        $draft->tags = $canonical->tags;
 
         // Roll the "initial" pointer forward so a subsequent
         // re-upload of yet another JSON is recognised as a fresh
