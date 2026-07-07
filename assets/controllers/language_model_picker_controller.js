@@ -2,125 +2,74 @@ import { Controller } from "@hotwired/stimulus";
 import Choices from "choices.js";
 
 /*
- * Choices.js on the wizard's language-model `<select>`.
+ * Choices.js on the wizard's language-model `<input type="text">`.
  *
- * Base shape: select-one search combobox seeded from the
- * `<option>` list Symfony pre-renders (SUPPORTED_LANGUAGE_MODELS
- * ∪ previously-persisted values).
+ * Runs Choices.js in text-input mode with `maxItemCount: 1`, so
+ * the field behaves like a single-choice tagger: the pill shows
+ * whatever the curator picked or typed, and the dropdown offers
+ * the union of canonical models (config/model_map.yaml) and
+ * previously-persisted values seeded from the server.
  *
- * Free-tag on the fly: every keystroke, if the typed query
- * isn't already a known option, we append it to the choice
- * list as a regular option. That way Choices.js's own search
- * filter surfaces the typed value as a pickable row alongside
- * any matching known options — Enter or click commits it, and
- * the committed option is a plain one (no "+ Add" prefix, no
- * `data-custom-properties` marker). Once picked, the newly-
- * committed value gets promoted to the known-options list so
- * subsequent keystrokes don't re-add it.
+ * Aliases from the map (e.g. `openai/gpt-4o`, `gpt-4o-2024-08-06`)
+ * are exposed as a space-joined string on each choice's
+ * customProperties.aliases so Choices.js's Fuse.js search matches
+ * them — typing `openai/gpt` filters the dropdown to the canonical
+ * gpt-4o row.
  *
- * Turning JS off leaves a plain `<select>` behind.
+ * The pill preserves the curator's typed casing. Server-side, the
+ * AssistantCreator folds aliases back to their canonical id so the
+ * catalogue facet stays deduplicated even when curators submit
+ * variant spellings.
+ *
+ * Turning JS off leaves the plain `<input list="…">` + `<datalist>`
+ * behind — the datalist still offers the seeded values as browser-
+ * native autocomplete suggestions.
  */
 export default class extends Controller {
     static values = {
+        choices: Array,
         placeholder: String,
+        addItemText: String,
     };
 
     connect() {
-        this.select = this.element.querySelector("select");
-        if (!this.select) {
-            return;
-        }
-        // Read the known options straight off the pre-rendered
-        // `<option>` list — Symfony already wrote them into the
-        // DOM from the SupportedLanguageModels service.
-        this.knownOriginals = Array.from(this.select.options)
-            .map((o) => String(o.value))
-            .filter((v) => "" !== v);
-        this.knownLower = new Set(
-            this.knownOriginals.map((v) => v.toLowerCase()),
-        );
-
-        this.choices = new Choices(this.select, {
+        this.instance = new Choices(this.element, {
             allowHTML: false,
-            searchEnabled: true,
-            // We filter the choice list ourselves in `onSearch` so
-            // we can (a) keep the filter in sync with the typed
-            // value round-trip below and (b) inject the free-typed
-            // value as a pickable option without Choices.js's own
-            // filter fighting our `setChoices` call. Every keystroke
-            // rebuilds the choice list from a pre-filtered known
-            // set — one source of truth, no flicker.
-            searchChoices: false,
-            searchResultLimit: 50,
-            shouldSort: false,
-            removeItemButton: false,
+            maxItemCount: 1,
+            addItems: true,
+            duplicateItemsAllowed: false,
+            editItems: true,
+            removeItemButton: true,
+            searchFields: ["label", "value", "customProperties.aliases"],
+            searchResultLimit: 20,
             placeholder: true,
-            placeholderValue: this.placeholderValue,
-            searchPlaceholderValue: this.placeholderValue,
+            placeholderValue: this.placeholderValue || "",
+            addItemText: (value) =>
+                (this.addItemTextValue || 'Add "__QUERY__"').replace(
+                    "__QUERY__",
+                    String(value),
+                ),
         });
 
-        this.onSearch = this.onSearch.bind(this);
-        this.onChoice = this.onChoice.bind(this);
-        this.select.addEventListener("search", this.onSearch);
-        this.select.addEventListener("choice", this.onChoice);
+        // Seed the dropdown with the union list the server rendered.
+        // Each entry carries its aliases as a space-joined string so
+        // the fuzzy-search index matches by any known spelling.
+        const seeded = (this.choicesValue || []).map((choice) => ({
+            value: String(choice.value),
+            label: String(choice.label ?? choice.value),
+            customProperties: {
+                aliases: Array.isArray(choice.aliases)
+                    ? choice.aliases.join(" ")
+                    : "",
+            },
+        }));
+        this.instance.setChoices(seeded, "value", "label", true);
     }
 
     disconnect() {
-        if (this.select) {
-            this.select.removeEventListener("search", this.onSearch);
-            this.select.removeEventListener("choice", this.onChoice);
+        if (this.instance) {
+            this.instance.destroy();
+            this.instance = null;
         }
-        if (this.choices) {
-            this.choices.destroy();
-            this.choices = null;
-        }
-    }
-
-    onSearch(event) {
-        const query = String(event.detail?.value ?? "").trim();
-        const queryLower = query.toLowerCase();
-
-        // Filter the known set to case-insensitive substring
-        // matches on the query. Empty query → whole set.
-        const filtered =
-            "" === query
-                ? this.knownOriginals
-                : this.knownOriginals.filter((v) =>
-                      v.toLowerCase().includes(queryLower),
-                  );
-
-        const list = filtered.map((v) => ({ value: v, label: v }));
-
-        // If the typed value isn't already in the known set,
-        // append it as a pickable row so Enter / click commits
-        // it as-is.
-        if ("" !== query && !this.knownLower.has(queryLower)) {
-            list.push({ value: query, label: query });
-        }
-
-        this.choices.setChoices(list, "value", "label", true);
-    }
-
-    onChoice(event) {
-        const value = event.detail?.choice?.value;
-        if (!value) {
-            return;
-        }
-        const lower = String(value).toLowerCase();
-        if (this.knownLower.has(lower)) {
-            return;
-        }
-        // The picked value was a just-added free-tag. Promote
-        // it to the known-options list so future keystrokes
-        // don't re-add it, and rebuild the choice list to the
-        // canonical shape (no per-search injection lingering).
-        this.knownOriginals.push(value);
-        this.knownLower.add(lower);
-        this.choices.setChoices(
-            this.knownOriginals.map((v) => ({ value: v, label: v })),
-            "value",
-            "label",
-            true,
-        );
     }
 }

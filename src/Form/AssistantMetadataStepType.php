@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Assistant\Model\ModelMap;
+use App\Repository\AssistantRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -44,8 +45,13 @@ final class AssistantMetadataStepType extends AbstractType
      */
     public const string MODEL_DATALIST_ID = 'metadata-model-options';
 
+    /**
+     * @param ModelMap            $modelMap  canonical model catalog backing the datalist
+     * @param AssistantRepository $assistants source of legacy/free-typed language-model values already in use
+     */
     public function __construct(
         private readonly ModelMap $modelMap,
+        private readonly AssistantRepository $assistants,
     ) {
     }
 
@@ -123,8 +129,19 @@ final class AssistantMetadataStepType extends AbstractType
     }
 
     /**
-     * Expose the known-model choices to the language-model field so the
-     * template can render them as a `<datalist>` for the input.
+     * Expose the known-model choices and their aliases to the language-model
+     * field so the template can render a searchable picker on top of it.
+     *
+     * The choice list unions {@see ModelMap::choices()} with the distinct
+     * `languageModel` values already persisted in the catalogue, so legacy
+     * or curator-typed values remain reachable even when they are not part
+     * of the canonical shortlist. Case-insensitive dedup applies, and the
+     * canonical spelling wins any tie — the catalog view stays coherent
+     * even when the persisted value differs only by case.
+     *
+     * Aliases are exposed as canonical-id => list<string> so the client can
+     * search-match by alias (e.g. typing `openai/gpt-4o` filters to the
+     * `gpt-4o` entry) without storing the alias as its own choice.
      *
      * Runs in `finishView` (not `buildView`) because child views only
      * exist once they are built. The flow builds this step's fields only
@@ -138,7 +155,29 @@ final class AssistantMetadataStepType extends AbstractType
             return;
         }
 
-        $languageModel->vars['model_choices'] = $this->modelMap->choices();
+        $canonicalChoices = $this->modelMap->choices();
+        $seen = [];
+        $choices = [];
+        foreach ($canonicalChoices as $label => $id) {
+            $seen[strtolower($id)] = true;
+            $choices[$label] = $id;
+        }
+        foreach ($this->assistants->persistedLanguageModels() as $stored) {
+            $key = strtolower($stored);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $choices[$stored] = $stored;
+        }
+
+        $aliases = [];
+        foreach ($canonicalChoices as $id) {
+            $aliases[$id] = $this->modelMap->aliasesFor($id);
+        }
+
+        $languageModel->vars['model_choices'] = $choices;
+        $languageModel->vars['model_aliases'] = $aliases;
         $languageModel->vars['model_datalist_id'] = self::MODEL_DATALIST_ID;
     }
 

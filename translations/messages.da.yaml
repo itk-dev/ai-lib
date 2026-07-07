@@ -432,6 +432,8 @@ assistant:
             language_model_label: "Sprogmodel"
             language_model_help: "Vælg en sprogmodel fra listen."
             language_model_required: "Angiv en sprogmodel."
+            language_model_placeholder: "Skriv eller vælg en sprogmodel"
+            language_model_add_item: 'Tilføj "__QUERY__"'
             tags_label: "Tags"
             tags_help: "Komma-separeret. Fx borgerservice, jura."
             experimental_notice: "%format% er et eksperimentelt format. Import og eksport er endnu ikke manuelt testet, så kontrollér resultatet før du deler."

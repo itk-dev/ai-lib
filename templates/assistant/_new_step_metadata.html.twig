@@ -3,6 +3,14 @@
     Every input is pre-filled from the DTO the flow's step-1
     listener populated from the detected source format.
 #}
+{% set picker_choices = [] %}
+{% for label, id in flow.metadata.languageModel.vars.model_choices %}
+    {% set picker_choices = picker_choices|merge([{
+        value: id,
+        label: label,
+        aliases: flow.metadata.languageModel.vars.model_aliases[id] ?? [],
+    }]) %}
+{% endfor %}
 <div class="grid gap-4">
     {% if draft.framework|framework_experimental %}
         <div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="note">
@@ -11,8 +19,15 @@
     {% endif %}
     {{ form_row(flow.metadata.title) }}
     {{ form_row(flow.metadata.description) }}
-    {{ form_row(flow.metadata.languageModel) }}
-    {# Known models offered as suggestions; the curator may still type a custom value. #}
+    {{ form_row(flow.metadata.languageModel, {
+        attr: flow.metadata.languageModel.vars.attr|merge({
+            'data-controller': 'language-model-picker',
+            'data-language-model-picker-choices-value': picker_choices|json_encode,
+            'data-language-model-picker-placeholder-value': 'assistant.new.step_metadata.language_model_placeholder'|trans,
+            'data-language-model-picker-add-item-text-value': 'assistant.new.step_metadata.language_model_add_item'|trans,
+        }),
+    }) }}
+    {# Known models offered as a native fallback when Choices.js is unavailable. #}
     <datalist id="{{ flow.metadata.languageModel.vars.model_datalist_id }}">
         {% for label, id in flow.metadata.languageModel.vars.model_choices %}
             <option value="{{ id }}">{{ label }}</option>

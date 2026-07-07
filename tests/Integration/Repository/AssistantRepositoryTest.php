@@ -99,6 +99,15 @@ final class AssistantRepositoryTest extends KernelTestCase
         self::assertGreaterThan(max($firstIds), min($secondIds), 'page 2 starts after page 1 by id-ASC order');
     }
 
+    // Ensures persistedLanguageModels() returns every distinct non-empty stored id, ordered A→Z.
+    public function testPersistedLanguageModelsListsDistinctStoredValues(): void
+    {
+        self::assertSame(
+            ['gpt-4o', 'gpt-4o-mini', 'llama-3.1', 'llama-3.2', 'mistral', 'o3-mini'],
+            $this->repository->persistedLanguageModels(),
+        );
+    }
+
     // Verifies the facet-count helpers reflect the fixture baseline (six canonical LM buckets summing to 21, single openwebui bucket).
     public function testFacetCountsReflectFixtureBaseline(): void
     {
