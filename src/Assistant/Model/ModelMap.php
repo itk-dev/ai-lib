@@ -37,7 +37,7 @@ final class ModelMap
     /**
      * Canonical model definitions keyed by canonical id; null until loaded.
      *
-     * @var array<string, array{label: string, targets: array<string, string|null>}>|null
+     * @var array<string, array{label: string, targets: array<string, string|null>, aliases: list<string>}>|null
      */
     private ?array $models = null;
 
@@ -141,6 +141,26 @@ final class ModelMap
     }
 
     /**
+     * The alias spellings recognised for a canonical id.
+     *
+     * The canonical id itself is not repeated in the returned list —
+     * only the aliases as declared in `config/model_map.yaml`. Feeds
+     * client-side search on the picker so typing an alias filters the
+     * dropdown to the canonical entry.
+     *
+     * @param string $canonicalId a canonical model id
+     *
+     * @return list<string> declared aliases in map order; empty when
+     *                      the id has no aliases or is unknown
+     */
+    public function aliasesFor(string $canonicalId): array
+    {
+        $this->load();
+
+        return $this->models[$canonicalId]['aliases'] ?? [];
+    }
+
+    /**
      * Read, validate structurally, and memoise the model map.
      *
      * Only the load-blocking failures throw (the file must parse to a
@@ -184,10 +204,10 @@ final class ModelMap
             foreach ((array) ($definition['targets'] ?? []) as $formatId => $targetId) {
                 $targets[(string) $formatId] = \is_string($targetId) ? $targetId : null;
             }
-            $definitions[$id] = ['label' => $label, 'targets' => $targets];
+            $aliases = array_values(array_filter((array) ($definition['aliases'] ?? []), 'is_string'));
+            $definitions[$id] = ['label' => $label, 'targets' => $targets, 'aliases' => $aliases];
 
-            $aliases = array_filter((array) ($definition['aliases'] ?? []), 'is_string');
-            foreach ([$id, ...array_values($aliases)] as $spelling) {
+            foreach ([$id, ...$aliases] as $spelling) {
                 $index[$this->key($spelling)] = $id;
             }
         }

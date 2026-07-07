@@ -52,6 +52,36 @@ final class AssistantCreatorTest extends KernelTestCase
         self::assertSame(['name' => 'demo', 'base_model_id' => 'gpt-4o'], $assistant->getSourceConfig());
     }
 
+    // Ensures a submitted alias is folded to its canonical id before persistence, keeping the language-model facet deduplicated.
+    public function testCreateNormalisesAliasToCanonicalLanguageModel(): void
+    {
+        $assistant = $this->creator->create(
+            'Alias normalised',
+            'A description',
+            'openai/gpt-4o',
+            'openwebui',
+            [],
+            '{"name":"demo","base_model_id":"gpt-4o"}',
+        );
+
+        self::assertSame('gpt-4o', $assistant->getLanguageModel());
+    }
+
+    // Verifies an unknown/free-typed language model passes through verbatim, so curator-specific values survive.
+    public function testCreatePreservesUnknownLanguageModel(): void
+    {
+        $assistant = $this->creator->create(
+            'Custom model preserved',
+            'A description',
+            'my-local-llm',
+            'openwebui',
+            [],
+            '{"name":"demo","base_model_id":"gpt-4o"}',
+        );
+
+        self::assertSame('my-local-llm', $assistant->getLanguageModel());
+    }
+
     // Verifies the real array-wrapped export is unwrapped and stripped of PII / instance data before storage.
     public function testCreateUnwrapsArrayAndStripsPiiAndInstanceData(): void
     {

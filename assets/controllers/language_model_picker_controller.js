@@ -4,59 +4,82 @@ import Choices from "choices.js";
 /*
  * Choices.js on the wizard's language-model `<select>`.
  *
- * Base shape: select-one search combobox seeded from the
- * `<option>` list Symfony pre-renders (SUPPORTED_LANGUAGE_MODELS
- * ∪ previously-persisted values).
+ * The template pre-renders the option list as the union of
+ * ModelMap::choices() and every persisted `languageModel`
+ * value already in the catalogue (server-side, so no-JS
+ * clients see the same options). This controller wraps the
+ * select in Choices.js's select-one search combobox and
+ * adds two behaviours the raw widget doesn't offer:
  *
- * Free-tag on the fly: every keystroke, if the typed query
- * isn't already a known option, we append it to the choice
- * list as a regular option. That way Choices.js's own search
- * filter surfaces the typed value as a pickable row alongside
- * any matching known options — Enter or click commits it, and
- * the committed option is a plain one (no "+ Add" prefix, no
- * `data-custom-properties` marker). Once picked, the newly-
- * committed value gets promoted to the known-options list so
- * subsequent keystrokes don't re-add it.
+ * 1. Alias-aware filter: we own the `search` event
+ *    (`searchChoices: false`) and re-emit a filtered choice
+ *    list that matches value, label, or any alias declared
+ *    in model_map.yaml. Typing `openai/gpt` narrows the
+ *    dropdown to the canonical `gpt-4o` row.
  *
- * Turning JS off leaves a plain `<select>` behind.
+ * 2. Free-tag on the fly: if the typed value doesn't match
+ *    any known option, we append it to the filtered list as
+ *    a pickable row. Enter or click commits it verbatim, and
+ *    the committed value gets promoted to the known set so
+ *    subsequent keystrokes don't duplicate it. The pill
+ *    shows whatever the curator typed; server-side
+ *    normalisation is what folds aliases to canonical ids.
+ *
+ * Turning JS off leaves a plain `<select>` behind, populated
+ * with the same option list.
  */
 export default class extends Controller {
     static values = {
+        aliases: Object,
         placeholder: String,
+        addItemText: String,
     };
 
     connect() {
+        // The controller is bound to a wrapper `<div>` (not the `<select>`
+        // itself) so Choices.js can re-parent the select into its own DOM
+        // wrapper without dragging the controller node out of the tree —
+        // that would fire disconnect/connect in a loop.
         this.select = this.element.querySelector("select");
         if (!this.select) {
             return;
         }
-        // Read the known options straight off the pre-rendered
-        // `<option>` list — Symfony already wrote them into the
-        // DOM from the SupportedLanguageModels service.
-        this.knownOriginals = Array.from(this.select.options)
-            .map((o) => String(o.value))
-            .filter((v) => "" !== v);
-        this.knownLower = new Set(
-            this.knownOriginals.map((v) => v.toLowerCase()),
-        );
 
-        this.choices = new Choices(this.select, {
+        // Snapshot the pre-rendered option list so the search hook
+        // can rebuild the choice list from a stable source of truth.
+        this.known = Array.from(this.select.options)
+            .filter((o) => "" !== o.value)
+            .map((o) => ({ value: String(o.value), label: o.textContent }));
+        this.knownLower = new Set(this.known.map((c) => c.value.toLowerCase()));
+
+        // Map canonical id → array of lower-cased alias tokens the
+        // filter hook consults when a typed query misses the value +
+        // label match.
+        this.aliasesLower = new Map();
+        const aliases = this.aliasesValue || {};
+        for (const id of Object.keys(aliases)) {
+            const list = Array.isArray(aliases[id]) ? aliases[id] : [];
+            this.aliasesLower.set(
+                id,
+                list.map((a) => String(a).toLowerCase()),
+            );
+        }
+
+        this.instance = new Choices(this.select, {
             allowHTML: false,
             searchEnabled: true,
-            // We filter the choice list ourselves in `onSearch` so
-            // we can (a) keep the filter in sync with the typed
-            // value round-trip below and (b) inject the free-typed
-            // value as a pickable option without Choices.js's own
-            // filter fighting our `setChoices` call. Every keystroke
-            // rebuilds the choice list from a pre-filtered known
-            // set — one source of truth, no flicker.
             searchChoices: false,
             searchResultLimit: 50,
             shouldSort: false,
             removeItemButton: false,
             placeholder: true,
-            placeholderValue: this.placeholderValue,
-            searchPlaceholderValue: this.placeholderValue,
+            placeholderValue: this.placeholderValue || "",
+            searchPlaceholderValue: this.placeholderValue || "",
+            addItemText: (value) =>
+                (this.addItemTextValue || 'Add "__QUERY__"').replace(
+                    "__QUERY__",
+                    String(value),
+                ),
         });
 
         this.onSearch = this.onSearch.bind(this);
@@ -70,35 +93,40 @@ export default class extends Controller {
             this.select.removeEventListener("search", this.onSearch);
             this.select.removeEventListener("choice", this.onChoice);
         }
-        if (this.choices) {
-            this.choices.destroy();
-            this.choices = null;
+        if (this.instance) {
+            this.instance.destroy();
+            this.instance = null;
         }
     }
 
     onSearch(event) {
         const query = String(event.detail?.value ?? "").trim();
-        const queryLower = query.toLowerCase();
+        const q = query.toLowerCase();
 
-        // Filter the known set to case-insensitive substring
-        // matches on the query. Empty query → whole set.
         const filtered =
-            "" === query
-                ? this.knownOriginals
-                : this.knownOriginals.filter((v) =>
-                      v.toLowerCase().includes(queryLower),
-                  );
+            "" === q
+                ? this.known
+                : this.known.filter((c) => {
+                      if (c.value.toLowerCase().includes(q)) {
+                          return true;
+                      }
+                      if (c.label.toLowerCase().includes(q)) {
+                          return true;
+                      }
+                      const aliasList = this.aliasesLower.get(c.value) || [];
+                      return aliasList.some((a) => a.includes(q));
+                  });
 
-        const list = filtered.map((v) => ({ value: v, label: v }));
+        const list = filtered.map((c) => ({
+            value: c.value,
+            label: c.label,
+        }));
 
-        // If the typed value isn't already in the known set,
-        // append it as a pickable row so Enter / click commits
-        // it as-is.
-        if ("" !== query && !this.knownLower.has(queryLower)) {
+        if ("" !== q && !this.knownLower.has(q)) {
             list.push({ value: query, label: query });
         }
 
-        this.choices.setChoices(list, "value", "label", true);
+        this.instance.setChoices(list, "value", "label", true);
     }
 
     onChoice(event) {
@@ -110,17 +138,7 @@ export default class extends Controller {
         if (this.knownLower.has(lower)) {
             return;
         }
-        // The picked value was a just-added free-tag. Promote
-        // it to the known-options list so future keystrokes
-        // don't re-add it, and rebuild the choice list to the
-        // canonical shape (no per-search injection lingering).
-        this.knownOriginals.push(value);
+        this.known.push({ value: String(value), label: String(value) });
         this.knownLower.add(lower);
-        this.choices.setChoices(
-            this.knownOriginals.map((v) => ({ value: v, label: v })),
-            "value",
-            "label",
-            true,
-        );
     }
 }
