@@ -33,10 +33,18 @@ final class AssistantNavigatorFlowType extends NavigatorFlowType
         // renders navigator children by name (`flow.navigator.previous`,
         // `.next`, `.finish`), so the trailing position in the
         // builder's children map doesn't affect the visible order.
+        //
+        // `validation_groups: false` is the switch that actually skips
+        // server-side validation — `validate: false` only sets the
+        // `formnovalidate` HTML attribute. Without it, the flow's
+        // `getStepForm()` returns early when a required field on the
+        // current step is unset (e.g. dataSensitivity when arriving
+        // from step 1), and the movePrevious handler never runs.
         $builder->remove('previous');
         $builder->add('previous', PreviousFlowType::class, [
             'clear_submission' => false,
             'validate' => false,
+            'validation_groups' => false,
         ]);
     }
 }
