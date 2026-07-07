@@ -43,37 +43,33 @@
                 {% elseif 'metadata' == current_step %}
                     {{ include('assistant/_new_step_metadata.html.twig', {flow: flow, draft: draft}) }}
                 {% elseif 'receipt' == current_step %}
-                    {{ include('assistant/_new_step_receipt.html.twig', {draft: draft}) }}
+                    {{ include('assistant/_new_step_receipt.html.twig', {flow: flow, draft: draft}) }}
                 {% endif %}
 
                 {#
-                    Navigator buttons rendered explicitly so we can style them
-                    and right-align the row. Each button self-hides via its
-                    NavigatorFlowType `include_if` callback: Previous on the
-                    first step, Next on the last step, Finish on any non-last
-                    step. `form_end()` emits the remaining unrendered fields
-                    — CSRF, the hidden step property — below.
+                    Navigator on the non-receipt steps: Previous / Next
+                    right-aligned. On the receipt step the three actions
+                    (Go to assistant / Share another / Back to catalog)
+                    are left-aligned and rendered inside the partial
+                    itself so they can sit alongside the non-form
+                    anchor links.
                 #}
-                <div class="flex flex-wrap items-center justify-end gap-2">
-                    {% if flow.navigator.previous is defined %}
-                        {{ form_widget(flow.navigator.previous, {
-                            label: 'assistant.new.action.previous'|trans,
-                            attr: {class: 'rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-primary/40'},
-                        }) }}
-                    {% endif %}
-                    {% if flow.navigator.next is defined %}
-                        {{ form_widget(flow.navigator.next, {
-                            label: 'assistant.new.action.next'|trans,
-                            attr: {class: 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40'},
-                        }) }}
-                    {% endif %}
-                    {% if flow.navigator.finish is defined %}
-                        {{ form_widget(flow.navigator.finish, {
-                            label: 'assistant.new.action.finish'|trans,
-                            attr: {class: 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40'},
-                        }) }}
-                    {% endif %}
-                </div>
+                {% if 'receipt' != current_step %}
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                        {% if flow.navigator.previous is defined %}
+                            {{ form_widget(flow.navigator.previous, {
+                                label: 'assistant.new.action.previous'|trans,
+                                attr: {class: 'rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-primary/40'},
+                            }) }}
+                        {% endif %}
+                        {% if flow.navigator.next is defined %}
+                            {{ form_widget(flow.navigator.next, {
+                                label: 'assistant.new.action.next'|trans,
+                                attr: {class: 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40'},
+                            }) }}
+                        {% endif %}
+                    </div>
+                {% endif %}
 
                 {{ form_end(flow) }}
             </section>

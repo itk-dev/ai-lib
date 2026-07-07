@@ -3,10 +3,10 @@
 
     The controller has already persisted the assistant and stashed
     its id on `draft.createdAssistantId` by the time this renders.
-    We show a confirmation heading + permalink to the fresh row.
-    "Del en til" is not a link here — it's the flow's Finish
-    button (rendered outside this partial), which correctly resets
-    the session state before landing on a fresh step 1.
+    We show a confirmation heading + permalink and three left-
+    aligned actions: view the fresh entity, share another (the
+    flow's Finish submit, which resets session state and lands
+    back on step 1), and go back to the catalog.
 #}
 <div class="grid gap-6">
     <div class="grid gap-2">
@@ -29,9 +29,19 @@
             <twig:Form:Button href="{{ path('app_assistant_show', {id: draft.createdAssistantId}) }}">
                 {{ 'assistant.new.step_receipt.go_to_assistant'|trans }}
             </twig:Form:Button>
+            {{ form_widget(flow.navigator.finish, {
+                label: 'assistant.new.step_receipt.share_another'|trans,
+                attr: {class: 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40'},
+            }) }}
             <a class="text-sm text-text underline hover:text-primary" href="{{ path('app_assistant_catalog') }}">
                 {{ 'assistant.new.step_receipt.back_to_catalog'|trans }}
             </a>
         </div>
     {% endif %}
 </div>
+{# `flow.navigator.previous` is still `include_if`-defined on the last step
+   (the cursor can technically move back). We only surface finish + the two
+   anchors on the receipt, so mark the whole navigator rendered here to keep
+   `form_end` from auto-emitting the leftover previous button below the
+   actions row. #}
+{% do flow.navigator.setRendered %}
