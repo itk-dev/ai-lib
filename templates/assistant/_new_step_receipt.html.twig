@@ -39,6 +39,11 @@
         </div>
     {% endif %}
 </div>
+{# `flow.receipt` is a childless compound (AssistantReceiptStepType has no
+   fields — the step is render-only), so `form_end` would otherwise emit
+   its default humanized legend "Receipt" at the bottom of the page. Mark
+   it rendered here to suppress that. #}
+{% do flow.receipt.setRendered %}
 {# `flow.navigator.previous` is still `include_if`-defined on the last step
    (the cursor can technically move back). We only surface finish + the two
    anchors on the receipt, so mark the whole navigator rendered here to keep
