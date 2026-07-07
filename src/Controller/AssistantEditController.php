@@ -140,11 +140,16 @@ final class AssistantEditController extends AbstractController
      * Seed an {@see AssistantDraft} from the persisted entity.
      *
      * `editingAssistantId` is what signals the prefiller to leave the
-     * draft alone and the controller to route through
-     * {@see AssistantEditor::update()}. The source config is
-     * re-serialised as pretty-printed JSON so step 1's textarea shows
-     * a copy of the stored dict — good enough for JSON formats to
-     * round-trip through the adapter's parser on submit.
+     * draft alone (until the raw JSON changes) and the controller to
+     * route through {@see AssistantEditor::update()}. The source
+     * config is re-serialised as pretty-printed JSON so step 1's
+     * textarea shows a copy of the stored dict — good enough for
+     * JSON formats to round-trip through the adapter's parser on
+     * submit. `jsonBaseline` gets the entity's own field values so
+     * the metadata step's "(Ændret)" badge highlights any current
+     * draft field that no longer matches the persisted row —
+     * whether the change came from a manual step-2 edit or from a
+     * re-upload of a different config on step 1.
      *
      * @param Assistant $assistant the row whose values seed the draft
      *
@@ -152,16 +157,18 @@ final class AssistantEditController extends AbstractController
      */
     private function hydrateDraft(Assistant $assistant): AssistantDraft
     {
+        $tagNames = array_map(
+            static fn (Tag $tag): string => $tag->getName(),
+            $assistant->getTags()->toArray(),
+        );
+
         $draft = new AssistantDraft();
         $draft->editingAssistantId = (string) $assistant->getId();
         $draft->title = $assistant->getTitle();
         $draft->description = $assistant->getDescription();
         $draft->framework = $assistant->getFramework();
         $draft->languageModel = $assistant->getLanguageModel();
-        $draft->tags = array_map(
-            static fn (Tag $tag): string => $tag->getName(),
-            $assistant->getTags()->toArray(),
-        );
+        $draft->tags = $tagNames;
         $draft->organizationId = null !== $assistant->getOrganization()
             ? (string) $assistant->getOrganization()->getId()
             : null;
@@ -177,6 +184,18 @@ final class AssistantEditController extends AbstractController
         // curator has since pasted a different one — if so, step-2's
         // derived fields refresh from the new canonical values.
         $draft->initialSourceConfig = $draft->sourceConfig;
+
+        // The baseline the step-2 "(Ændret)" badge compares against.
+        // On the edit path the entity's own values are the natural
+        // baseline: badges highlight fields that differ from the
+        // persisted row, regardless of whether the drift came from a
+        // manual step-2 edit or a step-1 re-upload.
+        $draft->jsonBaseline = [
+            'title' => $draft->title,
+            'description' => $draft->description,
+            'languageModel' => $draft->languageModel,
+            'tags' => $tagNames,
+        ];
 
         return $draft;
     }

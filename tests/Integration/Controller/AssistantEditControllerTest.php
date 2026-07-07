@@ -183,6 +183,41 @@ final class AssistantEditControllerTest extends WebTestCase
         self::assertSame('Refreshed description', $stepTwo[$descriptionField]->getValue());
     }
 
+    // Verifies the step-2 "(Ændret)" badge surfaces on the edit wizard when a derived field no longer matches the persisted entity, whether via manual step-2 edit or a step-1 re-upload.
+    public function testChangedBadgeAppearsForFieldsDivergingFromPersistedEntity(): void
+    {
+        $alice = $this->userByEmail(UserFixtures::ALICE_EMAIL);
+        $assistant = $this->assistantOwnedBy($alice);
+        $originalTitle = $assistant->getTitle();
+        $assistant->setSourceConfig(['name' => $originalTitle, 'base_model_id' => $assistant->getLanguageModel()]);
+        self::getContainer()->get('doctrine.orm.entity_manager')->flush();
+        $this->client->loginUser($alice);
+
+        // Baseline: entity → step 2 with the original title shows NO badge.
+        $crawler = $this->client->request('GET', '/assistant/'.$assistant->getId().'/edit');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $crawler = $this->client->submit($stepOne);
+        self::assertStringNotContainsString(
+            'Ændret',
+            $crawler->filter('body')->text(),
+            'no badge before any change lands on the derived fields',
+        );
+
+        // Paste a different JSON via Previous + submit-with-new-JSON.
+        $stepTwoBack = $crawler->selectButton('assistant_create_flow[navigator][previous]')->form();
+        $crawler = $this->client->submit($stepTwoBack);
+        $stepOneAgain = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $sourceField = $this->findFieldName($stepOneAgain->all(), '[sourceConfig]');
+        $stepOneAgain[$sourceField] = json_encode([
+            'name' => 'Refreshed via wizard',
+            'base_model_id' => $assistant->getLanguageModel(),
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOneAgain);
+
+        // Step 2 now diverges from the entity — the badge appears.
+        self::assertStringContainsString('Ændret', $crawler->filter('body')->text());
+    }
+
     // Verifies stepping through step 1 without changing the JSON leaves the entity-hydrated metadata intact.
     public function testUnchangedJsonPreservesEntityHydratedMetadata(): void
     {
