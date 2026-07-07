@@ -33,20 +33,20 @@
                 {{ form_start(flow, {attr: {class: 'grid gap-4'}}) }}
 
                 {#
-                    Flow-level errors — rendered as a plain bulleted
-                    list inside the shared `<twig:Alert>` component so
-                    every error is treated the same (any of them could
-                    be a lone entry). Tailwind's preflight strips
-                    `<ul>` styling, so `list-disc` + `pl-5` re-establish
-                    disc bullets and their left inset; `marker:text-…`
-                    tints the bullets to match the surrounding text.
+                    Flow-level errors rendered as a flat bulleted list.
+                    Tailwind's preflight sets `list-style: none` on every
+                    `<ul>`, so `list-disc` doesn't win — draw the bullet
+                    ourselves via a `::before` pseudo-element on each
+                    `<li>` instead. Wrapped in the shared alert component.
                 #}
                 {% set flow_errors = flow.vars.errors %}
                 {% if flow_errors|length > 0 %}
                     <twig:Alert type="error">
-                        <ul class="list-disc space-y-1 pl-5 marker:text-text">
+                        <ul class="space-y-1">
                             {% for error in flow_errors %}
-                                <li>{{ error.message }}</li>
+                                <li class="relative pl-4 before:absolute before:left-0 before:text-text before:content-['•']">
+                                    {{ error.message }}
+                                </li>
                             {% endfor %}
                         </ul>
                     </twig:Alert>
