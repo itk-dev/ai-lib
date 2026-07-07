@@ -101,26 +101,45 @@ final class FormatAdapterRegistryTest extends TestCase
         self::assertSame('', (new FormatAdapterRegistry([]))->default());
     }
 
+    // Verifies requiredForAnyExport() unions each adapter's required fields, deduped.
+    public function testRequiredForAnyExportUnionsFields(): void
+    {
+        $registry = new FormatAdapterRegistry([
+            $this->stub('a', 'A', required: ['name']),
+            $this->stub('b', 'B', required: ['name', 'baseModel']),
+        ]);
+
+        self::assertSame(['name', 'baseModel'], $registry->requiredForAnyExport());
+    }
+
     /**
      * Build a minimal {@see FormatAdapter} stub for registry tests.
      *
-     * Only id / label / supports are exercised here; the conversion
-     * methods return trivial values since the registry never calls
-     * them.
+     * Only id / label / supports / requiredCanonicalFields are exercised
+     * here; the conversion methods return trivial values since the
+     * registry never calls them.
      *
      * @param callable(string):bool|null $supports optional supports() behaviour
+     * @param list<string>               $required required canonical fields
      */
-    private function stub(string $id, string $label, ?callable $supports = null): FormatAdapter
+    private function stub(string $id, string $label, ?callable $supports = null, array $required = []): FormatAdapter
     {
-        return new class ($id, $label, $supports) implements FormatAdapter {
+        return new class ($id, $label, $supports, $required) implements FormatAdapter {
             /**
              * @param callable(string):bool|null $supports
+             * @param list<string>               $required
              */
             public function __construct(
                 private readonly string $id,
                 private readonly string $label,
                 private $supports,
+                private readonly array $required = [],
             ) {
+            }
+
+            public function requiredCanonicalFields(): array
+            {
+                return $this->required;
             }
 
             public function id(): string
@@ -131,6 +150,11 @@ final class FormatAdapterRegistryTest extends TestCase
             public function label(): string
             {
                 return $this->label;
+            }
+
+            public function isExperimental(): bool
+            {
+                return false;
             }
 
             public function mediaType(): string

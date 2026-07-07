@@ -182,6 +182,21 @@ final class AssistantControllerTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Type', 'application/json');
     }
 
+    // Verifies a cross-format export whose model has no target equivalent sets a non-blocking warning header.
+    public function testCrossFormatExportSetsWarningHeader(): void
+    {
+        $repository = self::getContainer()->get(AssistantRepository::class);
+        $assistant = $repository->findOneBy(['title' => 'Borgerservice-vejviser']);
+        self::assertNotNull($assistant);
+
+        // The fixture runs on gpt-4o, which has no Ollama equivalent.
+        $this->client->request('GET', '/assistant/'.$assistant->getId().'/export?format=ollama');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('text/plain', (string) $this->client->getResponse()->headers->get('Content-Type'));
+        self::assertNotNull($this->client->getResponse()->headers->get('X-Export-Warning'));
+    }
+
     // Verifies an unknown ?format= returns 404.
     public function testExportUnknownFormatReturns404(): void
     {

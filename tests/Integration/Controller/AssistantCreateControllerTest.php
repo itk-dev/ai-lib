@@ -47,7 +47,7 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertSelectorNotExists('input[name$="[title]"]');
         // Step rail shows all three step labels.
         $body = $crawler->filter('body')->text();
-        self::assertStringContainsString('Indsæt JSON', $body);
+        self::assertStringContainsString('Indsæt konfiguration', $body);
         self::assertStringContainsString('Gennemgang', $body);
         self::assertStringContainsString('Kvittering', $body);
     }
@@ -101,6 +101,23 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertIsArray($payload);
         self::assertFalse($payload['valid']);
         self::assertNotEmpty($payload['errors']);
+    }
+
+    // Verifies a check the detected format does not define (schema on an Ollama Modelfile) counts as passed.
+    public function testValidateConfigEndpointPassesInapplicableCheckForDetectedFormat(): void
+    {
+        $this->client->request(
+            'POST',
+            '/assistant/new/validate-config',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['json' => "FROM llama3.2\nSYSTEM be nice", 'check' => 'schema'], \JSON_THROW_ON_ERROR),
+        );
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), associative: true);
+        self::assertIsArray($payload);
+        self::assertTrue($payload['valid']);
+        self::assertSame([], $payload['errors']);
     }
 
     // Full happy-path: valid JSON on step 1 → auto-extracted metadata on step 2 → persist → step 3 receipt with permalink.
@@ -157,6 +174,26 @@ final class AssistantCreateControllerTest extends WebTestCase
 
         // The permalink to the created row is on the receipt page.
         self::assertStringContainsString('/assistant/'.(string) $created->getId(), $body);
+    }
+
+    // Verifies importing a non-OpenWebUI (Ollama) config detects the format, normalises the model, and flags step 2 as experimental.
+    public function testExperimentalFormatImportShowsNoticeOnStepTwo(): void
+    {
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
+        $stepOne[$textareaName] = "FROM llama3.2\nSYSTEM \"\"\"Du er en hjælpsom assistent.\"\"\"";
+        $crawler = $this->client->submit($stepOne);
+
+        self::assertResponseIsSuccessful();
+        $body = $crawler->filter('body')->text();
+        // The Ollama format is experimental, so step 2 carries the caution.
+        self::assertStringContainsString('eksperimentelt format', $body);
+
+        // The detected model is folded onto its canonical id for the selector.
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $languageModelField = $this->findFieldName($stepTwo->all(), '[languageModel]');
+        self::assertSame('llama-3.2', $stepTwo[$languageModelField]->getValue());
     }
 
     // Ensures a fresh GET after completing the wizard drops the receipt-state session slot and re-renders step 1.

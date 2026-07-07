@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Assistant\Format;
 
 use App\Assistant\InvalidAssistantInputException;
+use App\Assistant\Model\ModelMap;
 use App\Assistant\OpenWebUiConfigSanitizer;
 use App\Assistant\OpenWebUiModelNormalizer;
 use App\Validator\OpenWebUiConfigValidator;
 use App\Validator\ValidationResult;
+use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
 
 /**
  * {@see FormatAdapter} for the OpenWebUI model export format.
@@ -18,7 +20,12 @@ use App\Validator\ValidationResult;
  * flattening to {@see OpenWebUiModelNormalizer}, PII stripping to
  * {@see OpenWebUiConfigSanitizer} — and owns the mapping between a
  * sanitised OWUI model dict and the neutral {@see CanonicalModel}.
+ *
+ * The tag priority places OpenWebUI below the more sharply-discriminating
+ * JSON formats (its schema is permissive) but above the text-only Ollama
+ * adapter, so {@see FormatAdapterRegistry::detect()} stays deterministic.
  */
+#[AsTaggedItem(priority: 20)]
 final class OpenWebUiAdapter implements FormatAdapter
 {
     private const string ID = 'openwebui';
@@ -28,7 +35,17 @@ final class OpenWebUiAdapter implements FormatAdapter
         private readonly OpenWebUiConfigValidator $validator,
         private readonly OpenWebUiModelNormalizer $normalizer,
         private readonly OpenWebUiConfigSanitizer $sanitizer,
+        private readonly ModelMap $modelMap,
     ) {
+    }
+
+    /**
+     * OpenWebUI's schema requires only a `name`; the base model is
+     * optional, so `name` is the sole field a re-importable export needs.
+     */
+    public function requiredCanonicalFields(): array
+    {
+        return ['name'];
     }
 
     public function id(): string
@@ -39,6 +56,11 @@ final class OpenWebUiAdapter implements FormatAdapter
     public function label(): string
     {
         return self::LABEL;
+    }
+
+    public function isExperimental(): bool
+    {
+        return false;
     }
 
     public function mediaType(): string
@@ -146,7 +168,7 @@ final class OpenWebUiAdapter implements FormatAdapter
         unset($source['id']);
 
         $source['name'] = $model->name;
-        $source['base_model_id'] = $model->baseModel ?? '';
+        $source['base_model_id'] = $this->targetModel($model->baseModel);
 
         $meta = \is_array($source['meta'] ?? null) ? $source['meta'] : [];
         $meta['description'] = $model->description ?? '';
@@ -167,6 +189,27 @@ final class OpenWebUiAdapter implements FormatAdapter
             [$source],
             \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR,
         );
+    }
+
+    /**
+     * Resolve a canonical base-model id to the id OpenWebUI expects.
+     *
+     * A null model becomes an empty string; a known model is translated
+     * via {@see ModelMap}; an unknown or no-equivalent model passes
+     * through as its canonical name so the export still imports (the
+     * importer can reassign the model inside OpenWebUI).
+     *
+     * @param string|null $baseModel the canonical base-model id, if any
+     *
+     * @return string the OpenWebUI `base_model_id` value
+     */
+    private function targetModel(?string $baseModel): string
+    {
+        if (null === $baseModel) {
+            return '';
+        }
+
+        return $this->modelMap->toTarget($baseModel, self::ID) ?? $baseModel;
     }
 
     /**

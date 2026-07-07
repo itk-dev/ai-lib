@@ -41,7 +41,7 @@
                 {% if 'json' == current_step %}
                     {{ include('assistant/_new_step_json.html.twig', {flow: flow, checks: checks}) }}
                 {% elseif 'metadata' == current_step %}
-                    {{ include('assistant/_new_step_metadata.html.twig', {flow: flow}) }}
+                    {{ include('assistant/_new_step_metadata.html.twig', {flow: flow, draft: draft}) }}
                 {% elseif 'receipt' == current_step %}
                     {{ include('assistant/_new_step_receipt.html.twig', {draft: draft}) }}
                 {% endif %}
