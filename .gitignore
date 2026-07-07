@@ -28,3 +28,7 @@
 /.phpunit.cache/
 /coverage/
 ###< phpunit/phpunit ###
+
+###> Local user fixtures ###
+src/DataFixtures/LocalUserFixtures.php
+###< Local user fixtures ###
