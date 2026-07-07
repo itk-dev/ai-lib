@@ -93,12 +93,27 @@ final class AssistantDraft
      * template can flag which fields the curator has since edited —
      * showing a small "(Ændret)" badge next to the label of any field
      * whose current value no longer matches the JSON baseline. Empty
-     * on the edit path (the prefiller short-circuits when
-     * `editingAssistantId` is set), so no badges appear there.
+     * on the edit path (the prefiller uses a different signal —
+     * whether the raw source config changed — to decide when to
+     * refresh derived fields), so no badges appear there.
      *
      * @var array<string, mixed>
      */
     public array $jsonBaseline = [];
+
+    /**
+     * Raw source config the edit wizard hydrated from the persisted
+     * entity, kept as a stable reference for
+     * {@see AssistantDraftPrefiller::prefill()} to compare against.
+     *
+     * On the edit path, the prefiller only refreshes derived fields
+     * when `$sourceConfig !== $initialSourceConfig` — i.e. the
+     * curator has actually pasted / edited a different config than
+     * the one the entity was loaded with. Empty on the create path,
+     * where the baseline-compare logic on {@see self::$jsonBaseline}
+     * governs refresh behaviour instead.
+     */
+    public string $initialSourceConfig = '';
 
     /**
      * ULID of the persisted assistant, written by the controller

@@ -172,6 +172,11 @@ final class AssistantEditController extends AbstractController
             $assistant->getSourceConfig() ?? new \stdClass(),
             \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT | \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES,
         );
+        // Record the hydrated source config as the "initial" state
+        // so `AssistantDraftPrefiller::prefill()` can tell whether the
+        // curator has since pasted a different one — if so, step-2's
+        // derived fields refresh from the new canonical values.
+        $draft->initialSourceConfig = $draft->sourceConfig;
 
         return $draft;
     }

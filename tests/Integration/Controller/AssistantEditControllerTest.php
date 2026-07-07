@@ -148,6 +148,64 @@ final class AssistantEditControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
     }
 
+    // Verifies pasting a different JSON on step 1 of the edit wizard refreshes step 2's derived fields — the persisted entity's metadata stops being authoritative once the curator explicitly swaps the raw config.
+    public function testReuploadingDifferentJsonRefreshesStepTwoOnEdit(): void
+    {
+        $alice = $this->userByEmail(UserFixtures::ALICE_EMAIL);
+        $assistant = $this->assistantOwnedBy($alice);
+        $originalTitle = $assistant->getTitle();
+        $this->client->loginUser($alice);
+
+        $crawler = $this->client->request('GET', '/assistant/'.$assistant->getId().'/edit');
+
+        // Confirm the edit wizard renders step 1 with the entity's
+        // stored sourceConfig — a pre-condition for the refresh check
+        // below to be meaningful.
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $sourceField = $this->findFieldName($stepOne->all(), '[sourceConfig]');
+        self::assertNotSame('', trim($stepOne[$sourceField]->getValue()));
+
+        // Paste a different JSON and submit.
+        $stepOne[$sourceField] = json_encode([
+            'name' => 'Refreshed title',
+            'base_model_id' => 'gpt-4o',
+            'meta' => ['description' => 'Refreshed description'],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
+
+        // Step 2 now shows the new JSON's title / description —
+        // NOT the entity's original values.
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $titleField = $this->findFieldName($stepTwo->all(), '[title]');
+        self::assertSame('Refreshed title', $stepTwo[$titleField]->getValue());
+        self::assertNotSame($originalTitle, $stepTwo[$titleField]->getValue());
+        $descriptionField = $this->findFieldName($stepTwo->all(), '[description]');
+        self::assertSame('Refreshed description', $stepTwo[$descriptionField]->getValue());
+    }
+
+    // Verifies stepping through step 1 without changing the JSON leaves the entity-hydrated metadata intact.
+    public function testUnchangedJsonPreservesEntityHydratedMetadata(): void
+    {
+        $alice = $this->userByEmail(UserFixtures::ALICE_EMAIL);
+        $assistant = $this->assistantOwnedBy($alice);
+        // Fixture rows carry no sourceConfig — set a valid one so
+        // step 1's `ValidAssistantConfig` accepts the payload the
+        // controller hydrates from the entity.
+        $assistant->setSourceConfig(['name' => $assistant->getTitle(), 'base_model_id' => $assistant->getLanguageModel()]);
+        self::getContainer()->get('doctrine.orm.entity_manager')->flush();
+        $this->client->loginUser($alice);
+
+        $crawler = $this->client->request('GET', '/assistant/'.$assistant->getId().'/edit');
+
+        // Submit step 1 without changing the sourceConfig field.
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $crawler = $this->client->submit($stepOne);
+
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $titleField = $this->findFieldName($stepTwo->all(), '[title]');
+        self::assertSame($assistant->getTitle(), $stepTwo[$titleField]->getValue());
+    }
+
     // Full happy path: step 1 → step 2 (pre-filled) → step 3, ending with the row updated in place.
     public function testHappyPathUpdatesRowInPlace(): void
     {
@@ -172,12 +230,14 @@ final class AssistantEditControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
 
-        // Step 2: title / description are pre-filled from the
-        // persisted entity — the edit path does not re-run the
-        // prefiller.
+        // Step 2: because the curator pasted a different sourceConfig
+        // on step 1, the edit-path prefiller refreshes the derived
+        // fields from the new canonical. The entity-hydrated values
+        // are still what the persisted row carries — they just
+        // aren't the current draft any more.
         $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
         $titleField = $this->findFieldName($stepTwo->all(), '[title]');
-        self::assertSame($assistant->getTitle(), $stepTwo[$titleField]->getValue());
+        self::assertSame('Edited via wizard', $stepTwo[$titleField]->getValue());
 
         // Rewrite a couple of fields.
         $stepTwo[$titleField] = 'Rewritten title';

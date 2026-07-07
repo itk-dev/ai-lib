@@ -44,39 +44,104 @@ final class AssistantDraftPrefiller
     /**
      * Detect `$draft->sourceConfig`'s format and pre-fill the draft.
      *
-     * Sets `$draft->framework` to the detected format id, then refreshes
-     * the JSON-derived fields (`title` / `description` / `languageModel`
-     * / `tags`) against the new canonical values. A field is overwritten
-     * only when its current value still matches the previously-recorded
-     * baseline — i.e., the curator hasn't touched it since the last
-     * prefill. Manual edits are preserved. On the very first prefill
-     * the baseline is empty, so any empty draft field is filled from
-     * the canonical model. Description falls back to the system prompt
-     * when the source carries no explicit description. A payload no
-     * adapter recognises is a no-op.
+     * Two branches, keyed off `$draft->editingAssistantId`:
      *
-     * Skipped entirely when `$draft->editingAssistantId` is set: the
-     * edit controller has already seeded the draft from the persisted
-     * entity, and re-detecting the format would overwrite the curator's
-     * own metadata with values re-derived from the raw config (and,
-     * worse, attach the acting user's organisation on top of the
-     * assistant's own).
+     * - Create path (`editingAssistantId === null`): sets the
+     *   detected framework id, then refreshes the JSON-derived
+     *   fields (`title`, `description`, `languageModel`, `tags`)
+     *   against the new canonical values only when the field still
+     *   matches the previously-recorded {@see AssistantDraft::$jsonBaseline}
+     *   — i.e., the curator hasn't touched it since the last
+     *   prefill. Manual edits are preserved. The organisation is
+     *   defaulted from the acting user's e-mail domain when unset.
+     *
+     * - Edit path (`editingAssistantId !== null`): a no-op when the
+     *   raw source config still matches
+     *   {@see AssistantDraft::$initialSourceConfig} — the curator
+     *   hasn't touched the JSON, so the entity-hydrated metadata
+     *   stays. Otherwise the curator has pasted a different config,
+     *   and the derived fields are refreshed unconditionally to
+     *   reflect it; `initialSourceConfig` is then rolled forward so
+     *   a further re-upload triggers the same treatment. No
+     *   organisation defaulting on edit — the persisted assistant's
+     *   organisation stays authoritative.
+     *
+     * Payloads no adapter recognises are a no-op on both paths —
+     * the step-1 constraint reports the error separately.
      *
      * @param AssistantDraft $draft the DTO to mutate in place
      */
     public function prefill(AssistantDraft $draft): void
     {
-        if (null !== $draft->editingAssistantId) {
-            return;
-        }
-
         $adapter = $this->formats->detect($draft->sourceConfig);
         if (null === $adapter) {
             return;
         }
 
-        // detect() matched, so the payload is valid for this adapter
-        // and parseToSource() won't reject it.
+        if (null !== $draft->editingAssistantId) {
+            $this->prefillForEdit($draft, $adapter);
+
+            return;
+        }
+
+        $this->prefillForCreate($draft, $adapter);
+    }
+
+    /**
+     * Refresh derived fields when the curator swaps the raw JSON on
+     * the edit wizard's step 1.
+     *
+     * A no-op when the current source config still matches the one
+     * the entity was hydrated with; the curator is simply
+     * round-tripping through step 1 and their step-2 edits must not
+     * be clobbered. When it differs, every derived field is
+     * refreshed from the new canonical values — the curator
+     * explicitly uploaded a different config and step 2 must
+     * reflect it.
+     *
+     * @param AssistantDraft                        $draft   the DTO to mutate in place
+     * @param \App\Assistant\Format\FormatAdapter   $adapter the format adapter matched to the current source config
+     */
+    private function prefillForEdit(AssistantDraft $draft, \App\Assistant\Format\FormatAdapter $adapter): void
+    {
+        if ($draft->sourceConfig === $draft->initialSourceConfig) {
+            return;
+        }
+
+        $draft->framework = $adapter->id();
+        $canonical = $adapter->sourceToCanonical($adapter->parseToSource($draft->sourceConfig));
+
+        if ('' !== $canonical->name) {
+            $draft->title = $canonical->name;
+        }
+
+        $canonicalDescription = $canonical->description ?? $canonical->systemPrompt ?? '';
+        if ('' !== $canonicalDescription) {
+            $draft->description = $canonicalDescription;
+        }
+
+        if (null !== $canonical->baseModel && '' !== $canonical->baseModel) {
+            $draft->languageModel = $this->modelMap->normalise($canonical->baseModel) ?? $canonical->baseModel;
+        }
+
+        if ([] !== $canonical->tags) {
+            $draft->tags = $canonical->tags;
+        }
+
+        // Roll the "initial" pointer forward so a subsequent
+        // re-upload of yet another JSON is recognised as a fresh
+        // change and gets the same refresh treatment.
+        $draft->initialSourceConfig = $draft->sourceConfig;
+    }
+
+    /**
+     * Baseline-compare refresh for the create wizard.
+     *
+     * @param AssistantDraft                        $draft   the DTO to mutate in place
+     * @param \App\Assistant\Format\FormatAdapter   $adapter the format adapter matched to the current source config
+     */
+    private function prefillForCreate(AssistantDraft $draft, \App\Assistant\Format\FormatAdapter $adapter): void
+    {
         $draft->framework = $adapter->id();
         $canonical = $adapter->sourceToCanonical($adapter->parseToSource($draft->sourceConfig));
 
