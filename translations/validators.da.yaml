@@ -3,3 +3,13 @@ admin:
         form:
             email_domains_required: "Angiv mindst ét e-maildomæne."
             default_framework_unknown: "Vælg et understøttet framework."
+
+assistant:
+    new:
+        step_json:
+            required: "Indsæt eller upload en assistent-konfiguration."
+            invalid_config: "Filen er ikke en gyldig assistent-konfiguration:"
+        step_metadata:
+            title_required: "Angiv en titel."
+            description_required: "Angiv en beskrivelse."
+            language_model_required: "Angiv en sprogmodel."

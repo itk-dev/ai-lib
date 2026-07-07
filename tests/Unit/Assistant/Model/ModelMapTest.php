@@ -132,6 +132,16 @@ final class ModelMapTest extends TestCase
         self::assertNull($map->label('nope'));
     }
 
+    // Verifies aliasesFor() lists declared aliases in map order and returns an empty list for aliasless / unknown ids.
+    public function testAliasesForReturnsDeclaredAliasesOnly(): void
+    {
+        $map = $this->mapFrom($this->controlledYaml());
+
+        self::assertSame(['alpha-1', 'ALPHA/one'], $map->aliasesFor('alpha'));
+        self::assertSame([], $map->aliasesFor('beta'));
+        self::assertSame([], $map->aliasesFor('nope'));
+    }
+
     // Ensures a map that does not decode to a mapping surfaces as a RuntimeException.
     public function testLoadRejectsNonMappingRoot(): void
     {

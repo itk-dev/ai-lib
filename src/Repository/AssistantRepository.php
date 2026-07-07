@@ -69,6 +69,32 @@ class AssistantRepository extends ServiceEntityRepository
     }
 
     /**
+     * List every distinct non-empty `languageModel` value stored in the
+     * catalogue.
+     *
+     * Feeds the metadata step's model picker so the dropdown can offer
+     * legacy or free-typed values already in use — even when they are
+     * not present in `config/model_map.yaml`'s canonical shortlist. The
+     * caller merges this with the canonical list before rendering.
+     *
+     * @return list<string> distinct non-empty stored ids, ordered A→Z
+     *
+     * @throws \Doctrine\DBAL\Exception when the underlying connection or query execution fails
+     */
+    public function persistedLanguageModels(): array
+    {
+        /** @var list<array{languageModel: string}> $rows */
+        $rows = $this->createQueryBuilder('a')
+            ->select('DISTINCT a.languageModel AS languageModel')
+            ->andWhere("a.languageModel <> ''")
+            ->orderBy('a.languageModel', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row): string => (string) $row['languageModel'], $rows);
+    }
+
+    /**
      * Paginated catalogue listing filtered by the given criteria.
      *
      * Each facet selection on the criteria is an OR-within / AND-across

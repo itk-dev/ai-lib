@@ -91,28 +91,28 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
             new Assistant(
                 title: 'Mødereferent',
                 description: 'Tager udgangspunkt i et indtalt eller transskriberet mødeoptag og leverer et struktureret referat med beslutninger, ansvarsfordeling og deadlines. Identificerer automatisk handlepunkter og foreslår opfølgningstidspunkter. Bruges på direktionsmøder, projektmøder og udvalgsmøder. Delt af Københavns Kommune.',
-                languageModel: 'claude-3.5-sonnet',
+                languageModel: 'gpt-4o-mini',
                 framework: 'openwebui',
                 tags: $this->tags(['mødeledelse', 'dokumentation', 'produktivitet']),
             ),
             new Assistant(
                 title: 'Journaliseringsassistent',
                 description: 'Foreslår journalplan-numre og overskrifter ud fra dokumentets indhold, så fagmedarbejdere kan godkende i ét klik. Tager højde for kommunens egen klassifikationsstruktur og henter forslag fra historiske, lignende sager. Reducerer den tid medarbejdere bruger på korrekt arkivering markant. Delt af Odense Kommune.',
-                languageModel: 'llama-3.1-70b',
+                languageModel: 'llama-3.1',
                 framework: 'openwebui',
                 tags: $this->tags(['dokumentation', 'journalisering', 'arkiv']),
             ),
             new Assistant(
                 title: 'Skole- og dagtilbudssvar',
                 description: 'Drafter svar til forældrehenvendelser på skole- og dagtilbudsområdet. Bygger svaret på kommunens egen vejledningssamling, gældende lovgivning på området og det specifikke dagtilbuds praksis. Vedhæfter kildehenvisninger så medarbejderen kan tjekke baggrunden inden afsendelse. Delt af Vejle Kommune.',
-                languageModel: 'gpt-4o-mini',
+                languageModel: 'llama-3.2',
                 framework: 'openwebui',
                 tags: $this->tags(['skole', 'dagtilbud', 'kommunikation']),
             ),
             new Assistant(
                 title: 'Tilsynsrapport-assistent',
                 description: 'Læser plejehjemstilsynsrapporter og fremhæver afvigelser, opfølgningspunkter og udvikling over tid. Sammenligner det enkelte plejehjems resultater med kommune- og landsgennemsnit og foreslår fokusområder til det næste tilsyn. Bygger på Styrelsen for Patientsikkerheds tilsynsdata. Delt af Aalborg Kommune.',
-                languageModel: 'mistral-large',
+                languageModel: 'mistral',
                 framework: 'openwebui',
                 tags: $this->tags(['sundhed', 'tilsyn', 'plejehjem']),
             ),
@@ -192,12 +192,18 @@ final class AssistantFixtures extends Fixture implements DependentFixtureInterfa
             'Horsens Kommune',
         ];
 
+        // Canonical model ids drawn from config/model_map.yaml so
+        // the fixtures use the same shortlist the picker + exporter
+        // recognise. Order kept stable so the deterministic round-
+        // robin below produces the same title/model pairing every
+        // load.
         $languageModels = [
             'gpt-4o',
             'gpt-4o-mini',
-            'claude-3.5-sonnet',
-            'llama-3.1-70b',
-            'mistral-large',
+            'o3-mini',
+            'llama-3.1',
+            'llama-3.2',
+            'mistral',
         ];
 
         $topicCount = count($topics);

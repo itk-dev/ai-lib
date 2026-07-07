@@ -38,7 +38,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and in an `X-Export-Warning` response header — rather than silently
   swapped for a different model. The create wizard's language-model
   field is now a free-text input backed by a `<datalist>` of known
-  models, defaulting to the detected model's canonical id.
+  models, defaulting to the detected model's canonical id. On top of
+  that datalist, a Choices.js Stimulus controller
+  (`assets/controllers/language_model_picker_controller.js`) turns the
+  input into a tag-based combobox: the dropdown offers the union of
+  the canonical shortlist and every `languageModel` value already in
+  the catalogue (case-insensitive dedup, canonical spelling wins), and
+  aliases from `model_map.yaml` fuel a fuzzy search so typing
+  `openai/gpt` narrows the dropdown to `gpt-4o`. `AssistantCreator`
+  folds aliases and legacy spellings to their canonical id on persist,
+  keeping the catalogue's language-model facet deduplicated even when
+  curators submit variant spellings. The pill shows whatever the
+  curator typed. A new `AssistantRepository::persistedLanguageModels()`
+  feeds the union list and a new `ModelMap::aliasesFor()` exposes the
+  per-canonical alias tokens the picker searches on.
 - Exports are validated against the target format's own rules before
   download, so a broken payload is never emitted; `FormatAdapter` gains
   `requiredCanonicalFields()` and the registry a `requiredForAnyExport()`
@@ -152,7 +165,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `white-space: pre-wrap`
   ([#20](https://github.com/itk-dev/ai-reolen/issues/20),
   [#21](https://github.com/itk-dev/ai-reolen/issues/21)).
-
 - `/assistant/new` is now a three-step wizard: **Indsæt JSON**
   → **Gennemgang** → **Kvittering**. The user pastes / uploads
   an OpenWebUI export on step 1, reviews auto-extracted metadata
