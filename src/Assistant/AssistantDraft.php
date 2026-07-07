@@ -85,6 +85,22 @@ final class AssistantDraft
     public ?DataSensitivity $dataSensitivity = null;
 
     /**
+     * Snapshot of the values {@see AssistantDraftPrefiller} extracted
+     * from the uploaded JSON on the step-1 → step-2 transition, keyed
+     * by field name (`title`, `description`, `languageModel`, `tags`).
+     *
+     * Kept alongside the draft's live fields so the metadata step's
+     * template can flag which fields the curator has since edited —
+     * showing a small "(Ændret)" badge next to the label of any field
+     * whose current value no longer matches the JSON baseline. Empty
+     * on the edit path (the prefiller short-circuits when
+     * `editingAssistantId` is set), so no badges appear there.
+     *
+     * @var array<string, mixed>
+     */
+    public array $jsonBaseline = [];
+
+    /**
      * ULID of the persisted assistant, written by the controller
      * on the metadata→receipt transition. Null until that
      * happens; non-null on step 3 so the template can build a

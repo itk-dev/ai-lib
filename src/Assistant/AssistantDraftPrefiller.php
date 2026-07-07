@@ -75,19 +75,32 @@ final class AssistantDraftPrefiller
         $draft->framework = $adapter->id();
         $canonical = $adapter->sourceToCanonical($adapter->parseToSource($draft->sourceConfig));
 
+        // Record the JSON-derived values as the baseline the metadata
+        // step compares against so it can flag curator edits with a
+        // "(Ændret)" badge. Recorded unconditionally — the draft
+        // fields below are only overwritten when empty, but the
+        // baseline stays a truthful snapshot of what the JSON said.
+        $canonicalDescription = $canonical->description ?? $canonical->systemPrompt ?? '';
+        $canonicalLanguageModel = null !== $canonical->baseModel && '' !== $canonical->baseModel
+            ? ($this->modelMap->normalise($canonical->baseModel) ?? $canonical->baseModel)
+            : '';
+        $draft->jsonBaseline = [
+            'title' => $canonical->name,
+            'description' => $canonicalDescription,
+            'languageModel' => $canonicalLanguageModel,
+            'tags' => $canonical->tags,
+        ];
+
         if ('' === $draft->title && '' !== $canonical->name) {
             $draft->title = $canonical->name;
         }
 
-        if ('' === $draft->description) {
-            $description = $canonical->description ?? $canonical->systemPrompt;
-            if (null !== $description && '' !== $description) {
-                $draft->description = $description;
-            }
+        if ('' === $draft->description && '' !== $canonicalDescription) {
+            $draft->description = $canonicalDescription;
         }
 
-        if ('' === $draft->languageModel && null !== $canonical->baseModel && '' !== $canonical->baseModel) {
-            $draft->languageModel = $this->modelMap->normalise($canonical->baseModel) ?? $canonical->baseModel;
+        if ('' === $draft->languageModel && '' !== $canonicalLanguageModel) {
+            $draft->languageModel = $canonicalLanguageModel;
         }
 
         if ([] === $draft->tags && [] !== $canonical->tags) {

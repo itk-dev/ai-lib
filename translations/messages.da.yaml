@@ -443,6 +443,7 @@ assistant:
             tags_label: "Tags"
             tags_help: "Komma-separeret. Fx borgerservice, jura."
             experimental_notice: "%format% er et eksperimentelt format. Import og eksport er endnu ikke manuelt testet, så kontrollér resultatet før du deler."
+            changed_badge: "Ændret"
         step_receipt:
             rail_label: "Kvittering"
             rail_hint: "Permalink til din assistent"
