@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Password-reset flow at `/reset-password` (request → check-email → reset)
+  built on `symfonycasts/reset-password-bundle`. The email subject + body
+  are admin-editable under **Indstillinger → E-mail** with the same
+  Markdown + `%token%` pipeline the other transactional messages use
+  (`%name%`, `%email%`, `%brand_name%`, `%reset_url%`, `%expires_in%`) —
+  no redeploy needed to update the copy. A new `PasswordResetNotifier`
+  service owns token minting and delivery so the controller stays thin;
+  the request-form response shape is identical for known and unknown
+  addresses so the endpoint does not leak account existence. The login
+  page carries a "Glemt password?" link, and the templates reuse the
+  project's Twig components + Tailwind so the flow matches the rest of
+  the security surface. Migration `Version20260708065059` adds the
+  `reset_password_request` table.
 - Four new curator-facing metadata fields on the create wizard's step 2
   ([`assistant/new`](src/Controller/AssistantCreateController.php)) — `organization`
   (nullable `ManyToOne` to `Organization`), `tagline` (nullable string),

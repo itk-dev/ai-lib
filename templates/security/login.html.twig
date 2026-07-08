@@ -41,6 +41,12 @@
             <twig:Form:Button type="submit">
                 {{ 'security.login.submit'|trans }}
             </twig:Form:Button>
+
+            <p class="text-sm text-text-muted">
+                <a class="text-primary underline hover:text-primary-hover" href="{{ path('app_forgot_password_request') }}">
+                    {{ 'security.login.forgot_password'|trans }}
+                </a>
+            </p>
         </form>
     </section>
 {% endblock %}

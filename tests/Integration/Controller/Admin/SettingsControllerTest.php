@@ -357,15 +357,17 @@ final class SettingsControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/settings/email');
 
         self::assertResponseIsSuccessful();
-        // One cheat-sheet link per body field; three fieldsets on the page.
+        // One cheat-sheet link per body field; four fieldsets on the page
+        // (admin notification, registration confirmation, email confirmation,
+        // password reset).
         $cheatSheetLinks = $crawler->filter('a[href="https://www.markdownguide.org/cheat-sheet/"]');
-        self::assertCount(3, $cheatSheetLinks);
+        self::assertCount(4, $cheatSheetLinks);
         self::assertSame('_blank', $cheatSheetLinks->first()->attr('target'));
         self::assertSame('noopener noreferrer', $cheatSheetLinks->first()->attr('rel'));
 
         // One Preview button per body field.
         $previewButtons = $crawler->filter('button[data-action*="email-preview#open"]');
-        self::assertCount(3, $previewButtons);
+        self::assertCount(4, $previewButtons);
     }
 
     // Verifies POST /admin/settings/email/preview returns the substituted subject + rendered HTML for the acting admin.

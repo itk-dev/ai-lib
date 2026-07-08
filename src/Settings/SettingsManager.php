@@ -77,6 +77,15 @@ class SettingsManager
     public const string EMAIL_CONFIRMATION_SUBJECT = 'email_confirmation_subject';
     public const string EMAIL_CONFIRMATION_BODY = 'email_confirmation_body';
 
+    /**
+     * Canonical keys for the password-reset link email content
+     * (the fourth transactional message — the single-use link the
+     * user clicks after asking to reset their password from the
+     * `/reset-password` request page).
+     */
+    public const string PASSWORD_RESET_SUBJECT = 'password_reset_subject';
+    public const string PASSWORD_RESET_BODY = 'password_reset_body';
+
     public function __construct(
         private readonly SettingRepository $repository,
         private readonly EntityManagerInterface $em,
@@ -412,7 +421,55 @@ class SettingsManager
     }
 
     /**
-     * Apply the email-content submission (subjects + bodies for all three transactional emails) in one call.
+     * Read the configured subject template for the password-reset link email.
+     *
+     * Falls back to the `settings.password_reset.subject`
+     * translation when the row is unset.
+     *
+     * @return string current subject template
+     */
+    public function getPasswordResetSubject(): string
+    {
+        return $this->getString(self::PASSWORD_RESET_SUBJECT)
+            ?? $this->translator->trans('settings.password_reset.subject');
+    }
+
+    /**
+     * Persist the password-reset subject template, or clear it to revert to the default.
+     *
+     * @param string|null $subject subject template to store, or null to clear
+     */
+    public function setPasswordResetSubject(?string $subject): void
+    {
+        $this->setString(self::PASSWORD_RESET_SUBJECT, $subject);
+    }
+
+    /**
+     * Read the configured Markdown body template for the password-reset link email.
+     *
+     * Falls back to the `settings.password_reset.body`
+     * translation when the row is unset.
+     *
+     * @return string current Markdown body template
+     */
+    public function getPasswordResetBody(): string
+    {
+        return $this->getString(self::PASSWORD_RESET_BODY)
+            ?? $this->translator->trans('settings.password_reset.body');
+    }
+
+    /**
+     * Persist the password-reset body template, or clear it to revert to the default.
+     *
+     * @param string|null $body Markdown body template to store, or null to clear
+     */
+    public function setPasswordResetBody(?string $body): void
+    {
+        $this->setString(self::PASSWORD_RESET_BODY, $body);
+    }
+
+    /**
+     * Apply the email-content submission (subjects + bodies for all four transactional emails) in one call.
      *
      * Each argument is trimmed and empty strings collapse to
      * `null`, so clearing a field reverts that template to the
@@ -424,6 +481,8 @@ class SettingsManager
      * @param string|null $registrationConfirmationBody    submitted Markdown body for the signup-confirmation email
      * @param string|null $emailConfirmationSubject        submitted subject for the confirmation-link email
      * @param string|null $emailConfirmationBody           submitted Markdown body for the confirmation-link email
+     * @param string|null $passwordResetSubject            submitted subject for the password-reset link email
+     * @param string|null $passwordResetBody               submitted Markdown body for the password-reset link email
      */
     public function applyEmailContent(
         ?string $adminNotificationSubject,
@@ -432,6 +491,8 @@ class SettingsManager
         ?string $registrationConfirmationBody,
         ?string $emailConfirmationSubject = null,
         ?string $emailConfirmationBody = null,
+        ?string $passwordResetSubject = null,
+        ?string $passwordResetBody = null,
     ): void {
         $this->setAdminNotificationSubject(self::emptyToNull($adminNotificationSubject));
         $this->setAdminNotificationBody(self::emptyToNull($adminNotificationBody));
@@ -439,6 +500,8 @@ class SettingsManager
         $this->setRegistrationConfirmationBody(self::emptyToNull($registrationConfirmationBody));
         $this->setEmailConfirmationSubject(self::emptyToNull($emailConfirmationSubject));
         $this->setEmailConfirmationBody(self::emptyToNull($emailConfirmationBody));
+        $this->setPasswordResetSubject(self::emptyToNull($passwordResetSubject));
+        $this->setPasswordResetBody(self::emptyToNull($passwordResetBody));
     }
 
     /**

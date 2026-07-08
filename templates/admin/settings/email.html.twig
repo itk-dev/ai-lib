@@ -185,6 +185,56 @@
                 }) }}
             </fieldset>
 
+            <fieldset class="grid gap-4 rounded-xl border border-line bg-surface p-6"
+                      data-controller="email-preview"
+                      data-email-preview-url-value="{{ path('app_admin_settings_email_preview') }}">
+                <legend class="px-2 font-medium text-ink">{{ 'admin.settings.email.section.password_reset'|trans }}</legend>
+                <p class="text-sm text-text">
+                    {{ 'admin.settings.email.tokens_label'|trans }}
+                    <code class="rounded bg-surface-2 px-1">%name%</code>,
+                    <code class="rounded bg-surface-2 px-1">%email%</code>,
+                    <code class="rounded bg-surface-2 px-1">%brand_name%</code>,
+                    <code class="rounded bg-surface-2 px-1">%reset_url%</code>,
+                    <code class="rounded bg-surface-2 px-1">%expires_in%</code>.
+                </p>
+
+                <twig:Form:Label for="inputPasswordResetSubject" text="{{ 'admin.settings.email.fields.subject.label'|trans }}">
+                    <twig:Form:TextInput
+                        id="inputPasswordResetSubject"
+                        name="password_reset_subject"
+                        value="{{ submitted.password_reset_subject }}"
+                        data-email-preview-target="subjectInput"
+                    />
+                </twig:Form:Label>
+
+                <twig:Form:Label for="inputPasswordResetBody" text="{{ 'admin.settings.email.fields.body.label'|trans }}">
+                    <textarea id="inputPasswordResetBody"
+                              name="password_reset_body"
+                              rows="8"
+                              data-email-preview-target="bodyInput"
+                              class="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.password_reset_body }}</textarea>
+                    <p class="mt-1 text-sm text-text">
+                        {{ 'admin.settings.email.fields.body.help'|trans }}
+                        <a href="https://www.markdownguide.org/cheat-sheet/"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.fields.body.help_cheatsheet'|trans }}
+                        </a>
+                        <span class="mx-1 text-text-muted" aria-hidden="true">·</span>
+                        <button type="button"
+                                data-action="click->email-preview#open"
+                                class="text-primary underline hover:text-primary-hover">
+                            {{ 'admin.settings.email.actions.preview'|trans }}
+                        </button>
+                    </p>
+                </twig:Form:Label>
+
+                {{ include('admin/settings/_email_preview_dialog.html.twig', {
+                    id: 'previewPasswordReset',
+                }) }}
+            </fieldset>
+
             <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-settings-email') }}">
 
             <div class="flex items-center gap-4">
