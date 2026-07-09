@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Template audit-and-consolidation pass across `templates/` collapses
   ad-hoc markup onto the shared Twig component library. Three new
-  components land: `Icon` (a small library of decorative inline SVG
-  glyphs — pencil, upload, trash, chevron-down — replacing the five
+  component families land: `Icon:Pencil` / `Icon:Upload` / `Icon:Trash`
+  (one decorative inline SVG glyph per file, replacing the four
   hand-inlined `<svg>` blocks in `assistant/show.html.twig`,
   `assistant/_step_json.html.twig`, and `user/assistants.html.twig`),
   `Form:CsrfInput` (a hidden `_token` field wired to the
