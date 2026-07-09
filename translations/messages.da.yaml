@@ -350,6 +350,12 @@ user:
         heading: "Assistenter du har delt"
         lead: "Assistenter du har uploadet til biblioteket. Nye tilføjelser via »Del assistent« vises her."
         list_label: "Mine assistenter"
+        updated_at: "Opdateret %date%"
+        action:
+            view: "Gå til assistent"
+            edit: "Rediger assistent"
+            delete: "Slet assistent"
+            delete_confirm: "Slet »%title%«? Handlingen kan ikke fortrydes."
         empty:
             heading: "Ingen assistenter endnu"
             help: "Du har ikke delt en assistent endnu. Klik på »Del assistent« for at komme i gang."
@@ -383,7 +389,10 @@ assistant:
         no_data_sensitivity: "Ikke klassificeret"
         actions_heading: "Handlinger"
         action:
-            export: "Hjemtag (Eksportér JSON)"
+            export: "Hjemtag konfiguration"
+            edit: "Rediger assistent"
+        flash:
+            deleted: "Assistenten er slettet."
         modelkort:
             heading: "Modelkort"
             lead: "Sprogmodel %model% og hensyn ved brug af assistenten."
@@ -436,6 +445,7 @@ assistant:
             tags_label: "Tags"
             tags_help: "Komma-separeret. Fx borgerservice, jura."
             experimental_notice: "%format% er et eksperimentelt format. Import og eksport er endnu ikke manuelt testet, så kontrollér resultatet før du deler."
+            changed_badge: "Ændret"
         step_receipt:
             rail_label: "Kvittering"
             rail_hint: "Permalink til din assistent"
@@ -452,6 +462,21 @@ assistant:
         responsibility:
             heading: "Ansvar"
             body: "Du har som deler ansvaret for, at assistenten kan deles, og at det beskrevne datagrundlag ikke indeholder data, der ikke må deles. Selve videns- og datafiler deles ikke — kun konfigurationen og en opskrift på datagrundlaget."
+    edit:
+        title: "Rediger assistent – %brand%"
+        eyebrow: "Rediger assistent"
+        heading: 'Rediger "%title%"'
+        step_json:
+            rail_label: "Ret konfiguration"
+        step_receipt:
+            rail_label: "Kvittering"
+            rail_hint: "Ændringer gemt"
+            heading: "Ændringer er gemt"
+            body: '"%title%" er opdateret i biblioteket.'
+        action:
+            previous: "Ret konfiguration"
+            next: "Næste trin"
+            save: "Gem ændringer"
     data_sensitivity:
         ordinary_personal:
             label: "Almindelige personoplysninger"
