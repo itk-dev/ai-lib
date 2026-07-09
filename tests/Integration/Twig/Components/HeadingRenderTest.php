@@ -61,6 +61,40 @@ final class HeadingRenderTest extends KernelTestCase
         self::assertStringContainsString('Hello', $html);
     }
 
+    // Verifies size=caption renders the small eyebrow-shaped heading (text-xs uppercase tracking-widest text-ink).
+    public function testCaptionSizeRendersSmallEyebrowShape(): void
+    {
+        $html = $this->renderInline('<twig:Heading level="2" size="caption">Aktive filtre</twig:Heading>');
+
+        self::assertMatchesRegularExpression('#<h2[^>]*class="[^"]*text-xs[^"]*uppercase[^"]*tracking-widest[^"]*text-ink[^"]*"#', $html);
+        self::assertStringContainsString('Aktive filtre', $html);
+    }
+
+    // Verifies size=caption-lg renders the slightly larger eyebrow-shaped heading (text-sm variant).
+    public function testCaptionLargeSizeRendersLargerEyebrow(): void
+    {
+        $html = $this->renderInline('<twig:Heading level="3" size="caption-lg">Tags</twig:Heading>');
+
+        self::assertMatchesRegularExpression('#<h3[^>]*class="[^"]*text-sm[^"]*uppercase[^"]*tracking-widest[^"]*"#', $html);
+    }
+
+    // Verifies the `muted` prop swaps text-ink for text-text-muted while keeping the rest of the size class intact.
+    public function testMutedPropSwapsInkForMutedText(): void
+    {
+        $html = $this->renderInline('<twig:Heading level="3" size="caption-lg" muted>Tags</twig:Heading>');
+
+        self::assertMatchesRegularExpression('#<h3[^>]*class="[^"]*text-text-muted[^"]*"#', $html);
+        self::assertDoesNotMatchRegularExpression('#<h3[^>]*class="[^"]*text-ink[^"]*"#', $html);
+    }
+
+    // Ensures muted=false (default) still renders text-ink for existing sizes.
+    public function testMutedFalseKeepsTextInk(): void
+    {
+        $html = $this->renderInline('<twig:Heading level="2" size="caption">Section</twig:Heading>');
+
+        self::assertMatchesRegularExpression('#<h2[^>]*class="[^"]*text-ink[^"]*"#', $html);
+    }
+
     private function renderInline(string $source): string
     {
         return $this->twig->createTemplate($source)->render();
