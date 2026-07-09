@@ -55,10 +55,12 @@
             </twig:Form:Label>
 
             <twig:Form:Label for="inputHeroText" text="{{ 'admin.settings.site.fields.hero_text.label'|trans }}">
-                <textarea id="inputHeroText"
-                          name="hero_text"
-                          rows="5"
-                          class="rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary/40">{{ submitted.hero_text }}</textarea>
+                <twig:Form:Textarea
+                    id="inputHeroText"
+                    name="hero_text"
+                    value="{{ submitted.hero_text }}"
+                    rows="5"
+                />
                 <p class="mt-1 text-sm text-text">{{ 'admin.settings.site.fields.hero_text.help'|trans }}</p>
             </twig:Form:Label>
 

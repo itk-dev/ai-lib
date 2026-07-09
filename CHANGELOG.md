@@ -10,11 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Template audit-and-consolidation pass across `templates/` collapses
-  ad-hoc markup onto the shared Twig component library. Three new
-  component families land: `Icon:Pencil` / `Icon:Upload` / `Icon:Trash`
+  ad-hoc markup onto the shared Twig component library. Five new
+  components land: `Icon:Pencil` / `Icon:Upload` / `Icon:Trash`
   (one decorative inline SVG glyph per file, replacing the four
   hand-inlined `<svg>` blocks in `assistant/show.html.twig`,
   `assistant/_step_json.html.twig`, and `user/assistants.html.twig`),
+  `Form:Textarea` (covers the five hand-rolled `<textarea>` fields
+  across `admin/settings/{site,email}.html.twig` with `prose` and
+  `mono` variants), `Form:Fieldset` (rounded panel + labelled
+  legend, replacing the five identical fieldset+legend pairs in
+  `admin/settings/email.html.twig` and now the single place a
+  Stimulus controller can wrap an admin-form section),
   `Form:CsrfInput` (a hidden `_token` field wired to the
   `csrf-protection` Stimulus controller, replacing nine call sites and
   fixing a latent bug where `admin/settings/site.html.twig` and
