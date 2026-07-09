@@ -210,6 +210,41 @@ The comment is for a reader scanning the file's table of contents
 without reading method bodies. Matches the convention applied across
 every test file on the project.
 
+### Twig components — consult first, don't reinvent
+
+Before writing raw HTML for a common UI shape, check
+`templates/components/` for an existing component. Prefer `<twig:…>`
+over inlining new markup, even when the raw form is only three or four
+lines — the point is that a design change or accessibility patch then
+happens in one place instead of five.
+
+| Shape | Component |
+| --- | --- |
+| Solid / ghost / link button | `Form:Button` (variant `primary` / `ghost` / `link`) |
+| Icon-only outlined button | `Form:IconButton` (tone `primary` / `danger` / `neutral`) |
+| Heading (h1–h6) | `Heading` (size + optional `muted`) |
+| Eyebrow / small kicker | `Eyebrow` (accent, decorative rule) or `Heading size="caption[-lg]"` (plain label) |
+| Text input / textarea / select / label / checkbox | `Form:TextInput`, `Form:Textarea`, `Form:Select`, `Form:Label`, `Form:Checkbox` |
+| Fieldset + legend | `Form:Fieldset` |
+| Hidden CSRF token | `Form:CsrfInput` |
+| Flash / inline alert | `Alert` |
+| Data table | `Table` + `Table:*` children |
+| Filter link pill / remove chip | `Filter:Pill`, `Filter:Chip` |
+| Inline SVG glyph | `Icon:*` (one file per glyph) |
+
+When a swap requires a small additive change to a component — a new
+prop, a new variant, `{{ attributes }}` pass-through — **make the
+additive change rather than skip the call site**. Additive changes
+default to a no-op for existing consumers and carry no regression
+risk. Only skip when the additive change would materially widen the
+API (new pseudo-selector matrix, behavior split, incompatible slot
+shape), and say so explicitly in the PR body.
+
+Before opening a template-touching PR, grep the diff for raw
+`<button`, `<h[1-6]`, `<textarea`, `<label`, `<input` (outside a form
+theme), and `<div ... role="alert">` — each should either be a
+`<twig:…>` call or carry a comment naming why it stays raw.
+
 ## Workflows
 
 The `.github/workflows/*.yaml` files are mirrored from
