@@ -120,6 +120,74 @@ final class AssistantCreateControllerTest extends WebTestCase
         self::assertSame([], $payload['errors']);
     }
 
+    // Verifies clicking "Ret konfiguration" (Previous on step 2) preserves the curator's step-2 edits — no accidental metadata reset on the way back to step 1.
+    public function testPreviousPreservesStepTwoEdits(): void
+    {
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $textareaName = $this->findFieldName($stepOne->all(), '[sourceConfig]');
+        $stepOne[$textareaName] = json_encode([
+            'name' => 'Original title',
+            'base_model_id' => 'gpt-4o',
+            'meta' => ['description' => 'Original description'],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
+
+        // Step 2: rewrite the title, then click Previous. Selecting
+        // the Previous button as the form's submit binds
+        // `assistant_create_flow[navigator][previous]` in the submission
+        // so the flow routes through the "move back" handler.
+        $stepTwoPrevious = $crawler->selectButton('assistant_create_flow[navigator][previous]')->form();
+        $titleField = $this->findFieldName($stepTwoPrevious->all(), '[title]');
+        $stepTwoPrevious[$titleField] = 'Curator edit';
+        $crawler = $this->client->submit($stepTwoPrevious);
+
+        // Landed on step 1 again; go forward without changing the JSON.
+        $stepOneAgain = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $crawler = $this->client->submit($stepOneAgain);
+
+        // The curator's edited title survives the round-trip — Previous
+        // preserved the submitted step-2 data on the way back.
+        $stepTwoAgain = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        self::assertSame('Curator edit', $stepTwoAgain[$titleField]->getValue());
+    }
+
+    // Verifies going back to step 1 and pasting a different JSON refreshes the metadata fields on step 2 that the curator hadn't manually edited.
+    public function testReuploadingDifferentJsonRefreshesUntouchedMetadata(): void
+    {
+        $crawler = $this->client->request('GET', '/assistant/new');
+        $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $sourceField = $this->findFieldName($stepOne->all(), '[sourceConfig]');
+        $stepOne[$sourceField] = json_encode([
+            'name' => 'Original title',
+            'base_model_id' => 'gpt-4o',
+            'meta' => ['description' => 'Original description'],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOne);
+
+        // Go back to step 1 via the Previous button on step 2.
+        $stepTwoBack = $crawler->selectButton('assistant_create_flow[navigator][previous]')->form();
+        $crawler = $this->client->submit($stepTwoBack);
+
+        // Paste a different JSON and continue.
+        $stepOneAgain = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $sourceField = $this->findFieldName($stepOneAgain->all(), '[sourceConfig]');
+        $stepOneAgain[$sourceField] = json_encode([
+            'name' => 'Second title',
+            'base_model_id' => 'gpt-4o-mini',
+            'meta' => ['description' => 'Second description'],
+        ], \JSON_THROW_ON_ERROR);
+        $crawler = $this->client->submit($stepOneAgain);
+
+        // Step 2 renders with the SECOND JSON's metadata — the curator
+        // didn't edit any fields, so the prefiller refreshes them.
+        $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
+        $titleField = $this->findFieldName($stepTwo->all(), '[title]');
+        self::assertSame('Second title', $stepTwo[$titleField]->getValue());
+        $descriptionField = $this->findFieldName($stepTwo->all(), '[description]');
+        self::assertSame('Second description', $stepTwo[$descriptionField]->getValue());
+    }
+
     // Full happy-path: valid JSON on step 1 → auto-extracted metadata on step 2 → persist → step 3 receipt with permalink.
     public function testHappyPathAcrossThreeSteps(): void
     {

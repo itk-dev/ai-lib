@@ -6,13 +6,25 @@
     <twig:Layout:ContentWithAsides>
         <twig:block name="main">
             <article class="grid gap-6">
-                <nav class="text-sm text-text-muted" aria-label="{{ 'assistant.detail.breadcrumb_label'|trans }}">
-                    <a class="no-underline hover:text-primary" href="{{ path('app_assistant_catalog') }}">
-                        {{ 'assistant.detail.breadcrumb_catalog'|trans }}
-                    </a>
-                    <span aria-hidden="true" class="px-2">/</span>
-                    <span class="text-text">{{ 'assistant.detail.placeholder_origin'|trans }}</span>
-                </nav>
+                <div class="flex items-start justify-between gap-3">
+                    <nav class="text-sm text-text-muted" aria-label="{{ 'assistant.detail.breadcrumb_label'|trans }}">
+                        <a class="no-underline hover:text-primary" href="{{ path('app_assistant_catalog') }}">
+                            {{ 'assistant.detail.breadcrumb_catalog'|trans }}
+                        </a>
+                        <span aria-hidden="true" class="px-2">/</span>
+                        <span class="text-text">{{ 'assistant.detail.placeholder_origin'|trans }}</span>
+                    </nav>
+                    {% if is_granted(constant('App\\Security\\Voter\\EditAssistantVoter::EDIT'), assistant) %}
+                        <a class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line text-text-muted no-underline transition-colors hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                           href="{{ path('app_assistant_edit', {id: assistant.id}) }}"
+                           aria-label="{{ 'assistant.detail.action.edit'|trans }}"
+                           title="{{ 'assistant.detail.action.edit'|trans }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.862 4.487Zm0 0L19.5 7.125" />
+                            </svg>
+                        </a>
+                    {% endif %}
+                </div>
 
                 <header class="grid gap-4">
                     <twig:Eyebrow as="p">

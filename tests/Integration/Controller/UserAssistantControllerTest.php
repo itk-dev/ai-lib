@@ -37,7 +37,7 @@ final class UserAssistantControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(401);
     }
 
-    // Verifies the page renders and lists only the assistants the logged-in user created.
+    // Verifies the page renders one row per Alice-created assistant, with the title linking to the show page and the trash-icon form linking to the delete route.
     public function testListsOnlyCurrentUsersAssistants(): void
     {
         $this->loginAsFixture(UserFixtures::ALICE_EMAIL);
@@ -49,12 +49,26 @@ final class UserAssistantControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/mine/assistenter');
 
         self::assertResponseIsSuccessful();
-        $links = $crawler->filter('main a[href^="/assistant/"]');
-        self::assertCount(\count($expected), $links, 'the list must render exactly one card per Alice-created assistant');
+        $rows = $crawler->filter('ul[aria-label] > li');
+        self::assertCount(\count($expected), $rows, 'the list must render exactly one row per Alice-created assistant');
 
-        $hrefs = $links->each(static fn ($node) => (string) $node->attr('href'));
         foreach ($expected as $assistant) {
-            self::assertContains('/assistant/'.$assistant->getId(), $hrefs);
+            $showHref = '/assistant/'.$assistant->getId();
+            self::assertCount(
+                2,
+                $crawler->filter(sprintf('a[href="%s"]', $showHref)),
+                'title link + primary "Gå til assistent" link both point at the show page',
+            );
+            self::assertCount(
+                1,
+                $crawler->filter(sprintf('a[href="/assistant/%s/edit"]', $assistant->getId())),
+                'edit pencil links to the edit route',
+            );
+            self::assertCount(
+                1,
+                $crawler->filter(sprintf('form[action="/assistant/%s/delete"]', $assistant->getId())),
+                'delete trash button posts to the delete route',
+            );
         }
     }
 
@@ -69,7 +83,7 @@ final class UserAssistantControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/mine/assistenter');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(0, $crawler->filter('main a[href^="/assistant/"]'));
+        self::assertCount(0, $crawler->filter('ul[aria-label] > li'));
         self::assertSelectorTextContains('body', 'Ingen assistenter endnu');
     }
 
