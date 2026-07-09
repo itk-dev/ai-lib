@@ -44,12 +44,14 @@
                                 {{ 'user.assistants.action.view'|trans }}
                             </a>
                             {% if is_granted(constant('App\\Security\\Voter\\EditAssistantVoter::EDIT'), assistant) %}
-                                <a class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line text-text-muted no-underline transition-colors hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                   href="{{ path('app_assistant_edit', {id: assistant.id}) }}"
-                                   aria-label="{{ 'user.assistants.action.edit'|trans }}"
-                                   title="{{ 'user.assistants.action.edit'|trans }}">
+                                <twig:Form:IconButton
+                                    href="{{ path('app_assistant_edit', {id: assistant.id}) }}"
+                                    tone="primary"
+                                    aria-label="{{ 'user.assistants.action.edit'|trans }}"
+                                    title="{{ 'user.assistants.action.edit'|trans }}"
+                                >
                                     <twig:Icon:Pencil class="h-4 w-4" />
-                                </a>
+                                </twig:Form:IconButton>
                             {% endif %}
                             {% if is_granted(constant('App\\Security\\Voter\\EditAssistantVoter::DELETE'), assistant) %}
                                 <form action="{{ path('app_assistant_delete', {id: assistant.id}) }}"
@@ -57,12 +59,14 @@
                                       onsubmit="return confirm('{{ 'user.assistants.action.delete_confirm'|trans({'%title%': assistant.title})|e('js') }}');"
                                       class="inline">
                                     <twig:Form:CsrfInput intent="{{ 'assistant-delete-' ~ assistant.id }}" />
-                                    <button type="submit"
-                                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line text-text-muted transition-colors hover:border-red-600 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/40"
-                                            aria-label="{{ 'user.assistants.action.delete'|trans }}"
-                                            title="{{ 'user.assistants.action.delete'|trans }}">
+                                    <twig:Form:IconButton
+                                        type="submit"
+                                        tone="danger"
+                                        aria-label="{{ 'user.assistants.action.delete'|trans }}"
+                                        title="{{ 'user.assistants.action.delete'|trans }}"
+                                    >
                                         <twig:Icon:Trash class="h-4 w-4" />
-                                    </button>
+                                    </twig:Form:IconButton>
                                 </form>
                             {% endif %}
                         </div>

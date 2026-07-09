@@ -39,12 +39,16 @@
                     <span data-email-preview-target="subjectDisplay" class="ml-1"></span>
                 </p>
             </div>
-            <button type="button"
-                    data-action="click->email-preview#close"
-                    aria-label="{{ 'admin.settings.email.preview.close'|trans }}"
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-lg leading-none text-text hover:bg-surface-2">
+            <twig:Form:IconButton
+                type="button"
+                shape="pill"
+                size="md"
+                tone="neutral"
+                data-action="click->email-preview#close"
+                aria-label="{{ 'admin.settings.email.preview.close'|trans }}"
+            >
                 ×
-            </button>
+            </twig:Form:IconButton>
         </header>
         <p data-email-preview-target="error"
            role="alert"
