@@ -47,6 +47,29 @@ security:
         email_label: "E-mail"
         password_label: "Adgangskode"
         submit: "Log ind"
+        forgot_password: "Glemt password?"
+    reset_password:
+        eyebrow: "Nulstil password"
+        back_to_login: "← Tilbage til login"
+        request:
+            title: "Nulstil password – %brand%"
+            heading: "Nulstil dit password"
+            lead: "Skriv den e-mailadresse, du bruger til at logge ind. Vi sender dig et link til at vælge et nyt password."
+            email_label: "E-mail"
+            submit: "Send link til nulstilling"
+        check_email:
+            title: "Tjek din indbakke – %brand%"
+            heading: "Vi har sendt dig et link"
+            body: "Hvis der findes en konto med den e-mailadresse, har vi netop sendt et link til at vælge et nyt password. Linket udløber om %expires_in%."
+            spam_hint: "Modtager du ingen e-mail, så tjek dit spamfilter, eller"
+            try_again: "prøv igen"
+        reset:
+            title: "Vælg nyt password – %brand%"
+            heading: "Vælg et nyt password"
+            lead: "Vælg et password på mindst 8 tegn. Passwordet gemmes hashet — vi kan ikke se det efter du har valgt det."
+            new_password_label: "Nyt password"
+            repeat_password_label: "Gentag nyt password"
+            submit: "Gem nyt password"
     access_denied:
         title: "Adgang nægtet – %brand%"
         eyebrow: "Adgang nægtet"
@@ -197,6 +220,7 @@ admin:
                 admin_notification: "Admin: Ny bruger venter godkendelse"
                 registration_confirmation: "Bruger: Velkomst-mail"
                 email_confirmation: "Bruger: Bekræft e-mail-link"
+                password_reset: "Bruger: Nulstil password-link"
             tokens_label: "Tilgængelige pladsholdere:"
             fields:
                 admin_recipient:
@@ -331,6 +355,20 @@ settings:
             [Bekræft min e-mail](%confirmation_url%)
 
             Linket virker i 24 timer og kan kun bruges én gang.
+    password_reset:
+        subject: "Nulstil dit password – %brand_name%"
+        body: |
+            Hej %name%,
+
+            Du modtager denne e-mail, fordi der er anmodet om at
+            nulstille passwordet for din konto hos %brand_name%. Klik
+            på linket for at vælge et nyt password:
+
+            [Vælg nyt password](%reset_url%)
+
+            Linket udløber om %expires_in% og kan kun bruges én gang.
+            Hvis det ikke var dig, kan du ignorere denne e-mail —
+            passwordet ændres først, når linket klikkes.
 
 profile:
     edit:

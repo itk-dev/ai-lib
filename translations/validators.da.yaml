@@ -4,6 +4,15 @@ admin:
             email_domains_required: "Angiv mindst ét e-maildomæne."
             default_framework_unknown: "Vælg et understøttet framework."
 
+security:
+    reset_password:
+        request:
+            email_required: "Indtast din e-mailadresse."
+        reset:
+            password_required: "Indtast et password."
+            password_min: "Passwordet skal være mindst {{ limit }} tegn."
+            password_mismatch: "De to password-felter er ikke ens."
+
 assistant:
     new:
         step_json:
