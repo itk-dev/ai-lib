@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Security\Roles;
+use App\Security\UserManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
