@@ -19,11 +19,12 @@
     lg: 'text-[clamp(1.75rem,3vw,2.25rem)] leading-tight tracking-tight text-ink',
     md: 'text-2xl tracking-tight text-ink',
     sm: 'text-xl text-ink',
+    xs: 'text-lg text-ink',
 } %}
 {# Inter needs more weight than the serif did to read as a heading, so the #}
 {# defaults sit a step heavier than the old Fraunces scale. `hero` is the #}
 {# serif display face at its natural 400 weight. #}
-{% set defaultWeights = {hero: 'normal', xl: 'bold', lg: 'bold', md: 'semibold', sm: 'semibold'} %}
+{% set defaultWeights = {hero: 'normal', xl: 'bold', lg: 'bold', md: 'semibold', sm: 'semibold', xs: 'semibold'} %}
 {% set weightClasses = {
     normal: 'font-normal',
     medium: 'font-medium',
@@ -33,6 +34,6 @@
 {% set resolvedSize = size ?? (level == 1 ? 'xl' : (level == 2 ? 'md' : 'sm')) %}
 {% set resolvedWeight = weightClasses[weight ?? defaultWeights[resolvedSize]] %}
 {% set tag = 'h' ~ level %}
-<{{ tag }} class="{{ sizeClasses[resolvedSize] }} {{ resolvedWeight }}{{ class ? ' ' ~ class : '' }}">
+<{{ tag }} class="{{ sizeClasses[resolvedSize] }} {{ resolvedWeight }}{{ class ? ' ' ~ class : '' }}" {{ attributes }}>
     {%- block content -%}{%- endblock -%}
 </{{ tag }}>
