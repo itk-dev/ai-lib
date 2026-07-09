@@ -28,9 +28,6 @@ steps:
               - git checkout ${CI_COMMIT_BRANCH}
               - git pull
               - itkdev-docker-compose-server up -d --force-recreate
-              # Wipe the prod cache.
-              - itkdev-docker-compose-server exec phpfpm rm -rf var/cache/prod
-              - itkdev-docker-compose-server exec -e APP_ENV=prod phpfpm bin/console cache:clear --no-debug
               # Allow installation of dev packages to load fixtures.
               - itkdev-docker-compose-server exec phpfpm composer install -o --classmap-authoritative
               - itkdev-docker-compose-server exec phpfpm bin/console doctrine:schema:drop --full-database --force
@@ -46,3 +43,6 @@ steps:
               - itkdev-docker-compose-server exec phpfpm bin/console asset-map:compile
               # Remove dev packages
               - itkdev-docker-compose-server exec phpfpm composer install -o --no-dev --classmap-authoritative
+              - # Wipe the prod cache.
+              - itkdev-docker-compose-server exec phpfpm rm -rf var/cache/prod
+              - itkdev-docker-compose-server exec -e APP_ENV=prod phpfpm bin/console cache:clear --no-debug
