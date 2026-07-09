@@ -43,6 +43,6 @@ steps:
               - itkdev-docker-compose-server exec phpfpm bin/console asset-map:compile
               # Remove dev packages
               - itkdev-docker-compose-server exec phpfpm composer install -o --no-dev --classmap-authoritative
-              - # Wipe the prod cache.
+              # Wipe the prod cache.
               - itkdev-docker-compose-server exec phpfpm rm -rf var/cache/prod
               - itkdev-docker-compose-server exec -e APP_ENV=prod phpfpm bin/console cache:clear --no-debug
