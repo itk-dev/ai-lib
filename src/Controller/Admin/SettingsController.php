@@ -34,6 +34,22 @@ final class SettingsController extends AbstractController
      */
     private const string PREVIEW_NAME_FALLBACK = 'Forhåndsvisning';
 
+    /**
+     * Synthetic token embedded in the preview `%reset_url%` so admins
+     * can see the shape of the link without minting a real token.
+     * Matches the "60 minutter" copy the ResetPasswordBundle emits
+     * for `%expires_in%` so the two placeholders read consistently.
+     */
+    private const string PREVIEW_RESET_TOKEN = 'preview-token';
+
+    /**
+     * Synthetic value substituted for `%expires_in%` in the preview.
+     * Mirrors the human-readable expiration the ResetPasswordBundle
+     * emits at send time — hard-coded here so the preview does not
+     * need to reach into the bundle's translation catalogue.
+     */
+    private const string PREVIEW_EXPIRES_IN = '60 minutter';
+
     public function __construct(
         private readonly SettingsManager $settingsManager,
         private readonly EmailTemplateRenderer $emailTemplateRenderer,
@@ -166,9 +182,11 @@ final class SettingsController extends AbstractController
      * Reuses {@see EmailTemplateRenderer} so the output matches
      * what the mailer would ship — token substitution first, then
      * CommonMark. Tokens are filled from the acting admin's own
-     * profile (`name`, `email`), the current brand name, and a
-     * synthetic `approval_url` pointing at the users admin so the
-     * preview is realistic without depending on fixture data.
+     * profile (`name`, `email`), the current brand name, and
+     * synthetic URLs (`approval_url`, `confirmation_url`,
+     * `reset_url`) plus a synthetic `expires_in` copy so previews of
+     * every admin-editable message read realistically without
+     * depending on fixture data or minting real tokens.
      *
      * The endpoint is admin-gated via the class-level `IsGranted`
      * attribute and CSRF-protected against a dedicated intent —
@@ -212,6 +230,12 @@ final class SettingsController extends AbstractController
                 [],
                 UrlGeneratorInterface::ABSOLUTE_URL,
             ),
+            'reset_url' => $urlGenerator->generate(
+                'app_reset_password',
+                ['token' => self::PREVIEW_RESET_TOKEN],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            ),
+            'expires_in' => self::PREVIEW_EXPIRES_IN,
         ];
 
         $rendered = $this->emailTemplateRenderer->render(

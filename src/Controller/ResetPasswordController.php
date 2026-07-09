@@ -20,15 +20,6 @@ use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
 
-/**
- * Serves the three-step password-reset flow (request → check-email →
- * reset).
- *
- * Delegates the email send to {@see PasswordResetNotifier} so subject
- * + body + sender all resolve through {@see \App\Settings\SettingsManager}
- * at send time — same pipeline every other transactional mail on the
- * project uses.
- */
 #[Route('/reset-password')]
 class ResetPasswordController extends AbstractController
 {
@@ -41,9 +32,6 @@ class ResetPasswordController extends AbstractController
     ) {
     }
 
-    /**
-     * Display & process form to request a password reset.
-     */
     #[Route('', name: 'app_forgot_password_request')]
     public function request(Request $request): Response
     {
@@ -62,9 +50,6 @@ class ResetPasswordController extends AbstractController
         ]);
     }
 
-    /**
-     * Confirmation page after a user has requested a password reset.
-     */
     #[Route('/check-email', name: 'app_check_email')]
     public function checkEmail(): Response
     {
@@ -79,9 +64,6 @@ class ResetPasswordController extends AbstractController
         ]);
     }
 
-    /**
-     * Validates and process the reset URL that the user clicked in their email.
-     */
     #[Route('/reset/{token}', name: 'app_reset_password')]
     public function reset(Request $request, UserPasswordHasherInterface $passwordHasher, TranslatorInterface $translator, ?string $token = null): Response
     {
