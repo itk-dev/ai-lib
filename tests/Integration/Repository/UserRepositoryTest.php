@@ -9,7 +9,6 @@ use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Security\Roles;
-use App\Security\UserManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -94,40 +93,43 @@ final class UserRepositoryTest extends KernelTestCase
 
     public function testFindVisibleToReturnsEveryUserForAdmin(): void
     {
-        $manager = self::getContainer()->get(UserManager::class);
-        $admin = $manager->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
-        $manager->createUser('eve@other.test', 'Eve', 'pw', status: UserStatus::Pending);
+        $admin = $this->repository->findOneBy(['email' => UserFixtures::ADMIN_EMAIL]);
+        self::assertNotNull($admin);
 
         $emails = array_map(
             static fn (User $u): ?string => $u->getEmail(),
             $this->repository->findVisibleTo($admin),
         );
 
-        self::assertContains('alice@example.test', $emails);
-        self::assertContains('bob@example.test', $emails);
-        self::assertContains('admin@example.test', $emails);
-        self::assertContains('eve@other.test', $emails);
+        // Admin lives on aarhus.dk but sees every fixture user across every domain.
+        self::assertContains(UserFixtures::ALICE_EMAIL, $emails);
+        self::assertContains(UserFixtures::BOB_EMAIL, $emails);
+        self::assertContains(UserFixtures::ADMIN_EMAIL, $emails);
+        self::assertContains(UserFixtures::PENDING_EMAIL, $emails);
+        self::assertContains(UserFixtures::BLOCKED_EMAIL, $emails);
     }
 
     public function testFindVisibleToScopesByDomainForDomainManager(): void
     {
-        $manager = self::getContainer()->get(UserManager::class);
-        $domainManager = $manager->createUser('dm@example.test', 'DM', 'pw', [Roles::DOMAIN_MANAGER]);
-        $manager->createUser('outsider@other.test', 'Outsider', 'pw');
+        $domainManager = $this->repository->findOneBy(['email' => UserFixtures::DOMAIN_MANAGER_EMAIL]);
+        self::assertNotNull($domainManager);
 
         $emails = array_map(
             static fn (User $u): ?string => $u->getEmail(),
             $this->repository->findVisibleTo($domainManager),
         );
 
-        self::assertContains('alice@example.test', $emails);
-        self::assertContains('bob@example.test', $emails);
-        self::assertContains('dm@example.test', $emails);
-        self::assertNotContains('outsider@other.test', $emails);
+        // DOMAIN_MANAGER_EMAIL lives on aarhus.dk — sees the same-domain admin
+        // and colleague, does not see users on aalborg.dk / odense.dk / example.test.
+        self::assertContains(UserFixtures::ADMIN_EMAIL, $emails);
+        self::assertContains(UserFixtures::COLLEAGUE_EMAIL, $emails);
+        self::assertNotContains(UserFixtures::PENDING_EMAIL, $emails);
+        self::assertNotContains(UserFixtures::BLOCKED_EMAIL, $emails);
+        self::assertNotContains(UserFixtures::ALICE_EMAIL, $emails);
 
         // A plain authenticated user (no DOMAIN_MANAGER / ADMIN role) sees
         // no one — the repository falls through to an empty result.
-        $alice = $this->repository->findOneBy(['email' => 'alice@example.test']);
+        $alice = $this->repository->findOneBy(['email' => UserFixtures::ALICE_EMAIL]);
         self::assertNotNull($alice);
         self::assertSame([], $this->repository->findVisibleTo($alice));
 
@@ -139,22 +141,18 @@ final class UserRepositoryTest extends KernelTestCase
 
     public function testFindVisibleToFiltersByStatus(): void
     {
-        $manager = self::getContainer()->get(UserManager::class);
-        // Admin must start Approved so it doesn't itself match the Pending filter
-        // we're testing.
-        $admin = $manager->createUser('siteadmin@example.test', 'Site Admin', 'pw', [Roles::ADMIN], status: UserStatus::Approved);
-        $manager->createUser('pending@example.test', 'Pending', 'pw', status: UserStatus::Pending);
+        $admin = $this->repository->findOneBy(['email' => UserFixtures::ADMIN_EMAIL]);
+        self::assertNotNull($admin);
 
         $emails = array_map(
             static fn (User $u): ?string => $u->getEmail(),
             $this->repository->findVisibleTo($admin, UserStatus::Pending),
         );
 
-        // The fixture seeds other pending users; assertion only pins the
-        // test-created row and verifies non-pending users are filtered out.
-        self::assertContains('pending@example.test', $emails);
-        self::assertNotContains('siteadmin@example.test', $emails);
-        self::assertNotContains('alice@example.test', $emails);
+        // Only the Pending fixture user matches; every non-Pending fixture user is filtered out.
+        self::assertContains(UserFixtures::PENDING_EMAIL, $emails);
+        self::assertNotContains(UserFixtures::ADMIN_EMAIL, $emails);
+        self::assertNotContains(UserFixtures::ALICE_EMAIL, $emails);
     }
 
     // Verifies findApproversForDomain returns every Approved manager and admin on the given domain.

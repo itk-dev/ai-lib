@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Twig\Components;
 
+use App\DataFixtures\UserFixtures;
 use App\Repository\UserRepository;
-use App\Security\Roles;
-use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -41,7 +40,7 @@ final class UserMenuRenderTest extends WebTestCase
     // Tests that a plain authenticated user sees their name, the User section, and the "Log out" item.
     public function testPlainUserSeesUserSectionOnly(): void
     {
-        $this->loginAs('alice@example.test');
+        $this->loginAs(UserFixtures::ALICE_EMAIL);
 
         $crawler = $this->client->request('GET', '/');
 
@@ -62,10 +61,7 @@ final class UserMenuRenderTest extends WebTestCase
     // Verifies a ROLE_DOMAIN_MANAGER sees the Admin section with the "Administrér brugere" item.
     public function testDomainManagerSeesAdminUsersItem(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('dm@example.test', 'Domain Manager', 'pw', [Roles::DOMAIN_MANAGER]);
-
-        $this->loginAs('dm@example.test');
+        $this->loginAs(UserFixtures::DOMAIN_MANAGER_EMAIL);
 
         $crawler = $this->client->request('GET', '/');
 
@@ -78,10 +74,7 @@ final class UserMenuRenderTest extends WebTestCase
     // Verifies a ROLE_ADMIN sees the Admin section (ROLE_ADMIN implies ROLE_DOMAIN_MANAGER via the role hierarchy).
     public function testAdminSeesAdminSection(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('admin@example.test', 'Site Admin', 'pw', [Roles::ADMIN]);
-
-        $this->loginAs('admin@example.test');
+        $this->loginAs(UserFixtures::ADMIN_EMAIL);
 
         $crawler = $this->client->request('GET', '/');
 
@@ -95,10 +88,7 @@ final class UserMenuRenderTest extends WebTestCase
     // Ensures the settings item is gated to ROLE_ADMIN — a plain domain manager doesn't see it.
     public function testDomainManagerDoesNotSeeAdminSettings(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('dm2@example.test', 'Domain Manager 2', 'pw', [Roles::DOMAIN_MANAGER]);
-
-        $this->loginAs('dm2@example.test');
+        $this->loginAs(UserFixtures::DOMAIN_MANAGER_EMAIL);
 
         $crawler = $this->client->request('GET', '/');
 
@@ -109,7 +99,7 @@ final class UserMenuRenderTest extends WebTestCase
     // Ensures the dropdown's trigger has the WAI-ARIA "Menu Button" attributes set.
     public function testTriggerExposesMenuButtonAria(): void
     {
-        $this->loginAs('alice@example.test');
+        $this->loginAs(UserFixtures::ALICE_EMAIL);
 
         $crawler = $this->client->request('GET', '/');
 
