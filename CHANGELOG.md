@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Integration-test fixture consolidation pass. Eight test files
+  under `tests/Integration/` (UserApprovalTest, UserRolesTest,
+  UserRepositoryTest, SecurityControllerTest,
+  UserCreateControllerTest, OrganizationControllerTest,
+  SettingsControllerTest, UserMenuRenderTest) now look up their
+  actor/subject users through the existing `UserFixtures::…_EMAIL`
+  constants instead of calling `UserManager::createUser()` inline.
+  Test count is unchanged (633 tests, 1920 assertions). The
+  remaining inline `->createUser()` and `new User(...)` sites are
+  legitimate keeps: `UserManagerTest` tests the create path
+  itself, the last-admin guard tests in `UserRolesTest` /
+  `UserApprovalTest` deliberately control the admin count, and
+  `UserRepositoryTest` keeps a `(new User())` for its enum
+  round-trip and a headless-user edge case. No new fixtures were
+  needed — the existing `Roles::* × UserStatus` matrix covered
+  every swap.
 - Template audit-and-consolidation pass across `templates/` collapses
   ad-hoc markup onto the shared Twig component library. Five new
   components land: `Icon:Pencil` / `Icon:Upload` / `Icon:Trash`
