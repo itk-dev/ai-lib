@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Security;
 
+use App\DataFixtures\UserFixtures;
 use App\Repository\UserRepository;
 use App\Security\LastAdminException;
 use App\Security\Roles;
@@ -39,7 +40,8 @@ final class UserRolesTest extends KernelTestCase
     // Verifies promoteToManager replaces the role list with ROLE_DOMAIN_MANAGER.
     public function testPromoteToManagerSetsRoleDomainManager(): void
     {
-        $user = $this->userManager->createUser('promo-mgr@example.test', 'Promo', 'pw');
+        $user = $this->userRepository->findOneBy(['email' => UserFixtures::ALICE_EMAIL]);
+        self::assertNotNull($user);
 
         $this->userRoles->promoteToManager($user);
 
@@ -52,7 +54,8 @@ final class UserRolesTest extends KernelTestCase
     // Verifies promoteToAdmin replaces the role list with ROLE_ADMIN.
     public function testPromoteToAdminSetsRoleAdmin(): void
     {
-        $user = $this->userManager->createUser('promo-admin@example.test', 'Promo', 'pw');
+        $user = $this->userRepository->findOneBy(['email' => UserFixtures::BOB_EMAIL]);
+        self::assertNotNull($user);
 
         $this->userRoles->promoteToAdmin($user);
 
@@ -64,7 +67,8 @@ final class UserRolesTest extends KernelTestCase
     // Verifies removeAllPermissions clears the elevated roles, leaving the implicit ROLE_USER floor.
     public function testRemoveAllPermissionsClearsElevatedRoles(): void
     {
-        $user = $this->userManager->createUser('demoted@example.test', 'Demoted', 'pw', [Roles::DOMAIN_MANAGER]);
+        $user = $this->userRepository->findOneBy(['email' => UserFixtures::DOMAIN_MANAGER_EMAIL]);
+        self::assertNotNull($user);
 
         $this->userRoles->removeAllPermissions($user);
 

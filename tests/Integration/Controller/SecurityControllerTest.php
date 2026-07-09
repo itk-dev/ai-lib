@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Controller;
 
 use App\Controller\SecurityController;
+use App\DataFixtures\UserFixtures;
 use App\Entity\User;
-use App\Enum\UserStatus;
-use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -108,19 +107,12 @@ final class SecurityControllerTest extends WebTestCase
         );
     }
 
-    // Tests that an AwaitingEmailConfirmation user is rejected at login with the localised confirmation-pending message (issue #103).
+    // Tests that an AwaitingEmailConfirmation user is rejected at login with the localised confirmation-pending message.
     public function testAwaitingEmailConfirmationUserCannotLogIn(): void
     {
-        $this->client->getContainer()->get(UserManager::class)->createUser(
-            'erin@example.test',
-            'Erin',
-            'password',
-            status: UserStatus::AwaitingEmailConfirmation,
-        );
-
         $crawler = $this->client->request('GET', '/login');
         $form = $crawler->filter('form')->form();
-        $form['_username'] = 'erin@example.test';
+        $form['_username'] = UserFixtures::AWAITING_EMAIL;
         $form['_password'] = 'password';
         $this->client->submit($form);
 
@@ -141,16 +133,9 @@ final class SecurityControllerTest extends WebTestCase
     // Tests that a Pending user is rejected at login with the localised pending message.
     public function testPendingUserCannotLogIn(): void
     {
-        $this->client->getContainer()->get(UserManager::class)->createUser(
-            'carol@example.test',
-            'Carol',
-            'password',
-            status: UserStatus::Pending,
-        );
-
         $crawler = $this->client->request('GET', '/login');
         $form = $crawler->filter('form')->form();
-        $form['_username'] = 'carol@example.test';
+        $form['_username'] = UserFixtures::PENDING_EMAIL;
         $form['_password'] = 'password';
         $this->client->submit($form);
 
@@ -171,16 +156,9 @@ final class SecurityControllerTest extends WebTestCase
     // Tests that a Blocked user is rejected at login with the localised blocked message.
     public function testBlockedUserCannotLogIn(): void
     {
-        $this->client->getContainer()->get(UserManager::class)->createUser(
-            'dora@example.test',
-            'Dora',
-            'password',
-            status: UserStatus::Blocked,
-        );
-
         $crawler = $this->client->request('GET', '/login');
         $form = $crawler->filter('form')->form();
-        $form['_username'] = 'dora@example.test';
+        $form['_username'] = UserFixtures::BLOCKED_EMAIL;
         $form['_password'] = 'password';
         $this->client->submit($form);
 
