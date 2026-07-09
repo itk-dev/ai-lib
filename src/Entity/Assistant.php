@@ -69,7 +69,7 @@ class Assistant extends AbstractEntity
      * {@see \App\Repository\OrganizationRepository::findOneByEmailDomain()}.
      */
     #[ORM\ManyToOne(targetEntity: Organization::class)]
-    #[ORM\JoinColumn(name: 'organization_id', referencedColumnName: 'id', nullable: true)]
+    #[ORM\JoinColumn(name: 'organization_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Organization $organization = null;
 
     /**

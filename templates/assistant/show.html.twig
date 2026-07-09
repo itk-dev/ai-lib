@@ -3,34 +3,53 @@
 {% block title %}{{ 'assistant.detail.title'|trans({'%title%': assistant.title, '%brand%': brand_name}) }}{% endblock %}
 
 {% block body %}
+    {% set organization_name = assistant.organization ? assistant.organization.name : 'assistant.detail.no_organization'|trans %}
     <twig:Layout:ContentWithAsides>
         <twig:block name="main">
             <article class="grid gap-6">
-                <nav class="text-sm text-text-muted" aria-label="{{ 'assistant.detail.breadcrumb_label'|trans }}">
-                    <a class="no-underline hover:text-primary" href="{{ path('app_assistant_catalog') }}">
-                        {{ 'assistant.detail.breadcrumb_catalog'|trans }}
-                    </a>
-                    <span aria-hidden="true" class="px-2">/</span>
-                    <span class="text-text">{{ 'assistant.detail.placeholder_origin'|trans }}</span>
-                </nav>
+                <div class="flex items-start justify-between gap-3">
+                    <nav class="text-sm text-text-muted" aria-label="{{ 'assistant.detail.breadcrumb_label'|trans }}">
+                        <a class="no-underline hover:text-primary" href="{{ path('app_assistant_catalog') }}">
+                            {{ 'assistant.detail.breadcrumb_catalog'|trans }}
+                        </a>
+                        <span aria-hidden="true" class="px-2">/</span>
+                        <span class="text-text">{{ 'assistant.detail.placeholder_origin'|trans }}</span>
+                    </nav>
+                    {% if is_granted(constant('App\\Security\\Voter\\EditAssistantVoter::EDIT'), assistant) %}
+                        <a class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line text-text-muted no-underline transition-colors hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                           href="{{ path('app_assistant_edit', {id: assistant.id}) }}"
+                           aria-label="{{ 'assistant.detail.action.edit'|trans }}"
+                           title="{{ 'assistant.detail.action.edit'|trans }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.862 4.487Zm0 0L19.5 7.125" />
+                            </svg>
+                        </a>
+                    {% endif %}
+                </div>
 
                 <header class="grid gap-4">
                     <twig:Eyebrow as="p">
-                        {{ 'assistant.detail.placeholder_origin'|trans }} · {{ assistant.languageModel }}
+                        {{ organization_name }} · {{ assistant.languageModel }}
                     </twig:Eyebrow>
                     <twig:Heading level="1">{{ assistant.title }}</twig:Heading>
-                    <p class="text-sm text-text-muted italic">
-                        {{ 'assistant.detail.placeholder_tagline'|trans }}
-                    </p>
+                    {% if assistant.tagline %}
+                        <p class="text-sm text-text-muted">{{ assistant.tagline }}</p>
+                    {% endif %}
 
                     <div class="flex flex-wrap gap-2">
                         <span class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text">
                             {{ assistant.framework|framework_label }}
                         </span>
-                        <span class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text-muted italic"
-                              title="{{ 'assistant.detail.placeholder_hint'|trans }}">
-                            {{ 'assistant.detail.placeholder_sensitivity'|trans }}
-                        </span>
+                        {% if assistant.dataSensitivity %}
+                            <span class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text"
+                                  title="{{ assistant.dataSensitivity.description|trans }}">
+                                {{ assistant.dataSensitivity.label|trans }}
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text-muted italic">
+                                {{ 'assistant.detail.no_data_sensitivity'|trans }}
+                            </span>
+                        {% endif %}
                     </div>
                 </header>
 
@@ -54,9 +73,13 @@
             <twig:Box eyebrow="assistant.detail.meta_heading">
                 <twig:DescriptionList:List>
                     <twig:DescriptionList:Item label="assistant.detail.meta_origin">
-                        <span class="italic text-text-muted" title="{{ 'assistant.detail.placeholder_hint'|trans }}">
-                            {{ 'assistant.detail.placeholder_origin'|trans }}
-                        </span>
+                        {% if assistant.organization %}
+                            {{ assistant.organization.name }}
+                        {% else %}
+                            <span class="italic text-text-muted">
+                                {{ 'assistant.detail.no_organization'|trans }}
+                            </span>
+                        {% endif %}
                     </twig:DescriptionList:Item>
                     <twig:DescriptionList:Item label="assistant.detail.meta_language_model">
                         {{ assistant.languageModel }}
@@ -65,14 +88,15 @@
                         {{ assistant.framework|framework_label }}
                     </twig:DescriptionList:Item>
                     <twig:DescriptionList:Item label="assistant.detail.meta_sensitivity">
-                        <span class="italic text-text-muted" title="{{ 'assistant.detail.placeholder_hint'|trans }}">
-                            {{ 'assistant.detail.placeholder_sensitivity'|trans }}
-                        </span>
-                    </twig:DescriptionList:Item>
-                    <twig:DescriptionList:Item label="assistant.detail.meta_approved_for">
-                        <span class="italic text-text-muted" title="{{ 'assistant.detail.placeholder_hint'|trans }}">
-                            {{ 'assistant.detail.placeholder_approved_for'|trans }}
-                        </span>
+                        {% if assistant.dataSensitivity %}
+                            <span title="{{ assistant.dataSensitivity.description|trans }}">
+                                {{ assistant.dataSensitivity.label|trans }}
+                            </span>
+                        {% else %}
+                            <span class="italic text-text-muted">
+                                {{ 'assistant.detail.no_data_sensitivity'|trans }}
+                            </span>
+                        {% endif %}
                     </twig:DescriptionList:Item>
                     {% if assistant.createdAt %}
                         <twig:DescriptionList:Item label="assistant.detail.meta_created_at">
@@ -85,21 +109,16 @@
                         </twig:DescriptionList:Item>
                     {% endif %}
                 </twig:DescriptionList:List>
-                <a class="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white no-underline hover:bg-primary/90"
-                   href="{{ path('app_assistant_export', {id: assistant.id}) }}"
-                   download>
-                    {{ 'assistant.detail.export'|trans }}
-                </a>
             </twig:Box>
         </twig:block>
 
         <twig:block name="actions">
             <twig:Box eyebrow="assistant.detail.actions_heading">
-                <div class="grid gap-3">
-                    <twig:Form:Button href="{{ path('app_assistant_export', {id: assistant.id}) }}">
-                        {{ 'assistant.detail.action.export'|trans }}
-                    </twig:Form:Button>
-                </div>
+                <a class="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-ink no-underline transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40"
+                   href="{{ path('app_assistant_export', {id: assistant.id}) }}"
+                   download>
+                    {{ 'assistant.detail.action.export'|trans }}
+                </a>
             </twig:Box>
         </twig:block>
     </twig:Layout:ContentWithAsides>

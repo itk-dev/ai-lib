@@ -1,19 +1,23 @@
 {#
-    Step 3 body — the "assistant delt" receipt.
+    Step 3 body — the wizard's receipt.
 
-    The controller has already persisted the assistant and stashed
-    its id on `draft.createdAssistantId` by the time this renders.
-    We show a confirmation heading + permalink and three left-
-    aligned actions: view the fresh entity, share another (the
-    flow's Finish submit, which resets session state and lands
-    back on step 1), and go back to the catalog.
+    Two entry paths render this partial: the create wizard
+    (`draft.editingAssistantId is null`) and the edit wizard
+    (`draft.editingAssistantId is not null`). The copy differs
+    per path but the shape is identical: a heading, a permalink
+    to the persisted row, and three left-aligned actions. The
+    controller has already persisted / updated the assistant and
+    stashed its id on `draft.createdAssistantId` by the time this
+    renders.
 #}
+{% set is_edit = draft.editingAssistantId is not null %}
+{% set copy_scope = is_edit ? 'assistant.edit.step_receipt' : 'assistant.new.step_receipt' %}
 <div class="grid gap-6">
     <div class="grid gap-2">
         <twig:Heading level="2" size="md" class="text-primary">
-            {{ 'assistant.new.step_receipt.heading'|trans }}
+            {{ (copy_scope ~ '.heading')|trans }}
         </twig:Heading>
-        <p class="text-sm text-text">{{ 'assistant.new.step_receipt.body'|trans({'%title%': draft.title}) }}</p>
+        <p class="text-sm text-text">{{ (copy_scope ~ '.body')|trans({'%title%': draft.title}) }}</p>
     </div>
 
     {% if draft.createdAssistantId %}
@@ -29,10 +33,12 @@
             <twig:Form:Button href="{{ path('app_assistant_show', {id: draft.createdAssistantId}) }}">
                 {{ 'assistant.new.step_receipt.go_to_assistant'|trans }}
             </twig:Form:Button>
-            {{ form_widget(flow.navigator.finish, {
-                label: 'assistant.new.action.share_another'|trans,
-                attr: {class: 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40'},
-            }) }}
+            {% if not is_edit %}
+                {{ form_widget(flow.navigator.finish, {
+                    label: 'assistant.new.action.share_another'|trans,
+                    attr: {class: 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40'},
+                }) }}
+            {% endif %}
             <a class="text-sm text-text underline hover:text-primary" href="{{ path('app_assistant_catalog') }}">
                 {{ 'assistant.new.step_receipt.back_to_catalog'|trans }}
             </a>

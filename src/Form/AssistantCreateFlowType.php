@@ -9,7 +9,6 @@ use App\Assistant\AssistantDraftPrefiller;
 use Symfony\Component\Form\Flow\AbstractFlowType;
 use Symfony\Component\Form\Flow\DataStorage\SessionDataStorage;
 use Symfony\Component\Form\Flow\FormFlowBuilderInterface;
-use Symfony\Component\Form\Flow\Type\NavigatorFlowType;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -68,7 +67,7 @@ final class AssistantCreateFlowType extends AbstractFlowType
             ->addStep('json', AssistantJsonStepType::class)
             ->addStep('metadata', AssistantMetadataStepType::class)
             ->addStep('receipt', AssistantReceiptStepType::class)
-            ->add('navigator', NavigatorFlowType::class)
+            ->add('navigator', AssistantNavigatorFlowType::class)
         ;
 
         // On step 1 → step 2, the DTO's raw config is fresh. Detect

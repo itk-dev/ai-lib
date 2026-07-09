@@ -22,6 +22,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   project's Twig components + Tailwind so the flow matches the rest of
   the security surface. Migration `Version20260708065059` adds the
   `reset_password_request` table.
+- Detail page (`/assistant/{id}`) now renders the real
+  organisation, tagline, and data-sensitivity values from the
+  entity instead of the "kommer senere" placeholder copy that
+  stood in while the metadata fields were being built. The
+  data-sensitivity chip loses its muted-italic styling now that
+  it carries a real classification, and its `title` attribute
+  surfaces the enum case's descriptive text on hover. The
+  "Godkendt til" sidebar item is retired for v1 (never
+  wired to a real field). The Beskrivelse tab drops its
+  "AI-foreslåede tags markeres, når feltet er tilføjet
+  datamodellen." line. The sidebar's "Hjemtag konfiguration"
+  button shrinks to the same compact `px-3 py-1.5 text-sm`
+  sizing the "Gå til assistent" primary link uses on the
+  personal inventory, so it stops overflowing the aside
+  container; the redundant "Handlinger" aside box is removed
+  now that the export lives in the detail aside. Migration
+  `Version20260707131333` sets the organisation FK to
+  `ON DELETE SET NULL` so admins can remove an organisation
+  without seeded assistants' FKs blocking the delete.
+- Edit-an-assistant wizard at `/assistant/{id}/edit`, reusing the
+  create wizard's three-step shell (`json → metadata → receipt`).
+  Access is gated by a new `EditAssistantVoter` that grants the
+  assistant's original curator (`createdBy` blame) plus site admins;
+  everyone else is denied. The draft is seeded from the persisted
+  entity — the prefiller skips its own detection/organisation-default
+  passes when the DTO carries `editingAssistantId`, so the curator's
+  values are never clobbered by re-derivation from the acting user.
+  New `AssistantEditor::update()` applies the DTO to the entity with
+  the same normalisation rules as `AssistantCreator::create()`
+  (canonical model, blank-to-null, ULID resolution). The step
+  partials `_new_step_*.html.twig` are renamed to `_step_*.html.twig`
+  to reflect their shared scope; a dedicated `edit.html.twig` shell
+  drives the edit-specific copy (`assistant.edit.*` translation keys)
+  and re-uses the three partials. The detail page grows a "Rediger
+  assistent" affordance visible to the same audience the voter gates
+  on. Migration `Version20260707111627` sets the `organization` FK
+  to `ON DELETE SET NULL` so the admin can delete an organisation
+  without hitting a constraint from the seeded assistants that
+  reference it.
 - Four new curator-facing metadata fields on the create wizard's step 2
   ([`assistant/new`](src/Controller/AssistantCreateController.php)) — `organization`
   (nullable `ManyToOne` to `Organization`), `tagline` (nullable string),
