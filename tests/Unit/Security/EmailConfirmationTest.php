@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Security;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Notification\AdminRegistrationNotifier;
+use App\Notification\DomainManagerRegistrationNotifier;
 use App\Notification\RegistrationConfirmationNotifier;
 use App\Repository\UserRepository;
 use App\Security\EmailConfirmation;
@@ -52,6 +53,43 @@ final class EmailConfirmationTest extends TestCase
             $this->createMock(EntityManagerInterface::class),
             $this->makeRepositoryReturning($user),
             $adminNotifier,
+            $this->createMock(DomainManagerRegistrationNotifier::class),
+            $confirmationNotifier,
+            $logger,
+        );
+
+        $result = $service->consume('any-token');
+
+        self::assertSame($user, $result);
+    }
+
+    // Verifies a transport failure on the domain-manager notifier is logged and swallowed so the welcome notifier still fires.
+    public function testConsumeSwallowsTransportFailureOnDomainManagerNotifier(): void
+    {
+        $user = $this->makeAwaitingUser();
+
+        $adminNotifier = $this->createMock(AdminRegistrationNotifier::class);
+        $adminNotifier->expects(self::once())->method('notifyOfNewRegistration');
+
+        $domainManagerNotifier = $this->createMock(DomainManagerRegistrationNotifier::class);
+        $domainManagerNotifier->method('notifyOfNewRegistration')
+            ->willThrowException(new TransportException('SMTP down'));
+
+        $confirmationNotifier = $this->createMock(RegistrationConfirmationNotifier::class);
+        // Even though the domain-manager dispatch failed, the welcome mail must still fire.
+        $confirmationNotifier->expects(self::once())->method('confirmRegistration');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())
+            ->method('warning')
+            ->with(self::stringContains('domain-manager registration notification'));
+
+        $service = new EmailConfirmation(
+            $this->makeCacheHitting($user),
+            $this->createMock(EntityManagerInterface::class),
+            $this->makeRepositoryReturning($user),
+            $adminNotifier,
+            $domainManagerNotifier,
             $confirmationNotifier,
             $logger,
         );
@@ -83,6 +121,7 @@ final class EmailConfirmationTest extends TestCase
             $this->createMock(EntityManagerInterface::class),
             $this->makeRepositoryReturning($user),
             $adminNotifier,
+            $this->createMock(DomainManagerRegistrationNotifier::class),
             $confirmationNotifier,
             $logger,
         );

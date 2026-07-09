@@ -85,6 +85,48 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
+     * Find every Approved domain manager whose email domain matches `$domain`.
+     *
+     * Powers the domain-manager registration notifier: when a user
+     * completes email confirmation, the notifier resolves the set of
+     * managers responsible for the user's own email domain and
+     * dispatches the "new pending user" mail to each one. Only
+     * `Approved` managers are returned — a Pending / Blocked /
+     * AwaitingEmailConfirmation manager cannot act on the queue, so
+     * mailing them would be noise. Site admins (`ROLE_ADMIN`) are
+     * excluded on purpose: they already receive the site-wide admin
+     * recipient's mail via {@see \App\Notification\AdminRegistrationNotifier}
+     * and don't need a second, domain-scoped copy.
+     *
+     * Domain match is case-insensitive on the email column, and the
+     * caller-supplied `$domain` is compared lowercased so a stray
+     * mixed-case domain from {@see EmailDomain::of()} (already
+     * lowercased today, defensive here) still hits.
+     *
+     * @param string $domain lowercased email domain to match (e.g. "aarhus.dk")
+     *
+     * @return list<User> approved domain managers on that domain, sorted by id ascending
+     */
+    public function findApprovedDomainManagersForDomain(string $domain): array
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->andWhere('u.roles LIKE :managerRole')
+            ->andWhere('u.roles NOT LIKE :adminRole')
+            ->andWhere('u.status = :status')
+            ->andWhere('LOWER(u.email) LIKE :domainSuffix')
+            ->setParameter('managerRole', '%"'.Roles::DOMAIN_MANAGER.'"%')
+            ->setParameter('adminRole', '%"'.Roles::ADMIN.'"%')
+            ->setParameter('status', UserStatus::Approved->value)
+            ->setParameter('domainSuffix', '%@'.strtolower($domain))
+            ->orderBy('u.id', 'ASC');
+
+        /** @var list<User> $result */
+        $result = $qb->getQuery()->getResult();
+
+        return $result;
+    }
+
+    /**
      * Find users visible to the acting user, optionally filtered by status.
      *
      * Decision flow mirrors {@see \App\Security\Voter\ManageUserVoter}:

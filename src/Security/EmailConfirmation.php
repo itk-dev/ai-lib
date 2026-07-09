@@ -7,6 +7,7 @@ namespace App\Security;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Notification\AdminRegistrationNotifier;
+use App\Notification\DomainManagerRegistrationNotifier;
 use App\Notification\RegistrationConfirmationNotifier;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -50,12 +51,13 @@ final class EmailConfirmation
     public const int TOKEN_TTL_SECONDS = 86400;
 
     /**
-     * @param CacheItemPoolInterface           $tokens               dedicated cache pool storing the token → user-id mapping
-     * @param EntityManagerInterface           $entityManager        Doctrine entity manager used to flush the status transition
-     * @param UserRepository                   $userRepository       read-side lookup of the user the token belongs to
-     * @param AdminRegistrationNotifier        $adminNotifier        fires the moderator-inbox notification once the email is confirmed
-     * @param RegistrationConfirmationNotifier $confirmationNotifier fires the user-facing welcome mail once the email is confirmed
-     * @param LoggerInterface                  $logger               receives a warning on transient mailer failures for either follow-up
+     * @param CacheItemPoolInterface            $tokens                dedicated cache pool storing the token → user-id mapping
+     * @param EntityManagerInterface            $entityManager         Doctrine entity manager used to flush the status transition
+     * @param UserRepository                    $userRepository        read-side lookup of the user the token belongs to
+     * @param AdminRegistrationNotifier         $adminNotifier         fires the site-wide admin-recipient notification once the email is confirmed
+     * @param DomainManagerRegistrationNotifier $domainManagerNotifier fires the same notification to every approved manager on the user's own domain
+     * @param RegistrationConfirmationNotifier  $confirmationNotifier  fires the user-facing welcome mail once the email is confirmed
+     * @param LoggerInterface                   $logger                receives a warning on transient mailer failures for any follow-up
      */
     public function __construct(
         #[Autowire(service: 'cache.email_confirmation')]
@@ -63,6 +65,7 @@ final class EmailConfirmation
         private readonly EntityManagerInterface $entityManager,
         private readonly UserRepository $userRepository,
         private readonly AdminRegistrationNotifier $adminNotifier,
+        private readonly DomainManagerRegistrationNotifier $domainManagerNotifier,
         private readonly RegistrationConfirmationNotifier $confirmationNotifier,
         private readonly LoggerInterface $logger,
     ) {
@@ -167,6 +170,20 @@ final class EmailConfirmation
             $this->adminNotifier->notifyOfNewRegistration($user);
         } catch (TransportExceptionInterface $e) {
             $this->logger->warning('Failed to deliver admin registration notification.', [
+                'user_email' => $user->getUserIdentifier(),
+                'exception' => $e,
+            ]);
+        }
+
+        // The domain-manager notifier isolates each per-manager transport
+        // failure internally, so any exception escaping here is a hard
+        // configuration problem (unset sender, undetermined domain) that
+        // has already been logged inside the notifier — swallowing keeps
+        // the status transition unaffected.
+        try {
+            $this->domainManagerNotifier->notifyOfNewRegistration($user);
+        } catch (TransportExceptionInterface $e) {
+            $this->logger->warning('Failed to deliver domain-manager registration notification.', [
                 'user_email' => $user->getUserIdentifier(),
                 'exception' => $e,
             ]);

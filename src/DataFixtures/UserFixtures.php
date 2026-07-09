@@ -64,6 +64,14 @@ final class UserFixtures extends Fixture implements FixtureGroupInterface
     public const string DOMAIN_MANAGER_EMAIL = 'manager@aarhus.dk';
 
     /**
+     * Second domain manager sharing the `aarhus.dk` scope. Lets tests
+     * exercise "one event fans out to every same-domain manager"
+     * paths (notably the domain-manager registration notifier)
+     * without inline `createUser` plumbing.
+     */
+    public const string SECOND_DOMAIN_MANAGER_EMAIL = 'manager2@aarhus.dk';
+
+    /**
      * Plain `Approved` user sharing the manager's `aarhus.dk` domain.
      * Lets tests exercise "manager acts on a same-domain non-admin"
      * scenarios without inline `createUser` plumbing — the rest of
@@ -97,12 +105,14 @@ final class UserFixtures extends Fixture implements FixtureGroupInterface
     }
 
     /**
-     * Persist the seven baseline users via {@see UserManager::createUser()}.
+     * Persist the baseline users via {@see UserManager::createUser()}.
      *
      * The two original `example.test` accounts seed the
-     * cross-fixture relations; the remaining five pick domains
+     * cross-fixture relations; the remaining accounts pick domains
      * already declared by `OrganizationFixtures` so role-scoped
-     * voters and admin screens have a realistic dataset.
+     * voters and admin screens have a realistic dataset. Aarhus
+     * carries two domain managers so tests can exercise fan-out to
+     * every same-domain manager.
      *
      * @param ObjectManager $manager unused — UserManager flushes its own entity manager
      */
@@ -112,6 +122,7 @@ final class UserFixtures extends Fixture implements FixtureGroupInterface
         $this->userManager->createUser(self::BOB_EMAIL, 'Bob', 'password', status: UserStatus::Approved);
         $this->userManager->createUser(self::ADMIN_EMAIL, 'Admin', 'password', [Roles::ADMIN], UserStatus::Approved);
         $this->userManager->createUser(self::DOMAIN_MANAGER_EMAIL, 'Manager', 'password', [Roles::DOMAIN_MANAGER], UserStatus::Approved);
+        $this->userManager->createUser(self::SECOND_DOMAIN_MANAGER_EMAIL, 'Manager Two', 'password', [Roles::DOMAIN_MANAGER], UserStatus::Approved);
         $this->userManager->createUser(self::COLLEAGUE_EMAIL, 'Colleague', 'password', status: UserStatus::Approved);
         $this->userManager->createUser(self::PENDING_EMAIL, 'Pending', 'password', status: UserStatus::Pending);
         $this->userManager->createUser(self::AWAITING_EMAIL, 'Awaiting', 'password', status: UserStatus::AwaitingEmailConfirmation);

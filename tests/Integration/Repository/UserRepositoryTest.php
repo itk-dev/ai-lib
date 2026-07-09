@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Repository;
 
+use App\DataFixtures\UserFixtures;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
@@ -154,5 +155,81 @@ final class UserRepositoryTest extends KernelTestCase
         self::assertContains('pending@example.test', $emails);
         self::assertNotContains('siteadmin@example.test', $emails);
         self::assertNotContains('alice@example.test', $emails);
+    }
+
+    // Verifies findApprovedDomainManagersForDomain returns every ROLE_DOMAIN_MANAGER on the given domain.
+    public function testFindApprovedDomainManagersForDomainReturnsSameDomainManagers(): void
+    {
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findApprovedDomainManagersForDomain('aarhus.dk'),
+        );
+
+        self::assertContains(UserFixtures::DOMAIN_MANAGER_EMAIL, $emails);
+        self::assertContains(UserFixtures::SECOND_DOMAIN_MANAGER_EMAIL, $emails);
+    }
+
+    // Ensures site admins are excluded even when they share the target domain — they already receive the admin recipient's mail.
+    public function testFindApprovedDomainManagersForDomainExcludesSiteAdmins(): void
+    {
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findApprovedDomainManagersForDomain('aarhus.dk'),
+        );
+
+        self::assertNotContains(UserFixtures::ADMIN_EMAIL, $emails);
+    }
+
+    // Ensures plain (non-manager) same-domain users are excluded.
+    public function testFindApprovedDomainManagersForDomainExcludesPlainUsers(): void
+    {
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findApprovedDomainManagersForDomain('aarhus.dk'),
+        );
+
+        self::assertNotContains(UserFixtures::COLLEAGUE_EMAIL, $emails);
+    }
+
+    // Verifies managers on other domains are excluded.
+    public function testFindApprovedDomainManagersForDomainScopesByDomain(): void
+    {
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findApprovedDomainManagersForDomain('aalborg.dk'),
+        );
+
+        self::assertNotContains(UserFixtures::DOMAIN_MANAGER_EMAIL, $emails);
+        self::assertSame([], $emails);
+    }
+
+    // Ensures the domain match is case-insensitive so a caller passing a mixed-case domain still hits.
+    public function testFindApprovedDomainManagersForDomainIsCaseInsensitive(): void
+    {
+        $lower = $this->repository->findApprovedDomainManagersForDomain('aarhus.dk');
+        $upper = $this->repository->findApprovedDomainManagersForDomain('AARHUS.DK');
+
+        self::assertSame(
+            array_map(static fn (User $u): ?string => (string) $u->getId(), $lower),
+            array_map(static fn (User $u): ?string => (string) $u->getId(), $upper),
+        );
+    }
+
+    // Verifies non-Approved managers (Pending / Blocked / Awaiting) are filtered out — mailing them makes no sense; they can't act on the queue.
+    public function testFindApprovedDomainManagersForDomainFiltersByStatus(): void
+    {
+        $manager = self::getContainer()->get(UserManager::class);
+        $manager->createUser('pending-manager@aarhus.dk', 'PM', 'pw', [Roles::DOMAIN_MANAGER], UserStatus::Pending);
+        $manager->createUser('blocked-manager@aarhus.dk', 'BM', 'pw', [Roles::DOMAIN_MANAGER], UserStatus::Blocked);
+        $manager->createUser('awaiting-manager@aarhus.dk', 'AM', 'pw', [Roles::DOMAIN_MANAGER], UserStatus::AwaitingEmailConfirmation);
+
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findApprovedDomainManagersForDomain('aarhus.dk'),
+        );
+
+        self::assertNotContains('pending-manager@aarhus.dk', $emails);
+        self::assertNotContains('blocked-manager@aarhus.dk', $emails);
+        self::assertNotContains('awaiting-manager@aarhus.dk', $emails);
     }
 }
