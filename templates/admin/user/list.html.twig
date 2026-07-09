@@ -100,9 +100,11 @@
                                          data-role-picker-url-value="{{ path('app_admin_user_role', {id: u.id}) }}"
                                          data-role-picker-success-message-value="{{ 'admin.users.role.flash.success'|trans }}"
                                          class="grid gap-1">
-                                        <label for="{{ picker_id }}" class="sr-only">
-                                            {{ 'admin.users.role.label'|trans({'%name%': u.name}) }}
-                                        </label>
+                                        <twig:Form:Label
+                                            for="{{ picker_id }}"
+                                            text="{{ 'admin.users.role.label'|trans({'%name%': u.name}) }}"
+                                            srOnly
+                                        />
                                         <select id="{{ picker_id }}"
                                                 data-role-picker-target="select"
                                                 data-action="change->role-picker#submit"

@@ -5,16 +5,15 @@
           role="search"
           action="{{ action }}"
           method="get">
-        <label for="{{ inputId }}" class="sr-only">{{ legend|trans }}</label>
+        <twig:Form:Label for="{{ inputId }}" text="{{ legend|trans }}" srOnly />
         <input id="{{ inputId }}"
                class="flex-1 rounded-lg border-0 bg-transparent px-3 py-2 text-base text-ink placeholder:italic placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
                type="search"
                name="{{ name }}"
                placeholder="{{ placeholder|trans }}"
                autocomplete="off">
-        <button class="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-ink transition-colors hover:bg-primary-hover"
-                type="submit">
+        <twig:Form:Button type="submit">
             {{ submitLabel|trans }}
-        </button>
+        </twig:Form:Button>
     </form>
 </section>
