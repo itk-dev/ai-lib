@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Security;
 
+use App\DataFixtures\UserFixtures;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Security\LastAdminException;
@@ -16,6 +17,7 @@ final class UserApprovalTest extends KernelTestCase
 {
     private UserManager $userManager;
     private UserApproval $userApproval;
+    private UserRepository $userRepository;
 
     protected function setUp(): void
     {
@@ -24,16 +26,13 @@ final class UserApprovalTest extends KernelTestCase
 
         $this->userManager = $container->get(UserManager::class);
         $this->userApproval = $container->get(UserApproval::class);
+        $this->userRepository = $container->get(UserRepository::class);
     }
 
     public function testApproveTransitionsPendingUserToApproved(): void
     {
-        $user = $this->userManager->createUser(
-            'kim@example.test',
-            'Kim',
-            'pw',
-            status: UserStatus::Pending,
-        );
+        $user = $this->userRepository->findOneBy(['email' => UserFixtures::PENDING_EMAIL]);
+        self::assertNotNull($user);
 
         $this->userApproval->approve($user);
 
@@ -42,11 +41,8 @@ final class UserApprovalTest extends KernelTestCase
 
     public function testBlockTransitionsApprovedUserToBlocked(): void
     {
-        $user = $this->userManager->createUser(
-            'lara@example.test',
-            'Lara',
-            'pw',
-        );
+        $user = $this->userRepository->findOneBy(['email' => UserFixtures::ALICE_EMAIL]);
+        self::assertNotNull($user);
 
         $this->userApproval->block($user);
 
@@ -55,19 +51,15 @@ final class UserApprovalTest extends KernelTestCase
 
     public function testApprovalIsRoundTrippedThroughTheDatabase(): void
     {
-        $user = $this->userManager->createUser(
-            'mona@example.test',
-            'Mona',
-            'pw',
-            status: UserStatus::Pending,
-        );
+        $user = $this->userRepository->findOneBy(['email' => UserFixtures::PENDING_EMAIL]);
+        self::assertNotNull($user);
         $id = $user->getId();
 
         $this->userApproval->approve($user);
 
         self::bootKernel();
         $reloaded = self::getContainer()
-            ->get(\App\Repository\UserRepository::class)
+            ->get(UserRepository::class)
             ->find($id);
 
         self::assertNotNull($reloaded);

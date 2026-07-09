@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller\Admin;
 
+use App\DataFixtures\UserFixtures;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Security\Roles;
-use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -42,9 +42,7 @@ final class UserCreateControllerTest extends WebTestCase
     // Tests that a domain manager without ROLE_ADMIN is 403'd — only site admins can create.
     public function testDomainManagerGets403(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('dm@example.test', 'DM', 'pw', [Roles::DOMAIN_MANAGER]);
-        $this->loginAsApproved('dm@example.test');
+        $this->loginAsApproved(UserFixtures::DOMAIN_MANAGER_EMAIL);
 
         $this->client->request('GET', '/admin/users/new');
 
@@ -150,9 +148,7 @@ final class UserCreateControllerTest extends WebTestCase
 
     private function loginAsAdmin(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
-        $this->loginAsApproved('admin@example.test');
+        $this->loginAsApproved(UserFixtures::ADMIN_EMAIL);
     }
 
     private function loginAsApproved(string $email): void

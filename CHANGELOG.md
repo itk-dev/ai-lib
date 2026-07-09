@@ -9,6 +9,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Domain-scoped registration notification. When a user completes
+  email confirmation and transitions from `AwaitingEmailConfirmation`
+  to `Pending`, every Approved user carrying `ROLE_DOMAIN_MANAGER`
+  or `ROLE_ADMIN` whose own email is on the same domain now
+  receives a notification alongside the existing site-wide admin
+  recipient. Powered by a new
+  `App\Notification\DomainRegistrationNotifier` and a new
+  `UserRepository::findApproversForDomain()` lookup that filters
+  to Approved managers-or-admins on the given domain. The mail
+  reuses the admin-editable subject + body
+  (`admin_notification_subject` / `admin_notification_body`) so a
+  wording edit at `/admin/settings/email` updates both audiences
+  at once; the help text under the "E-mailadresse" field on that
+  page now names domain managers and administrators so the admin
+  can see the full delivery set. `UserFixtures` gains a second
+  `manager2@aarhus.dk` entry so tests exercise the "fan-out to
+  every same-domain approver" path.
+- Integration-test fixture consolidation pass. Eight test files
+  under `tests/Integration/` (UserApprovalTest, UserRolesTest,
+  UserRepositoryTest, SecurityControllerTest,
+  UserCreateControllerTest, OrganizationControllerTest,
+  SettingsControllerTest, UserMenuRenderTest) now look up their
+  actor/subject users through the existing `UserFixtures::…_EMAIL`
+  constants instead of calling `UserManager::createUser()` inline.
+  Test count is unchanged (633 tests, 1920 assertions). The
+  remaining inline `->createUser()` and `new User(...)` sites are
+  legitimate keeps: `UserManagerTest` tests the create path
+  itself, the last-admin guard tests in `UserRolesTest` /
+  `UserApprovalTest` deliberately control the admin count, and
+  `UserRepositoryTest` keeps a `(new User())` for its enum
+  round-trip and a headless-user edge case. No new fixtures were
+  needed — the existing `Roles::* × UserStatus` matrix covered
+  every swap.
+- Template audit-and-consolidation pass across `templates/` collapses
+  ad-hoc markup onto the shared Twig component library. Five new
+  components land: `Icon:Pencil` / `Icon:Upload` / `Icon:Trash`
+  (one decorative inline SVG glyph per file, replacing the four
+  hand-inlined `<svg>` blocks in `assistant/show.html.twig`,
+  `assistant/_step_json.html.twig`, and `user/assistants.html.twig`),
+  `Form:Textarea` (covers the five hand-rolled `<textarea>` fields
+  across `admin/settings/{site,email}.html.twig` with `prose` and
+  `mono` variants), `Form:Fieldset` (rounded panel + labelled
+  legend, replacing the five identical fieldset+legend pairs in
+  `admin/settings/email.html.twig` and now the single place a
+  Stimulus controller can wrap an admin-form section),
+  `Form:CsrfInput` (a hidden `_token` field wired to the
+  `csrf-protection` Stimulus controller, replacing nine call sites and
+  fixing a latent bug where `admin/settings/site.html.twig` and
+  `user/assistants.html.twig` had lost the `data-controller` attribute
+  and would submit stale tokens), and `Filter:Pill` (the four
+  status-filter chips in `admin/user/list.html.twig` are now a shared
+  component so a design change lands in one place). Four ad-hoc
+  `role="alert"` `<div>`s in `registration/register.html.twig`,
+  `admin/settings/{site,email}.html.twig`, and `admin/user/new.html.twig`
+  become `<twig:Alert type="error">`, and the two open-coded
+  `<h1 class="text-[clamp(…)] …">` in `registration/{register,pending}.html.twig`
+  become `<twig:Heading level="1" size="lg">`. No behavior or visual
+  change intended — the swap is markup-only.
+- Password-reset flow at `/reset-password` (request → check-email → reset)
+  built on `symfonycasts/reset-password-bundle`. The email subject + body
+  are admin-editable under **Indstillinger → E-mail** with the same
+  Markdown + `%token%` pipeline the other transactional messages use
+  (`%name%`, `%email%`, `%brand_name%`, `%reset_url%`, `%expires_in%`) —
+  no redeploy needed to update the copy. A new `PasswordResetNotifier`
+  service owns token minting and delivery so the controller stays thin;
+  the request-form response shape is identical for known and unknown
+  addresses so the endpoint does not leak account existence. The login
+  page carries a "Glemt password?" link, and the templates reuse the
+  project's Twig components + Tailwind so the flow matches the rest of
+  the security surface. Migration `Version20260708065059` adds the
+  `reset_password_request` table.
+- Detail page (`/assistant/{id}`) now renders the real
+  organisation, tagline, and data-sensitivity values from the
+  entity instead of the "kommer senere" placeholder copy that
+  stood in while the metadata fields were being built. The
+  data-sensitivity chip loses its muted-italic styling now that
+  it carries a real classification, and its `title` attribute
+  surfaces the enum case's descriptive text on hover. The
+  "Godkendt til" sidebar item is retired for v1 (never
+  wired to a real field). The Beskrivelse tab drops its
+  "AI-foreslåede tags markeres, når feltet er tilføjet
+  datamodellen." line. The sidebar's "Hjemtag konfiguration"
+  button shrinks to the same compact `px-3 py-1.5 text-sm`
+  sizing the "Gå til assistent" primary link uses on the
+  personal inventory, so it stops overflowing the aside
+  container; the redundant "Handlinger" aside box is removed
+  now that the export lives in the detail aside. Migration
+  `Version20260707131333` sets the organisation FK to
+  `ON DELETE SET NULL` so admins can remove an organisation
+  without seeded assistants' FKs blocking the delete.
+- Edit-an-assistant wizard at `/assistant/{id}/edit`, reusing the
+  create wizard's three-step shell (`json → metadata → receipt`).
+  Access is gated by a new `EditAssistantVoter` that grants the
+  assistant's original curator (`createdBy` blame) plus site admins;
+  everyone else is denied. The draft is seeded from the persisted
+  entity — the prefiller skips its own detection/organisation-default
+  passes when the DTO carries `editingAssistantId`, so the curator's
+  values are never clobbered by re-derivation from the acting user.
+  New `AssistantEditor::update()` applies the DTO to the entity with
+  the same normalisation rules as `AssistantCreator::create()`
+  (canonical model, blank-to-null, ULID resolution). The step
+  partials `_new_step_*.html.twig` are renamed to `_step_*.html.twig`
+  to reflect their shared scope; a dedicated `edit.html.twig` shell
+  drives the edit-specific copy (`assistant.edit.*` translation keys)
+  and re-uses the three partials. The detail page grows a "Rediger
+  assistent" affordance visible to the same audience the voter gates
+  on. Migration `Version20260707111627` sets the `organization` FK
+  to `ON DELETE SET NULL` so the admin can delete an organisation
+  without hitting a constraint from the seeded assistants that
+  reference it.
+- Four new curator-facing metadata fields on the create wizard's step 2
+  ([`assistant/new`](src/Controller/AssistantCreateController.php)) — `organization`
+  (nullable `ManyToOne` to `Organization`), `tagline` (nullable string),
+  `knowledgeDescription` (nullable text), and `dataSensitivity` (new
+  `App\Enum\DataSensitivity` enum with `public / internal / personal /
+  sensitive_personal`). The organization picker pre-fills from the
+  logged-in user's e-mail domain via a new
+  `OrganizationRepository::findOneByEmailDomain()` and a new
+  `ModelMap::aliasesFor()`-style path in `AssistantDraftPrefiller`.
+  `AssistantCreator::create()` folds blank strings on the three
+  nullable columns to `null` on persist and ignores malformed /
+  unknown organization ULIDs so tampered POSTs land safely. Fixtures
+  seed realistic values for all four fields and every enum case is
+  represented in the generated catalogue. Migration
+  `Version20260707084856` adds the columns.
 - The share wizard (`/assistant/new`) is now format-agnostic: its labels
   no longer say "OpenWebUI"/"JSON", the file picker accepts `.json` **and**
   `.modelfile` (so an Ollama Modelfile fits), and the live-validation
@@ -250,6 +375,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   controller calls `generateCsrfToken()` against it at submit
   time so the random token + matching `__Host-{intent}_{token}`
   cookie are paired correctly before the JSON body goes out.
+- Dark footer with the OS2ai logo.
 - Admin list pages (`/admin/users`, `/admin/organizations`) now
   fill the wide admin container instead of the narrow `max-w-4xl`
   column. The user list in particular has six columns after the

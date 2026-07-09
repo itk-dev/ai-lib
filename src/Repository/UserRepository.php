@@ -85,6 +85,47 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
+     * Find every Approved approver whose email domain matches `$domain`.
+     *
+     * "Approver" here means a user who can act on the pending-user
+     * queue for the given domain: any Approved user carrying
+     * `ROLE_DOMAIN_MANAGER` or `ROLE_ADMIN` whose own email is on
+     * that domain. Powers {@see \App\Notification\DomainRegistrationNotifier},
+     * which dispatches the "new pending user" mail to every returned
+     * user after a fresh registration lands.
+     *
+     * Only `Approved` users are returned — a Pending / Blocked /
+     * AwaitingEmailConfirmation approver cannot log in and act on
+     * the queue, so mailing them would be noise.
+     *
+     * Domain match is case-insensitive on the email column, and the
+     * caller-supplied `$domain` is compared lowercased so a stray
+     * mixed-case domain from {@see EmailDomain::of()} (already
+     * lowercased today, defensive here) still hits.
+     *
+     * @param string $domain lowercased email domain to match (e.g. "aarhus.dk")
+     *
+     * @return list<User> approved approvers on that domain, sorted by id ascending
+     */
+    public function findApproversForDomain(string $domain): array
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->andWhere('(u.roles LIKE :managerRole OR u.roles LIKE :adminRole)')
+            ->andWhere('u.status = :status')
+            ->andWhere('LOWER(u.email) LIKE :domainSuffix')
+            ->setParameter('managerRole', '%"'.Roles::DOMAIN_MANAGER.'"%')
+            ->setParameter('adminRole', '%"'.Roles::ADMIN.'"%')
+            ->setParameter('status', UserStatus::Approved->value)
+            ->setParameter('domainSuffix', '%@'.strtolower($domain))
+            ->orderBy('u.id', 'ASC');
+
+        /** @var list<User> $result */
+        $result = $qb->getQuery()->getResult();
+
+        return $result;
+    }
+
+    /**
      * Find users visible to the acting user, optionally filtered by status.
      *
      * Decision flow mirrors {@see \App\Security\Voter\ManageUserVoter}:

@@ -31,20 +31,24 @@
     <div class="grid gap-4 p-6">
         <header class="flex items-start justify-between gap-4">
             <div class="grid gap-1">
-                <h2 id="{{ id }}Title" class="text-lg font-semibold text-ink">
+                <twig:Heading level="2" size="xs" id="{{ id }}Title">
                     {{ 'admin.settings.email.preview.modal_title'|trans }}
-                </h2>
+                </twig:Heading>
                 <p class="text-sm text-text-muted">
                     <span class="font-medium">{{ 'admin.settings.email.preview.subject_prefix'|trans }}</span>
                     <span data-email-preview-target="subjectDisplay" class="ml-1"></span>
                 </p>
             </div>
-            <button type="button"
-                    data-action="click->email-preview#close"
-                    aria-label="{{ 'admin.settings.email.preview.close'|trans }}"
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-lg leading-none text-text hover:bg-surface-2">
+            <twig:Form:IconButton
+                type="button"
+                shape="pill"
+                size="md"
+                tone="neutral"
+                data-action="click->email-preview#close"
+                aria-label="{{ 'admin.settings.email.preview.close'|trans }}"
+            >
                 ×
-            </button>
+            </twig:Form:IconButton>
         </header>
         <p data-email-preview-target="error"
            role="alert"
@@ -60,5 +64,5 @@
 </dialog>
 
 <div data-email-preview-target="csrfForm" hidden aria-hidden="true">
-    <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-settings-email-preview') }}">
+    <twig:Form:CsrfInput intent="admin-settings-email-preview" />
 </div>

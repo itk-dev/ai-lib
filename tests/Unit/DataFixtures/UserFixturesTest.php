@@ -23,7 +23,13 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  */
 final class UserFixturesTest extends TestCase
 {
-    private const int EXPECTED_USER_COUNT = 8;
+    private const int EXPECTED_USER_COUNT = 9;
+
+    // Ensures the fixture is grouped under `default` so the stg pipeline can load it with `--group=default`.
+    public function testBelongsToDefaultGroup(): void
+    {
+        self::assertSame(['default'], UserFixtures::getGroups());
+    }
 
     // Tests that load() persists every Roles::* and every UserStatus case, hashing the shared fixture password.
     public function testLoadPersistsEveryRoleAndStatusCombination(): void
@@ -67,6 +73,8 @@ final class UserFixturesTest extends TestCase
         // Every role is represented.
         self::assertContains(Roles::ADMIN, $byEmail[UserFixtures::ADMIN_EMAIL]->getRoles());
         self::assertContains(Roles::DOMAIN_MANAGER, $byEmail[UserFixtures::DOMAIN_MANAGER_EMAIL]->getRoles());
+        // Second same-domain manager for fan-out tests (e.g. the domain-manager registration notifier).
+        self::assertContains(Roles::DOMAIN_MANAGER, $byEmail[UserFixtures::SECOND_DOMAIN_MANAGER_EMAIL]->getRoles());
 
         // Every status case has at least one seeded user.
         $statuses = array_map(static fn (User $u): UserStatus => $u->getStatus(), $persisted);

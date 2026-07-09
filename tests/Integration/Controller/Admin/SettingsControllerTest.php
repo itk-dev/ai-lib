@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller\Admin;
 
+use App\DataFixtures\UserFixtures;
 use App\Repository\UserRepository;
-use App\Security\Roles;
-use App\Security\UserManager;
 use App\Settings\SettingsManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -18,8 +17,10 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * recipient. Each form posts back to its own endpoint with its own
  * CSRF intent.
  *
- * Users are created per-test via `UserManager::createUser()` and
- * rolled back by `dama/doctrine-test-bundle` between tests.
+ * Uses the baseline fixture users (`UserFixtures::ADMIN_EMAIL`,
+ * `UserFixtures::DOMAIN_MANAGER_EMAIL`) loaded by
+ * `tests/bootstrap_integration.php`; per-test mutations are rolled
+ * back by `dama/doctrine-test-bundle`.
  */
 final class SettingsControllerTest extends WebTestCase
 {
@@ -51,9 +52,7 @@ final class SettingsControllerTest extends WebTestCase
     // Tests that a domain manager (no ROLE_ADMIN) is 403'd.
     public function testDomainManagerGets403(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('dm@example.test', 'DM', 'pw', [Roles::DOMAIN_MANAGER]);
-        $this->loginAsApproved('dm@example.test');
+        $this->loginAsApproved(UserFixtures::DOMAIN_MANAGER_EMAIL);
 
         $this->client->request('GET', '/admin/settings');
 
@@ -357,15 +356,17 @@ final class SettingsControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/settings/email');
 
         self::assertResponseIsSuccessful();
-        // One cheat-sheet link per body field; three fieldsets on the page.
+        // One cheat-sheet link per body field; four fieldsets on the page
+        // (admin notification, registration confirmation, email confirmation,
+        // password reset).
         $cheatSheetLinks = $crawler->filter('a[href="https://www.markdownguide.org/cheat-sheet/"]');
-        self::assertCount(3, $cheatSheetLinks);
+        self::assertCount(4, $cheatSheetLinks);
         self::assertSame('_blank', $cheatSheetLinks->first()->attr('target'));
         self::assertSame('noopener noreferrer', $cheatSheetLinks->first()->attr('rel'));
 
         // One Preview button per body field.
         $previewButtons = $crawler->filter('button[data-action*="email-preview#open"]');
-        self::assertCount(3, $previewButtons);
+        self::assertCount(4, $previewButtons);
     }
 
     // Verifies POST /admin/settings/email/preview returns the substituted subject + rendered HTML for the acting admin.
@@ -389,7 +390,7 @@ final class SettingsControllerTest extends WebTestCase
         $payload = $this->decodeJsonResponse();
         self::assertSame('Velkommen Admin', $payload['subject']);
         self::assertStringContainsString('<strong>Admin</strong>', $payload['html']);
-        self::assertStringContainsString('admin@example.test', $payload['html']);
+        self::assertStringContainsString(UserFixtures::ADMIN_EMAIL, $payload['html']);
     }
 
     // Ensures the preview endpoint substitutes the synthetic approval_url token so admins can preview link output.
@@ -482,9 +483,7 @@ final class SettingsControllerTest extends WebTestCase
 
     private function loginAsAdmin(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
-        $this->loginAsApproved('admin@example.test');
+        $this->loginAsApproved(UserFixtures::ADMIN_EMAIL);
     }
 
     private function loginAsApproved(string $email): void

@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller\Admin;
 
+use App\DataFixtures\UserFixtures;
 use App\Entity\Organization;
 use App\Repository\OrganizationRepository;
 use App\Repository\UserRepository;
-use App\Security\Roles;
-use App\Security\UserManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -213,10 +212,7 @@ final class OrganizationControllerTest extends WebTestCase
 
     private function loginAsAdmin(): void
     {
-        $um = self::getContainer()->get(UserManager::class);
-        $um->createUser('admin@example.test', 'Admin', 'pw', [Roles::ADMIN]);
-
-        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'admin@example.test']);
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => UserFixtures::ADMIN_EMAIL]);
         \assert(null !== $user);
         $this->client->loginUser($user);
     }

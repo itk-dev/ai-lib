@@ -79,6 +79,19 @@ final class UserManagerTest extends KernelTestCase
         $this->userManager->createUser('charlie@example.test', 'Charlie', '');
     }
 
+    // Verifies omitting the password entirely (null) mints a random secret and persists a usable hash — enables fixtures that don't care about the credential.
+    public function testCreateUserGeneratesRandomPasswordWhenNoneGiven(): void
+    {
+        $first = $this->userManager->createUser('nopass-one@example.test', 'NoPass One');
+        $second = $this->userManager->createUser('nopass-two@example.test', 'NoPass Two');
+
+        // Each generated password is opaque, but both must be non-empty and
+        // must differ across calls — otherwise the "random" mint isn't random.
+        self::assertNotEmpty($first->getPassword());
+        self::assertNotEmpty($second->getPassword());
+        self::assertNotSame($first->getPassword(), $second->getPassword());
+    }
+
     // Tests that changePassword() replaces the stored hash and the new password verifies (while the old one no longer does).
     public function testChangePasswordReplacesTheHash(): void
     {

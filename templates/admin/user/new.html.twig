@@ -8,9 +8,9 @@
         <twig:Heading level="1" size="lg" class="mb-6">{{ 'admin.users.new.heading'|trans }}</twig:Heading>
 
         {% if domain_error %}
-            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
+            <twig:Alert type="error" class="mb-4">
                 {{ domain_error }}
-            </div>
+            </twig:Alert>
         {% endif %}
 
         {{ form_start(form, {action: path('app_admin_user_new'), attr: {class: 'grid gap-4'}}) }}

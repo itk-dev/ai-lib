@@ -49,7 +49,7 @@
                                           method="post"
                                           class="inline"
                                           onsubmit="return confirm('{{ 'admin.organization.action.delete_confirm'|trans|e('js') }}');">
-                                        <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-organization-delete') }}">
+                                        <twig:Form:CsrfInput intent="admin-organization-delete" />
                                         <twig:Form:Button type="submit" size="sm">
                                             {{ 'admin.organization.action.delete'|trans }}
                                         </twig:Form:Button>

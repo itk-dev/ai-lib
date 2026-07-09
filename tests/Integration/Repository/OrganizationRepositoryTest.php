@@ -78,6 +78,48 @@ final class OrganizationRepositoryTest extends KernelTestCase
         self::assertNotContains('  Mixed.CASE.dk  ', $domains);
     }
 
+    // Verifies findOneByEmailDomain() returns the seeded organisation whose emailDomains list carries the queried domain.
+    public function testFindOneByEmailDomainResolvesFixtureRow(): void
+    {
+        self::bootKernel();
+        $repository = self::getContainer()->get(OrganizationRepository::class);
+
+        $organization = $repository->findOneByEmailDomain('aarhus.dk');
+
+        self::assertNotNull($organization);
+        self::assertSame('Aarhus Kommune', $organization->getName());
+    }
+
+    // Verifies findOneByEmailDomain() is case-insensitive and trims the input.
+    public function testFindOneByEmailDomainNormalisesInput(): void
+    {
+        self::bootKernel();
+        $repository = self::getContainer()->get(OrganizationRepository::class);
+
+        $organization = $repository->findOneByEmailDomain('  AARHUS.DK  ');
+
+        self::assertNotNull($organization);
+        self::assertSame('Aarhus Kommune', $organization->getName());
+    }
+
+    // Verifies findOneByEmailDomain() returns null for a domain no organisation claims.
+    public function testFindOneByEmailDomainReturnsNullForUnknownDomain(): void
+    {
+        self::bootKernel();
+        $repository = self::getContainer()->get(OrganizationRepository::class);
+
+        self::assertNull($repository->findOneByEmailDomain('unknown.test'));
+    }
+
+    // Verifies findOneByEmailDomain() short-circuits on blank input rather than scanning every organisation.
+    public function testFindOneByEmailDomainReturnsNullForBlankInput(): void
+    {
+        self::bootKernel();
+        $repository = self::getContainer()->get(OrganizationRepository::class);
+
+        self::assertNull($repository->findOneByEmailDomain('   '));
+    }
+
     // Tests that blank or whitespace-only entries inside an organisation's emailDomains array are dropped.
     public function testCollectAllowedEmailDomainsDropsBlankEntries(): void
     {

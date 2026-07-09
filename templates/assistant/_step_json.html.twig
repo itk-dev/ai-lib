@@ -22,9 +22,7 @@
          tabindex="0"
          aria-label="{{ 'assistant.new.step_json.file_label'|trans }}"
          class="grid cursor-pointer place-items-center gap-2 rounded-xl border-2 border-dashed border-line bg-surface-2 px-6 py-10 text-center transition-colors hover:border-primary hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/40">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-10 w-10 text-text-muted" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 7.5m0 0L7.5 12M12 7.5V21" />
-        </svg>
+        <twig:Icon:Upload class="h-10 w-10 text-text-muted" />
         <p class="text-sm font-medium text-ink">{{ 'assistant.new.step_json.dropzone_prompt'|trans }}</p>
         <p class="text-xs text-text-muted">{{ 'assistant.new.step_json.dropzone_hint'|trans }}</p>
         <input type="file"

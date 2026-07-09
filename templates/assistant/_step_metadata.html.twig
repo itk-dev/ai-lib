@@ -2,22 +2,47 @@
     Step 2 body — metadata fields the user reviews and edits.
     Every input is pre-filled from the DTO the flow's step-1
     listener populated from the detected source format.
+
+    `draft.jsonBaseline` carries a snapshot of the values the
+    step-1 prefiller extracted from the uploaded JSON. When a
+    curator has edited a field since prefill, we suffix the
+    label with a small "(Ændret)" badge so they can see at a
+    glance which metadata no longer matches the source config.
+    Empty on the edit path — the prefiller short-circuits when
+    editingAssistantId is set, so no badges appear there.
 #}
 {% set language_model = flow.metadata.languageModel %}
 {% set language_model_current = language_model.vars.value %}
 {% set language_model_choices = language_model.vars.model_choices %}
 {% set language_model_value_in_choices = language_model_current in language_model_choices %}
+
+{% set changed_badge %}<span class="ml-2 rounded bg-primary/10 px-1.5 py-0.5 align-middle text-[0.65rem] font-medium uppercase tracking-wide text-primary">{{ 'assistant.new.step_metadata.changed_badge'|trans }}</span>{% endset %}
+
+{% macro fieldLabel(key, translation, draft, badge) %}
+    {%- set label = translation|trans -%}
+    {%- if draft.jsonBaseline[key] is defined and attribute(draft, key) != draft.jsonBaseline[key] -%}
+        {#- `|e('html')` guards the translation in case it ever carries
+            an HTML-relevant character; concatenating with the badge
+            markup and marking the whole thing `|raw` stops the outer
+            `{{ }}` from re-escaping the span tags. -#}
+        {{- (label|e('html') ~ badge)|raw -}}
+    {%- else -%}
+        {{- label -}}
+    {%- endif -%}
+{% endmacro %}
+{% import _self as macros %}
+
 <div class="grid gap-4">
     {% if draft.framework|framework_experimental %}
         <div class="rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="note">
             {{ 'assistant.new.step_metadata.experimental_notice'|trans({'%format%': draft.framework|framework_label}) }}
         </div>
     {% endif %}
-    {{ form_row(flow.metadata.title) }}
-    {{ form_row(flow.metadata.description) }}
+    {{ form_row(flow.metadata.title, {label: macros.fieldLabel('title', 'assistant.new.step_metadata.title_label', draft, changed_badge), label_html: true}) }}
+    {{ form_row(flow.metadata.description, {label: macros.fieldLabel('description', 'assistant.new.step_metadata.description_label', draft, changed_badge), label_html: true}) }}
     <div class="grid gap-1 text-sm">
         <label for="{{ language_model.vars.id }}" class="block font-medium text-ink">
-            {{ language_model.vars.label|trans }}
+            {{ macros.fieldLabel('languageModel', 'assistant.new.step_metadata.language_model_label', draft, changed_badge)|raw }}
         </label>
         {# The Stimulus controller sits on this wrapper (not the <select>)
            because Choices.js re-parents the <select> into its own DOM
@@ -52,5 +77,9 @@
     {# Manually rendered above — mark the child as rendered so form_end()
        doesn't emit a duplicate `<input>` with the same label. #}
     {% do language_model.setRendered %}
-    {{ form_row(flow.metadata.tags) }}
+    {{ form_row(flow.metadata.tagline) }}
+    {{ form_row(flow.metadata.knowledgeDescription) }}
+    {{ form_row(flow.metadata.organizationId) }}
+    {{ form_row(flow.metadata.dataSensitivity) }}
+    {{ form_row(flow.metadata.tags, {label: macros.fieldLabel('tags', 'assistant.new.step_metadata.tags_label', draft, changed_badge), label_html: true}) }}
 </div>
