@@ -28,22 +28,26 @@
         {% endif %}
 
         <nav aria-label="{{ 'admin.users.filter_label'|trans }}" class="mb-6 flex flex-wrap gap-3 text-sm">
-            <a class="rounded-full border border-line px-3 py-1 {% if status_filter is null %}bg-surface-2 text-ink{% else %}text-text hover:bg-surface-2{% endif %}"
-               href="{{ path('app_admin_users') }}">
-                {{ 'admin.users.filter.all'|trans }}
-            </a>
-            <a class="rounded-full border border-line px-3 py-1 {% if status_filter and status_filter.value == 'pending' %}bg-surface-2 text-ink{% else %}text-text hover:bg-surface-2{% endif %}"
-               href="{{ path('app_admin_users', {status: 'pending'}) }}">
-                {{ 'admin.users.filter.pending'|trans }}
-            </a>
-            <a class="rounded-full border border-line px-3 py-1 {% if status_filter and status_filter.value == 'approved' %}bg-surface-2 text-ink{% else %}text-text hover:bg-surface-2{% endif %}"
-               href="{{ path('app_admin_users', {status: 'approved'}) }}">
-                {{ 'admin.users.filter.approved'|trans }}
-            </a>
-            <a class="rounded-full border border-line px-3 py-1 {% if status_filter and status_filter.value == 'blocked' %}bg-surface-2 text-ink{% else %}text-text hover:bg-surface-2{% endif %}"
-               href="{{ path('app_admin_users', {status: 'blocked'}) }}">
-                {{ 'admin.users.filter.blocked'|trans }}
-            </a>
+            <twig:Filter:Pill
+                href="{{ path('app_admin_users') }}"
+                label="{{ 'admin.users.filter.all'|trans }}"
+                active="{{ status_filter is null }}"
+            />
+            <twig:Filter:Pill
+                href="{{ path('app_admin_users', {status: 'pending'}) }}"
+                label="{{ 'admin.users.filter.pending'|trans }}"
+                active="{{ status_filter and status_filter.value == 'pending' }}"
+            />
+            <twig:Filter:Pill
+                href="{{ path('app_admin_users', {status: 'approved'}) }}"
+                label="{{ 'admin.users.filter.approved'|trans }}"
+                active="{{ status_filter and status_filter.value == 'approved' }}"
+            />
+            <twig:Filter:Pill
+                href="{{ path('app_admin_users', {status: 'blocked'}) }}"
+                label="{{ 'admin.users.filter.blocked'|trans }}"
+                active="{{ status_filter and status_filter.value == 'blocked' }}"
+            />
         </nav>
 
         {% if users is empty %}
@@ -124,7 +128,7 @@
                                         {# Stimulus controller can mint a fresh token + paired cookie at #}
                                         {# submit time via the bundle's shared helper. #}
                                         <form data-role-picker-target="csrfForm" hidden aria-hidden="true">
-                                            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-user-action') }}">
+                                            <twig:Form:CsrfInput intent="admin-user-action" />
                                         </form>
                                     </div>
                                 {% endif %}
@@ -133,7 +137,7 @@
                                 <div class="inline-flex items-center gap-2 whitespace-nowrap">
                                     {% if u.status.value != 'approved' and is_granted('APPROVE_USER', u) %}
                                         <form action="{{ path('app_admin_user_approve', {id: u.id}) }}" method="post" class="inline">
-                                            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-user-action') }}">
+                                            <twig:Form:CsrfInput intent="admin-user-action" />
                                             <input type="hidden" name="back" value="{{ back_url }}">
                                             <twig:Form:Button type="submit" size="sm">
                                                 {{ 'admin.users.action.approve'|trans }}
@@ -143,7 +147,7 @@
 
                                     {% if u.status.value != 'blocked' and is_granted('BLOCK_USER', u) %}
                                         <form action="{{ path('app_admin_user_block', {id: u.id}) }}" method="post" class="inline">
-                                            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-user-action') }}">
+                                            <twig:Form:CsrfInput intent="admin-user-action" />
                                             <input type="hidden" name="back" value="{{ back_url }}">
                                             <twig:Form:Button type="submit" size="sm">
                                                 {{ 'admin.users.action.block'|trans }}

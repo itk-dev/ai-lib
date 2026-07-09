@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Template audit-and-consolidation pass across `templates/` collapses
+  ad-hoc markup onto the shared Twig component library. Three new
+  components land: `Icon` (a small library of decorative inline SVG
+  glyphs — pencil, upload, trash, chevron-down — replacing the five
+  hand-inlined `<svg>` blocks in `assistant/show.html.twig`,
+  `assistant/_step_json.html.twig`, and `user/assistants.html.twig`),
+  `Form:CsrfInput` (a hidden `_token` field wired to the
+  `csrf-protection` Stimulus controller, replacing nine call sites and
+  fixing a latent bug where `admin/settings/site.html.twig` and
+  `user/assistants.html.twig` had lost the `data-controller` attribute
+  and would submit stale tokens), and `Filter:Pill` (the four
+  status-filter chips in `admin/user/list.html.twig` are now a shared
+  component so a design change lands in one place). Four ad-hoc
+  `role="alert"` `<div>`s in `registration/register.html.twig`,
+  `admin/settings/{site,email}.html.twig`, and `admin/user/new.html.twig`
+  become `<twig:Alert type="error">`, and the two open-coded
+  `<h1 class="text-[clamp(…)] …">` in `registration/{register,pending}.html.twig`
+  become `<twig:Heading level="1" size="lg">`. No behavior or visual
+  change intended — the swap is markup-only.
 - Password-reset flow at `/reset-password` (request → check-email → reset)
   built on `symfonycasts/reset-password-bundle`. The email subject + body
   are admin-editable under **Indstillinger → E-mail** with the same

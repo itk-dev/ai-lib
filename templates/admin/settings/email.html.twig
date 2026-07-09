@@ -18,9 +18,9 @@
         {% endfor %}
 
         {% if error %}
-            <div class="mb-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm text-text" role="alert">
+            <twig:Alert type="error" class="mb-4">
                 {{ error|trans }}
-            </div>
+            </twig:Alert>
         {% endif %}
 
         <form action="{{ path('app_admin_settings_email') }}" method="post" class="grid gap-8">
@@ -235,7 +235,7 @@
                 }) }}
             </fieldset>
 
-            <input type="hidden" name="_token" data-controller="csrf-protection" value="{{ csrf_token('admin-settings-email') }}">
+            <twig:Form:CsrfInput intent="admin-settings-email" />
 
             <div class="flex items-center gap-4">
                 <twig:Form:Button type="submit">
