@@ -7,35 +7,36 @@ namespace App\Tests\Integration\Notification;
 use App\DataFixtures\UserFixtures;
 use App\Entity\User;
 use App\Enum\UserStatus;
-use App\Notification\DomainManagerRegistrationNotifier;
+use App\Notification\DomainRegistrationNotifier;
 use App\Settings\SettingsManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 
 /**
- * End-to-end coverage of the domain-manager registration notifier.
+ * End-to-end coverage of the domain registration notifier.
  *
  * Symfony's `null://null` transport (configured in `.env.test`)
  * captures every sent message in the `MessageDataCollector` so
  * `MailerAssertionsTrait` can introspect them without delivering
  * anything off-box. The baseline `UserFixtures` seed two Approved
- * managers on `aarhus.dk` (`DOMAIN_MANAGER_EMAIL`,
- * `SECOND_DOMAIN_MANAGER_EMAIL`) and no manager on `aalborg.dk`
- * or `odense.dk`, giving the "single / multi / no manager"
+ * managers plus one Approved admin on `aarhus.dk`
+ * (`DOMAIN_MANAGER_EMAIL`, `SECOND_DOMAIN_MANAGER_EMAIL`,
+ * `ADMIN_EMAIL`) and no approver on `aalborg.dk` or `odense.dk`,
+ * giving the "multi-recipient / no-approver / cross-domain"
  * scenarios out of the box.
  */
-final class DomainManagerNotifierTest extends KernelTestCase
+final class DomainNotifierTest extends KernelTestCase
 {
     use MailerAssertionsTrait;
 
     private SettingsManager $settings;
-    private DomainManagerRegistrationNotifier $notifier;
+    private DomainRegistrationNotifier $notifier;
 
     protected function setUp(): void
     {
         self::bootKernel();
         $this->settings = self::getContainer()->get(SettingsManager::class);
-        $this->notifier = self::getContainer()->get(DomainManagerRegistrationNotifier::class);
+        $this->notifier = self::getContainer()->get(DomainRegistrationNotifier::class);
 
         // Pin a deterministic subject / body per test so assertions can
         // point at the token substitution without depending on the
@@ -44,13 +45,13 @@ final class DomainManagerNotifierTest extends KernelTestCase
         $this->settings->setAdminNotificationBody('E-mail: %email%, godkend på %approval_url%.');
     }
 
-    // Verifies each approved domain manager on the user's domain receives one mail carrying the rendered subject and token substitutions.
-    public function testSendsOneMailPerApprovedDomainManagerOnTheSameDomain(): void
+    // Verifies every approved manager and admin on the user's domain receives one mail carrying the rendered subject and token substitutions.
+    public function testSendsOneMailPerApprovedApproverOnTheSameDomain(): void
     {
         $this->notifier->notifyOfNewRegistration($this->newUserOnDomain('newbie@aarhus.dk', 'Newbie'));
 
-        // Aarhus fixture: manager@aarhus.dk + manager2@aarhus.dk.
-        self::assertEmailCount(2);
+        // Aarhus fixture: manager@aarhus.dk + manager2@aarhus.dk + admin@aarhus.dk.
+        self::assertEmailCount(3);
 
         $messages = self::getMailerMessages();
         $recipients = array_map(
@@ -59,6 +60,7 @@ final class DomainManagerNotifierTest extends KernelTestCase
         );
         self::assertContains(UserFixtures::DOMAIN_MANAGER_EMAIL, $recipients);
         self::assertContains(UserFixtures::SECOND_DOMAIN_MANAGER_EMAIL, $recipients);
+        self::assertContains(UserFixtures::ADMIN_EMAIL, $recipients);
 
         foreach ($messages as $email) {
             self::assertSame('Ny bruger: Newbie', $email->getSubject());
@@ -66,17 +68,17 @@ final class DomainManagerNotifierTest extends KernelTestCase
         }
     }
 
-    // Ensures the notifier is a no-op when the user's domain has no approved manager — the admin recipient still receives their own mail from AdminRegistrationNotifier, so no signal is lost.
-    public function testSkipsWhenNoManagerExistsOnDomain(): void
+    // Ensures the notifier is a no-op when the user's domain has no approver — the admin recipient still receives their own mail from AdminRegistrationNotifier, so no signal is lost.
+    public function testSkipsWhenNoApproverExistsOnDomain(): void
     {
-        // aalborg.dk has fixture users (pending, awaiting) but no ROLE_DOMAIN_MANAGER.
+        // aalborg.dk has fixture users (pending, awaiting) but no ROLE_DOMAIN_MANAGER or ROLE_ADMIN.
         $this->notifier->notifyOfNewRegistration($this->newUserOnDomain('newbie@aalborg.dk', 'Newbie'));
 
         self::assertEmailCount(0);
     }
 
-    // Verifies the notifier excludes site admins even when they share the target domain — they already receive the admin recipient's mail.
-    public function testExcludesSiteAdminsOnSameDomain(): void
+    // Verifies same-domain plain users (no elevated role) are not in the recipient set.
+    public function testExcludesPlainSameDomainUsers(): void
     {
         $this->notifier->notifyOfNewRegistration($this->newUserOnDomain('newbie@aarhus.dk', 'Newbie'));
 
@@ -84,7 +86,7 @@ final class DomainManagerNotifierTest extends KernelTestCase
             static fn ($m): ?string => $m->getTo()[0]->getAddress(),
             self::getMailerMessages(),
         );
-        self::assertNotContains(UserFixtures::ADMIN_EMAIL, $recipients);
+        self::assertNotContains(UserFixtures::COLLEAGUE_EMAIL, $recipients);
     }
 
     // Ensures the notifier skips silently when the user has no resolvable email domain.

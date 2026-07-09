@@ -7,7 +7,7 @@ namespace App\Tests\Unit\Notification;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Mail\EmailTemplateRenderer;
-use App\Notification\DomainManagerRegistrationNotifier;
+use App\Notification\DomainRegistrationNotifier;
 use App\Repository\UserRepository;
 use App\Security\Roles;
 use App\Settings\SettingsManager;
@@ -18,21 +18,21 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * Unit-level coverage of the per-manager try/catch branch in
- * {@see DomainManagerRegistrationNotifier}.
+ * Unit-level coverage of the per-recipient try/catch branch in
+ * {@see DomainRegistrationNotifier}.
  *
  * The integration test in
- * {@see \App\Tests\Integration\Notification\DomainManagerNotifierTest}
+ * {@see \App\Tests\Integration\Notification\DomainNotifierTest}
  * drives the happy path against the null mailer transport and the
  * real repository; this suite complements it by simulating a
- * transport failure on one manager and verifying the loop keeps
- * going for the remaining recipients — a single flaky manager
- * mailbox must not block delivery to their peers.
+ * transport failure on one recipient and verifying the loop keeps
+ * going for the remaining recipients — a single flaky mailbox
+ * must not block delivery to their peers.
  */
-final class DomainManagerRegistrationNotifierTest extends TestCase
+final class DomainRegistrationNotifierTest extends TestCase
 {
-    // Verifies a transport failure on one manager is logged and swallowed so the next manager still receives their mail.
-    public function testTransportFailureOnOneManagerDoesNotAbortTheLoop(): void
+    // Verifies a transport failure on one recipient is logged and swallowed so the next recipient still receives their mail.
+    public function testTransportFailureOnOneRecipientDoesNotAbortTheLoop(): void
     {
         $sentTo = [];
         $mailer = $this->createMock(MailerInterface::class);
@@ -52,23 +52,23 @@ final class DomainManagerRegistrationNotifierTest extends TestCase
         $settings->method('getAdminNotificationBody')->willReturn('E-mail: %email%');
         $settings->method('getBrandName')->willReturn('Brand');
 
-        $flaky = $this->makeManager('flaky@aarhus.dk', 'Flaky');
-        $healthy = $this->makeManager('healthy@aarhus.dk', 'Healthy');
+        $flaky = $this->makeApprover('flaky@aarhus.dk', 'Flaky', Roles::DOMAIN_MANAGER);
+        $healthy = $this->makeApprover('healthy@aarhus.dk', 'Healthy', Roles::ADMIN);
 
         $userRepository = $this->createMock(UserRepository::class);
-        $userRepository->method('findApprovedDomainManagersForDomain')
+        $userRepository->method('findApproversForDomain')
             ->with('aarhus.dk')
             ->willReturn([$flaky, $healthy]);
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())
             ->method('warning')
-            ->with(self::stringContains('domain-manager registration notification'));
+            ->with(self::stringContains('domain registration notification'));
 
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator->method('generate')->willReturn('https://example.test/admin/users?status=pending');
 
-        $notifier = new DomainManagerRegistrationNotifier(
+        $notifier = new DomainRegistrationNotifier(
             $mailer,
             $settings,
             new EmailTemplateRenderer(new \League\CommonMark\CommonMarkConverter()),
@@ -83,15 +83,15 @@ final class DomainManagerRegistrationNotifierTest extends TestCase
     }
 
     /**
-     * Build an unpersisted `Approved` `ROLE_DOMAIN_MANAGER` user for
-     * the notifier's per-manager loop.
+     * Build an unpersisted Approved approver (manager or admin) for
+     * the notifier's per-recipient loop.
      */
-    private function makeManager(string $email, string $name): User
+    private function makeApprover(string $email, string $name, string $role): User
     {
         return (new User())
             ->setEmail($email)
             ->setName($name)
-            ->setRoles([Roles::DOMAIN_MANAGER])
+            ->setRoles([$role])
             ->setStatus(UserStatus::Approved);
     }
 

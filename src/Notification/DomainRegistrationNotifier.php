@@ -18,15 +18,20 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Sends the "new pending user on your domain" email to every
- * approved domain manager whose email domain matches the newly
- * confirmed user's domain.
+ * approved user with `ROLE_DOMAIN_MANAGER` or `ROLE_ADMIN` whose
+ * email domain matches the newly confirmed user's domain.
  *
  * Runs alongside {@see AdminRegistrationNotifier} — the site-wide
- * admin recipient still receives their mail; this notifier adds a
- * scoped signal to the users who will actually approve the pending
- * account (`ROLE_DOMAIN_MANAGER` on that domain,
- * `UserStatus::Approved`). Site admins are excluded from this
- * recipient set to avoid duplicating the admin notification.
+ * admin recipient (configured under `/admin/settings/email`) still
+ * receives their mail; this notifier adds a scoped signal to every
+ * user on the target domain who can act on the queue (a same-
+ * domain admin plus every same-domain domain manager). A site
+ * admin whose email happens to also be the configured admin
+ * recipient will receive two messages in that specific
+ * configuration; deduplication is intentionally not attempted here
+ * because the two notifications are independent (the admin
+ * recipient can point at a shared ops mailbox instead of a
+ * `User` row).
  *
  * The mail body reuses the admin-editable subject + body pair
  * (`admin_notification_subject` / `admin_notification_body`) via
@@ -41,19 +46,19 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  *
  * When the sender address is unset or the recipient set is empty,
  * the send is skipped (warning / info log respectively). A
- * transport failure on one manager is logged and swallowed so the
- * loop reaches every remaining recipient and the calling status
- * transition is never rolled back.
+ * transport failure on one recipient is logged and swallowed so
+ * the loop reaches every remaining recipient and the calling
+ * status transition is never rolled back.
  */
-class DomainManagerRegistrationNotifier
+class DomainRegistrationNotifier
 {
     /**
-     * @param MailerInterface       $mailer         Symfony Mailer used to dispatch the message per manager
+     * @param MailerInterface       $mailer         Symfony Mailer used to dispatch the message per recipient
      * @param SettingsManager       $settings       typed accessor for the admin-editable templates and sender
      * @param EmailTemplateRenderer $renderer       resolves the Markdown template into subject + html + text
      * @param UrlGeneratorInterface $urlGenerator   absolute-URL helper for the `%approval_url%` token
-     * @param UserRepository        $userRepository resolves the approved-manager recipient set for a given domain
-     * @param LoggerInterface       $logger         receives a warning on sender-unset / transport failure, info on empty manager set
+     * @param UserRepository        $userRepository resolves the approver recipient set for a given domain
+     * @param LoggerInterface       $logger         receives a warning on sender-unset / transport failure, info on empty recipient set
      */
     public function __construct(
         private readonly MailerInterface $mailer,
@@ -66,13 +71,12 @@ class DomainManagerRegistrationNotifier
     }
 
     /**
-     * Dispatch the domain-manager notification for a freshly-confirmed user.
+     * Dispatch the domain-scoped notification for a freshly-confirmed user.
      *
-     * Extracts the user's email domain, resolves every approved
-     * `ROLE_DOMAIN_MANAGER` on that domain via
-     * {@see UserRepository::findApprovedDomainManagersForDomain()},
-     * and sends one mail per manager. Skips silently (with an info
-     * log) when the manager set is empty — the admin recipient
+     * Extracts the user's email domain, resolves every approver on
+     * that domain via {@see UserRepository::findApproversForDomain()},
+     * and sends one mail per approver. Skips silently (with an info
+     * log) when the recipient set is empty — the admin recipient
      * still receives their own mail via {@see AdminRegistrationNotifier},
      * so no signal is lost. Skips with a warning if the sender
      * address is unset or the user has no resolvable domain.
@@ -83,7 +87,7 @@ class DomainManagerRegistrationNotifier
     {
         $domain = EmailDomain::of($user);
         if (null === $domain) {
-            $this->logger->warning('Cannot resolve domain from user email; skipping domain-manager notification.', [
+            $this->logger->warning('Cannot resolve domain from user email; skipping domain notification.', [
                 'user_email' => $user->getUserIdentifier(),
             ]);
 
@@ -92,16 +96,16 @@ class DomainManagerRegistrationNotifier
 
         $sender = $this->settings->getSenderAddress();
         if (null === $sender) {
-            $this->logger->warning('Sender address is unset; skipping domain-manager notification.', [
+            $this->logger->warning('Sender address is unset; skipping domain notification.', [
                 'user_email' => $user->getUserIdentifier(),
             ]);
 
             return;
         }
 
-        $managers = $this->userRepository->findApprovedDomainManagersForDomain($domain);
-        if ([] === $managers) {
-            $this->logger->info('No approved domain manager on the user domain; skipping domain-manager notification.', [
+        $recipients = $this->userRepository->findApproversForDomain($domain);
+        if ([] === $recipients) {
+            $this->logger->info('No approver on the user domain; skipping domain notification.', [
                 'user_email' => $user->getUserIdentifier(),
                 'domain' => $domain,
             ]);
@@ -124,8 +128,8 @@ class DomainManagerRegistrationNotifier
             ],
         );
 
-        foreach ($managers as $manager) {
-            $recipient = (string) $manager->getEmail();
+        foreach ($recipients as $approver) {
+            $recipient = (string) $approver->getEmail();
             $email = (new TemplatedEmail())
                 ->from(Address::create($sender))
                 ->to(Address::create($recipient))
@@ -137,9 +141,9 @@ class DomainManagerRegistrationNotifier
             try {
                 $this->mailer->send($email);
             } catch (TransportExceptionInterface $e) {
-                $this->logger->warning('Failed to deliver domain-manager registration notification.', [
+                $this->logger->warning('Failed to deliver domain registration notification.', [
                     'user_email' => $user->getUserIdentifier(),
-                    'manager_email' => $recipient,
+                    'recipient_email' => $recipient,
                     'exception' => $e,
                 ]);
             }

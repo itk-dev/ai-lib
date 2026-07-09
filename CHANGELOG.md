@@ -9,22 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Domain-manager registration notification. When a user completes
+- Domain-scoped registration notification. When a user completes
   email confirmation and transitions from `AwaitingEmailConfirmation`
-  to `Pending`, every approved `ROLE_DOMAIN_MANAGER` on the user's
-  own email domain now receives a notification alongside the
-  existing site-wide admin recipient. Powered by a new
-  `App\Notification\DomainManagerRegistrationNotifier` and a new
-  `UserRepository::findApprovedDomainManagersForDomain()` lookup
-  that filters to Approved managers and excludes site admins (they
-  already receive the admin recipient's mail). The mail reuses the
-  admin-editable subject + body (`admin_notification_subject` /
-  `admin_notification_body`) so a wording edit at
-  `/admin/settings/email` updates both audiences at once; the help
-  text under the "E-mailadresse" field on that page now names
-  domain managers so the admin can see the full delivery set.
-  `UserFixtures` gains a second `manager2@aarhus.dk` entry so tests
-  exercise the "fan-out to every same-domain manager" path.
+  to `Pending`, every Approved user carrying `ROLE_DOMAIN_MANAGER`
+  or `ROLE_ADMIN` whose own email is on the same domain now
+  receives a notification alongside the existing site-wide admin
+  recipient. Powered by a new
+  `App\Notification\DomainRegistrationNotifier` and a new
+  `UserRepository::findApproversForDomain()` lookup that filters
+  to Approved managers-or-admins on the given domain. The mail
+  reuses the admin-editable subject + body
+  (`admin_notification_subject` / `admin_notification_body`) so a
+  wording edit at `/admin/settings/email` updates both audiences
+  at once; the help text under the "E-mailadresse" field on that
+  page now names domain managers and administrators so the admin
+  can see the full delivery set. `UserFixtures` gains a second
+  `manager2@aarhus.dk` entry so tests exercise the "fan-out to
+  every same-domain approver" path.
 - Password-reset flow at `/reset-password` (request → check-email → reset)
   built on `symfonycasts/reset-password-bundle`. The email subject + body
   are admin-editable under **Indstillinger → E-mail** with the same

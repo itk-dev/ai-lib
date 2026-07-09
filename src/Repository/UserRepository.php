@@ -85,18 +85,18 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
-     * Find every Approved domain manager whose email domain matches `$domain`.
+     * Find every Approved approver whose email domain matches `$domain`.
      *
-     * Powers the domain-manager registration notifier: when a user
-     * completes email confirmation, the notifier resolves the set of
-     * managers responsible for the user's own email domain and
-     * dispatches the "new pending user" mail to each one. Only
-     * `Approved` managers are returned — a Pending / Blocked /
-     * AwaitingEmailConfirmation manager cannot act on the queue, so
-     * mailing them would be noise. Site admins (`ROLE_ADMIN`) are
-     * excluded on purpose: they already receive the site-wide admin
-     * recipient's mail via {@see \App\Notification\AdminRegistrationNotifier}
-     * and don't need a second, domain-scoped copy.
+     * "Approver" here means a user who can act on the pending-user
+     * queue for the given domain: any Approved user carrying
+     * `ROLE_DOMAIN_MANAGER` or `ROLE_ADMIN` whose own email is on
+     * that domain. Powers {@see \App\Notification\DomainRegistrationNotifier},
+     * which dispatches the "new pending user" mail to every returned
+     * user after a fresh registration lands.
+     *
+     * Only `Approved` users are returned — a Pending / Blocked /
+     * AwaitingEmailConfirmation approver cannot log in and act on
+     * the queue, so mailing them would be noise.
      *
      * Domain match is case-insensitive on the email column, and the
      * caller-supplied `$domain` is compared lowercased so a stray
@@ -105,13 +105,12 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      *
      * @param string $domain lowercased email domain to match (e.g. "aarhus.dk")
      *
-     * @return list<User> approved domain managers on that domain, sorted by id ascending
+     * @return list<User> approved approvers on that domain, sorted by id ascending
      */
-    public function findApprovedDomainManagersForDomain(string $domain): array
+    public function findApproversForDomain(string $domain): array
     {
         $qb = $this->createQueryBuilder('u')
-            ->andWhere('u.roles LIKE :managerRole')
-            ->andWhere('u.roles NOT LIKE :adminRole')
+            ->andWhere('(u.roles LIKE :managerRole OR u.roles LIKE :adminRole)')
             ->andWhere('u.status = :status')
             ->andWhere('LOWER(u.email) LIKE :domainSuffix')
             ->setParameter('managerRole', '%"'.Roles::DOMAIN_MANAGER.'"%')
