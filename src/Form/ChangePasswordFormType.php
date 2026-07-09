@@ -11,16 +11,14 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
-use Symfony\Component\Validator\Constraints\PasswordStrength;
 
 /**
  * Step 3 of the password-reset flow — pick + repeat a new password.
  *
- * Same constraint chain the registration form uses
- * (NotBlank + Length min 12 + PasswordStrength +
- * NotCompromisedPassword). The value is `mapped: false`; the
- * controller reads it and hashes on the fly.
+ * Constraints kept intentionally light: `NotBlank` plus a minimum
+ * length of 8 characters, with no composition rules (mixed case,
+ * digits, symbols) and no HIBP look-up. The value is
+ * `mapped: false`; the controller reads it and hashes on the fly.
  */
 final class ChangePasswordFormType extends AbstractType
 {
@@ -40,13 +38,11 @@ final class ChangePasswordFormType extends AbstractType
                             message: 'security.reset_password.reset.password_required',
                         ),
                         new Length(
-                            min: 12,
+                            min: 8,
                             minMessage: 'security.reset_password.reset.password_min',
                             // max length allowed by Symfony for security reasons
                             max: 4096,
                         ),
-                        new PasswordStrength(),
-                        new NotCompromisedPassword(),
                     ],
                     'label' => 'security.reset_password.reset.new_password_label',
                 ],
