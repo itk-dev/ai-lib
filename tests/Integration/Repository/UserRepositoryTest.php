@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use App\Security\Roles;
+use App\Security\UserManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -153,5 +154,72 @@ final class UserRepositoryTest extends KernelTestCase
         self::assertContains(UserFixtures::PENDING_EMAIL, $emails);
         self::assertNotContains(UserFixtures::ADMIN_EMAIL, $emails);
         self::assertNotContains(UserFixtures::ALICE_EMAIL, $emails);
+    }
+
+    // Verifies findApproversForDomain returns every Approved manager and admin on the given domain.
+    public function testFindApproversForDomainReturnsManagersAndAdmins(): void
+    {
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findApproversForDomain('aarhus.dk'),
+        );
+
+        self::assertContains(UserFixtures::DOMAIN_MANAGER_EMAIL, $emails);
+        self::assertContains(UserFixtures::SECOND_DOMAIN_MANAGER_EMAIL, $emails);
+        self::assertContains(UserFixtures::ADMIN_EMAIL, $emails);
+    }
+
+    // Ensures plain (non-approver) same-domain users are excluded.
+    public function testFindApproversForDomainExcludesPlainUsers(): void
+    {
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findApproversForDomain('aarhus.dk'),
+        );
+
+        self::assertNotContains(UserFixtures::COLLEAGUE_EMAIL, $emails);
+    }
+
+    // Verifies approvers on other domains are excluded.
+    public function testFindApproversForDomainScopesByDomain(): void
+    {
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findApproversForDomain('aalborg.dk'),
+        );
+
+        self::assertNotContains(UserFixtures::DOMAIN_MANAGER_EMAIL, $emails);
+        self::assertNotContains(UserFixtures::ADMIN_EMAIL, $emails);
+        self::assertSame([], $emails);
+    }
+
+    // Ensures the domain match is case-insensitive so a caller passing a mixed-case domain still hits.
+    public function testFindApproversForDomainIsCaseInsensitive(): void
+    {
+        $lower = $this->repository->findApproversForDomain('aarhus.dk');
+        $upper = $this->repository->findApproversForDomain('AARHUS.DK');
+
+        self::assertSame(
+            array_map(static fn (User $u): ?string => (string) $u->getId(), $lower),
+            array_map(static fn (User $u): ?string => (string) $u->getId(), $upper),
+        );
+    }
+
+    // Verifies non-Approved approvers (Pending / Blocked / Awaiting) are filtered out — mailing them makes no sense; they can't act on the queue.
+    public function testFindApproversForDomainFiltersByStatus(): void
+    {
+        $manager = self::getContainer()->get(UserManager::class);
+        $manager->createUser('pending-manager@aarhus.dk', 'PM', 'pw', [Roles::DOMAIN_MANAGER], UserStatus::Pending);
+        $manager->createUser('blocked-admin@aarhus.dk', 'BA', 'pw', [Roles::ADMIN], UserStatus::Blocked);
+        $manager->createUser('awaiting-manager@aarhus.dk', 'AM', 'pw', [Roles::DOMAIN_MANAGER], UserStatus::AwaitingEmailConfirmation);
+
+        $emails = array_map(
+            static fn (User $u): ?string => $u->getEmail(),
+            $this->repository->findApproversForDomain('aarhus.dk'),
+        );
+
+        self::assertNotContains('pending-manager@aarhus.dk', $emails);
+        self::assertNotContains('blocked-admin@aarhus.dk', $emails);
+        self::assertNotContains('awaiting-manager@aarhus.dk', $emails);
     }
 }

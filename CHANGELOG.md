@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Domain-scoped registration notification. When a user completes
+  email confirmation and transitions from `AwaitingEmailConfirmation`
+  to `Pending`, every Approved user carrying `ROLE_DOMAIN_MANAGER`
+  or `ROLE_ADMIN` whose own email is on the same domain now
+  receives a notification alongside the existing site-wide admin
+  recipient. Powered by a new
+  `App\Notification\DomainRegistrationNotifier` and a new
+  `UserRepository::findApproversForDomain()` lookup that filters
+  to Approved managers-or-admins on the given domain. The mail
+  reuses the admin-editable subject + body
+  (`admin_notification_subject` / `admin_notification_body`) so a
+  wording edit at `/admin/settings/email` updates both audiences
+  at once; the help text under the "E-mailadresse" field on that
+  page now names domain managers and administrators so the admin
+  can see the full delivery set. `UserFixtures` gains a second
+  `manager2@aarhus.dk` entry so tests exercise the "fan-out to
+  every same-domain approver" path.
 - Integration-test fixture consolidation pass. Eight test files
   under `tests/Integration/` (UserApprovalTest, UserRolesTest,
   UserRepositoryTest, SecurityControllerTest,

@@ -225,7 +225,7 @@ admin:
             fields:
                 admin_recipient:
                     label: "E-mailadresse"
-                    help: "Modtager besked når en bruger registrerer sig og afventer godkendelse. Lad feltet stå tomt for at slå disse beskeder fra."
+                    help: "Modtager besked når en bruger registrerer sig og afventer godkendelse. Domænemanagere og administratorer med samme e-maildomæne som den nye bruger får også beskeden. Lad feltet stå tomt for at slå denne besked fra — beskeder til domænemanagere og administratorer sendes stadig."
                 subject:
                     label: "Emne"
                 body:

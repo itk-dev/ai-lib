@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Mail\EmailTemplateRenderer;
 use App\Notification\AdminRegistrationNotifier;
+use App\Notification\DomainRegistrationNotifier;
 use App\Notification\EmailConfirmationNotifier;
 use App\Notification\RegistrationConfirmationNotifier;
 use App\Repository\UserRepository;
@@ -42,6 +43,32 @@ final class NotifierSkipsWhenSenderUnsetTest extends TestCase
             $settings,
             new EmailTemplateRenderer(new \League\CommonMark\CommonMarkConverter()),
             $this->createMock(UrlGeneratorInterface::class),
+            new NullLogger(),
+        );
+
+        $notifier->notifyOfNewRegistration($this->makeUser());
+    }
+
+    // Ensures DomainRegistrationNotifier skips the send when the sender address is null.
+    public function testDomainNotifierSkipsWhenSenderUnset(): void
+    {
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects(self::never())->method('send');
+
+        $settings = $this->createMock(SettingsManager::class);
+        $settings->method('getSenderAddress')->willReturn(null);
+
+        // The repository is never queried when the sender check
+        // short-circuits — expect zero interactions.
+        $userRepository = $this->createMock(UserRepository::class);
+        $userRepository->expects(self::never())->method('findApproversForDomain');
+
+        $notifier = new DomainRegistrationNotifier(
+            $mailer,
+            $settings,
+            new EmailTemplateRenderer(new \League\CommonMark\CommonMarkConverter()),
+            $this->createMock(UrlGeneratorInterface::class),
+            $userRepository,
             new NullLogger(),
         );
 
@@ -92,6 +119,7 @@ final class NotifierSkipsWhenSenderUnsetTest extends TestCase
                 $this->createMock(EntityManagerInterface::class),
                 $this->createMock(UserRepository::class),
                 $this->createMock(AdminRegistrationNotifier::class),
+                $this->createMock(DomainRegistrationNotifier::class),
                 $this->createMock(RegistrationConfirmationNotifier::class),
                 new NullLogger(),
             ),

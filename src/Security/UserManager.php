@@ -40,16 +40,26 @@ final class UserManager
      * usable account — the console command and the local-development
      * fixtures — pass `UserStatus::Approved` explicitly.
      *
+     * `$plainPassword` may be `null` (omitted entirely) when the
+     * caller doesn't care about the credential — typical for
+     * fixture seeding of subject users who won't log in through
+     * this account. In that case the method mints an unguessable
+     * random secret and hashes it, so the row still carries a
+     * usable password hash and the login form remains resistant
+     * to enumeration timing attacks. Passing an empty string is
+     * still an error — it usually signals a form submission that
+     * missed the required-field guard.
+     *
      * @param string       $email         user e-mail; must be unique
      * @param string       $name          display name; required, may be any non-null string
-     * @param string       $plainPassword clear-text password, hashed before persistence
+     * @param string|null  $plainPassword clear-text password, hashed before persistence; when null a random secret is minted
      * @param list<string> $roles         additional roles beyond the implicit `ROLE_USER`
      * @param UserStatus   $status        identity-lifecycle status; defaults to {@see UserStatus::Pending}
      *
      * @return User the persisted user with an assigned id
      *
      * @throws \DomainException          when a user with the same e-mail already exists
-     * @throws \InvalidArgumentException when `$plainPassword` is empty
+     * @throws \InvalidArgumentException when `$plainPassword` is the empty string
      */
     /**
      * Create a new user from an `UserCreateType` form submission.
@@ -86,7 +96,7 @@ final class UserManager
     public function createUser(
         string $email,
         string $name,
-        string $plainPassword,
+        ?string $plainPassword = null,
         array $roles = [],
         UserStatus $status = UserStatus::Pending,
     ): User {
@@ -103,7 +113,7 @@ final class UserManager
             ->setName($name)
             ->setRoles($roles)
             ->setStatus($status);
-        $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
+        $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword ?? bin2hex(random_bytes(32))));
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
