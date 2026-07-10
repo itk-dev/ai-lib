@@ -9,7 +9,7 @@
         <p class="mb-6 text-sm text-text">{{ 'security.reset_password.request.lead'|trans }}</p>
 
         {% for flash_error in app.flashes('reset_password_error') %}
-            <twig:Alert type="error" class="mb-4">{{ flash_error }}</twig:Alert>
+            <twig:Alert type="danger" class="mb-4">{{ flash_error }}</twig:Alert>
         {% endfor %}
 
         {{ form_start(requestForm, {attr: {class: 'grid gap-4'}}) }}
