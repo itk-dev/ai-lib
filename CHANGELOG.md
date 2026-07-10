@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Assistant cards on the catalog grid
+  (`templates/components/Catalog/AssistantCard.html.twig`) and the
+  frontpage rail (`templates/frontpage/index.html.twig`) now
+  render the short one-line `tagline` field instead of the
+  long-form `description`, falling back to `description` for
+  seeded assistants that carry no tagline yet. Matches the
+  pattern already used on the personal inventory
+  (`templates/user/assistants.html.twig:32`). Purely visual —
+  no entity or form change, and the details page
+  (`_show_tab_beskrivelse.html.twig`) still renders the full
+  description as before.
 - Domain-scoped registration notification. When a user completes
   email confirmation and transitions from `AwaitingEmailConfirmation`
   to `Pending`, every Approved user carrying `ROLE_DOMAIN_MANAGER`

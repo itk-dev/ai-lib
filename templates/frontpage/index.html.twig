@@ -36,7 +36,7 @@
                     kommune="{{ assistant.framework }}"
                     model="{{ assistant.languageModel }}"
                     name="{{ assistant.title }}"
-                    summary="{{ assistant.description }}"
+                    summary="{{ assistant.tagline ?? assistant.description }}"
                     href="{{ path('app_assistant_show', {id: assistant.id}) }}" />
             {% endfor %}
         </twig:CardRail:Container>
