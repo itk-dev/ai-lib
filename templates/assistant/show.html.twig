@@ -42,13 +42,13 @@
                             {{ assistant.framework|framework_label }}
                         </span>
                         {% if assistant.dataSensitivity %}
-                            {# Map each DataSensitivity case to a semantic  #}
+                            {# Map each DataSensitivity case to a semantic #}
                             {# alert-palette class triple so ordinary reads #}
-                            {# as success (green), confidential as warning  #}
-                            {# (yellow), and sensitive-personal as danger   #}
-                            {# (red). The empty branch below deliberately   #}
-                            {# stays on the neutral surface — "unknown" is  #}
-                            {# not "safe".                                  #}
+                            {# as success (green), confidential as warning #}
+                            {# (yellow), and sensitive-personal as danger #}
+                            {# (red). The empty branch below deliberately #}
+                            {# stays on the neutral surface — "unknown" is #}
+                            {# not "safe". #}
                             {% set sensitivityClasses = {
                                 ordinary_personal: 'bg-success-surface border-success-line text-success-ink',
                                 confidential: 'bg-warning-surface border-warning-line text-warning-ink',

@@ -37,6 +37,12 @@ use Symfony\Component\Validator\Constraints as Assert;
  * `tags` is a comma-separated textbox transformed to / from the
  * DTO's `list<string>` shape, matching the pattern the pre-flow
  * version of this page used.
+ *
+ * Field-declaration order below mirrors the on-screen order the
+ * template renders: identity (title, tagline) → what the assistant
+ * does (description) → what it draws on (knowledge, language model
+ * paired with organisation) → how it's classified (tags, data
+ * sensitivity).
  */
 final class AssistantMetadataStepType extends AbstractType
 {
@@ -73,6 +79,21 @@ final class AssistantMetadataStepType extends AbstractType
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
+            ->add('tagline', TextType::class, [
+                'label' => 'assistant.new.step_metadata.tagline_label',
+                'help' => 'assistant.new.step_metadata.tagline_help',
+                'required' => true,
+                'empty_data' => '',
+                'constraints' => [
+                    new Assert\NotBlank(
+                        message: 'assistant.new.step_metadata.tagline_required',
+                        groups: ['metadata'],
+                    ),
+                ],
+                'attr' => ['class' => self::INPUT_CLASS, 'maxlength' => 255],
+                'label_attr' => ['class' => self::LABEL_CLASS],
+                'row_attr' => ['class' => self::ROW_CLASS],
+            ])
             ->add('description', TextareaType::class, [
                 'label' => 'assistant.new.step_metadata.description_label',
                 'required' => true,
@@ -83,6 +104,15 @@ final class AssistantMetadataStepType extends AbstractType
                         groups: ['metadata'],
                     ),
                 ],
+                'attr' => ['class' => self::INPUT_CLASS, 'rows' => 4],
+                'label_attr' => ['class' => self::LABEL_CLASS],
+                'row_attr' => ['class' => self::ROW_CLASS],
+            ])
+            ->add('knowledgeDescription', TextareaType::class, [
+                'label' => 'assistant.new.step_metadata.knowledge_description_label',
+                'help' => 'assistant.new.step_metadata.knowledge_description_help',
+                'required' => false,
+                'empty_data' => '',
                 'attr' => ['class' => self::INPUT_CLASS, 'rows' => 4],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
@@ -108,24 +138,6 @@ final class AssistantMetadataStepType extends AbstractType
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
-            ->add('tagline', TextType::class, [
-                'label' => 'assistant.new.step_metadata.tagline_label',
-                'help' => 'assistant.new.step_metadata.tagline_help',
-                'required' => false,
-                'empty_data' => '',
-                'attr' => ['class' => self::INPUT_CLASS, 'maxlength' => 255],
-                'label_attr' => ['class' => self::LABEL_CLASS],
-                'row_attr' => ['class' => self::ROW_CLASS],
-            ])
-            ->add('knowledgeDescription', TextareaType::class, [
-                'label' => 'assistant.new.step_metadata.knowledge_description_label',
-                'help' => 'assistant.new.step_metadata.knowledge_description_help',
-                'required' => false,
-                'empty_data' => '',
-                'attr' => ['class' => self::INPUT_CLASS, 'rows' => 4],
-                'label_attr' => ['class' => self::LABEL_CLASS],
-                'row_attr' => ['class' => self::ROW_CLASS],
-            ])
             ->add('organizationId', ChoiceType::class, [
                 'label' => 'assistant.new.step_metadata.organization_label',
                 'help' => 'assistant.new.step_metadata.organization_help',
@@ -136,29 +148,40 @@ final class AssistantMetadataStepType extends AbstractType
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
-            ->add('dataSensitivity', EnumType::class, [
-                'class' => DataSensitivity::class,
-                'label' => 'assistant.new.step_metadata.data_sensitivity_label',
-                'help' => 'assistant.new.step_metadata.data_sensitivity_help',
-                'required' => true,
-                'placeholder' => 'assistant.new.step_metadata.data_sensitivity_placeholder',
-                'choice_label' => static fn (DataSensitivity $case): string => $case->label(),
-                'constraints' => [
-                    new Assert\NotNull(
-                        message: 'assistant.new.step_metadata.data_sensitivity_required',
-                        groups: ['metadata'],
-                    ),
-                ],
-                'attr' => ['class' => self::INPUT_CLASS],
-                'label_attr' => ['class' => self::LABEL_CLASS],
-                'row_attr' => ['class' => self::ROW_CLASS],
-            ])
             ->add('tags', TextType::class, [
                 'label' => 'assistant.new.step_metadata.tags_label',
                 'help' => 'assistant.new.step_metadata.tags_help',
                 'required' => false,
                 'empty_data' => '',
                 'attr' => ['class' => self::INPUT_CLASS],
+                'label_attr' => ['class' => self::LABEL_CLASS],
+                'row_attr' => ['class' => self::ROW_CLASS],
+            ])
+            ->add('dataSensitivity', EnumType::class, [
+                'class' => DataSensitivity::class,
+                'label' => 'assistant.new.step_metadata.data_sensitivity_label',
+                'help' => 'assistant.new.step_metadata.data_sensitivity_help',
+                'required' => true,
+                // No placeholder: expanded radios give no "empty" option,
+                // so the curator has to make an explicit pick — a hidden
+                // <select> default would otherwise let an assistant ship
+                // with whichever case sits first in the enum.
+                'expanded' => true,
+                'choice_label' => static fn (DataSensitivity $case): string => $case->label(),
+                // Surface the longer descriptive copy on each child's
+                // `vars.attr` so the template can pair it with the label
+                // without dragging the whole enum case through the view
+                // (EnumType-expanded children carry a bool `vars.data`,
+                // not the case itself).
+                'choice_attr' => static fn (DataSensitivity $case): array => [
+                    'data-description-key' => $case->description(),
+                ],
+                'constraints' => [
+                    new Assert\NotNull(
+                        message: 'assistant.new.step_metadata.data_sensitivity_required',
+                        groups: ['metadata'],
+                    ),
+                ],
                 'label_attr' => ['class' => self::LABEL_CLASS],
                 'row_attr' => ['class' => self::ROW_CLASS],
             ])
