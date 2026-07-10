@@ -50,7 +50,14 @@
     {{ form_row(flow.metadata.knowledgeDescription) }}
 
     <div class="grid gap-4 md:grid-cols-2">
-        <div class="grid gap-1 text-sm">
+        {# `content-start` on each column pins the inner grid's tracks #}
+        {# to the top: the outer `md:grid-cols-2` stretches both #}
+        {# columns to the tallest cell's height (default #}
+        {# `align-items: stretch`), and without `content-start` the #}
+        {# shorter column's inner grid distributes the extra vertical #}
+        {# space across its tracks and inflates the gap between the #}
+        {# label, the input, and the help line. #}
+        <div class="grid gap-1 text-sm content-start">
             <label for="{{ language_model.vars.id }}" class="block font-medium text-ink">
                 {{ macros.fieldLabel('languageModel', 'assistant.new.step_metadata.language_model_label', draft, changed_badge)|raw }}
             </label>
@@ -85,7 +92,7 @@
         {# Manually rendered above — mark the child as rendered so form_end()
            doesn't emit a duplicate `<input>` with the same label. #}
         {% do language_model.setRendered %}
-        {{ form_row(flow.metadata.organizationId) }}
+        {{ form_row(flow.metadata.organizationId, {row_attr: {class: 'grid gap-1 text-sm content-start'}}) }}
     </div>
 
     {{ form_row(flow.metadata.tags, {label: macros.fieldLabel('tags', 'assistant.new.step_metadata.tags_label', draft, changed_badge), label_html: true}) }}
@@ -100,9 +107,7 @@
         <legend class="block font-medium text-ink">
             {{ sensitivity_field.vars.label|trans }}
         </legend>
-        {% if sensitivity_field.vars.help %}
-            <small class="text-text">{{ sensitivity_field.vars.help|trans }}</small>
-        {% endif %}
+        {{ form_help(sensitivity_field) }}
         <div class="grid gap-2">
             {% for child in sensitivity_field %}
                 <label class="grid cursor-pointer grid-cols-[auto_1fr] gap-3 rounded-lg border border-line bg-surface p-4 hover:border-border-strong has-[input:checked]:border-primary has-[input:checked]:bg-surface-2">
