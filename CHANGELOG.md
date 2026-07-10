@@ -20,6 +20,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no entity or form change, and the details page
   (`_show_tab_beskrivelse.html.twig`) still renders the full
   description as before.
+- Viden tab on the assistant details page replaces the Readme
+  placeholder tab. Renders **Vidensopskrift** as the heading, a
+  static intro paragraph clarifying that the recipe is shareable
+  between kommuner while the underlying videns- og datafiler are
+  not, and the assistant's `knowledgeDescription` beneath — using
+  the same `paragraphs` + `whitespace-pre-wrap` treatment the
+  Beskrivelse tab uses so line breaks stay visible. Empty
+  knowledge descriptions fall back to a muted italic "Denne
+  assistent har endnu ingen vidensopskrift." line so the heading
+  and intro still render. The tab id changes from `readme` →
+  `viden`
+  in `AssistantController::DETAIL_TABS`; `?tab=readme` no longer
+  resolves and silently falls back to Beskrivelse. Danish
+  translations under `assistant.detail.tab` and
+  `assistant.detail.viden.*` swap in accordingly; the unused
+  `assistant.detail.readme.*` block is dropped.
+- Assistant details page breadcrumb now renders the assistant's
+  organisation name (or the "Ingen tilknyttet organisation"
+  fallback copy when no organisation is attached) as the second
+  segment, matching the eyebrow just below the breadcrumb. The
+  segment previously rendered the raw translation identifier
+  `assistant.detail.placeholder_origin` because the key was never
+  wired to a real translation entry.
+- Per-type colour treatment for the shared `Alert` component. Info,
+  success, warning, and danger now each render a soft surface, a
+  mid-weight border, and a WCAG-AA-legible text shade instead of the
+  single neutral surface. Introduces four semantic token triples
+  (`--color-{info,success,warning,danger}-{surface,line,ink}`) under
+  the `@theme` block in `assets/styles/app.css`; success leans cool
+  (emerald) so it reads as a status hue and not as a second brand-
+  green accent. The `type` prop is renamed from `error` to `danger`
+  to match the Info/Success/Warning/Danger design language, and the
+  nine existing `type="error"` callsites are updated. ARIA behaviour
+  is unchanged — warning/danger stay assertive (`role="alert"`),
+  info/success stay polite (`role="status"`). A new
+  `AlertRenderTest` pins each type's class triple + role so an
+  accidental token rename can't silently drop the affordance.
 - Domain-scoped registration notification. When a user completes
   email confirmation and transitions from `AwaitingEmailConfirmation`
   to `Pending`, every Approved user carrying `ROLE_DOMAIN_MANAGER`
