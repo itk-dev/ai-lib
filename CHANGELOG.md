@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Step 2 of the assistant create/edit wizard reorders its fields
+  to narrate the assistant — identity (title, tagline) → what it
+  does (description) → what it draws on (knowledge, language
+  model + organisation) → how it's classified (tags, data
+  sensitivity). Language model and organisation share a row on
+  `md:` and up, stack below. The tagline field is now required
+  (adds a `NotBlank` constraint under the `metadata` validation
+  group and a matching `tagline_required` translation entry) so
+  curators explicitly write the short one-line summary the
+  catalog surfaces on card lists. Data sensitivity switches from
+  a dropdown to a set of three rich radio cards — each card
+  pairs the enum's short label with its longer descriptive
+  copy, hovering a card darkens the border, and the selected
+  card gets the primary border + `surface-2` background. The
+  placeholder option is removed so the choice cannot ship
+  silently on the first enum case.
 - Data-sensitivity pill on the assistant details page is now
   colour-coded per classification, reusing the semantic alert
   palette so readers get an at-a-glance signal of how much care
