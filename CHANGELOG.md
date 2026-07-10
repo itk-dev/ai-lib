@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Data-sensitivity pill on the assistant details page is now
+  colour-coded per classification, reusing the semantic alert
+  palette so readers get an at-a-glance signal of how much care
+  the assistant's knowledge base warrants: `ordinary_personal`
+  renders as green (success), `confidential` as yellow (warning),
+  and `sensitive_personal` as red (danger). The pill's tooltip
+  (`assistant.dataSensitivity.description`) and label copy are
+  unchanged; the empty-state pill deliberately stays on the
+  neutral muted surface so "unknown" is not misread as "safe".
+  The meta-sidebar sensitivity row stays plain text so the visual
+  weight sits on the hero pill.
 - Assistant cards on the catalog grid
   (`templates/components/Catalog/AssistantCard.html.twig`) and the
   frontpage rail (`templates/frontpage/index.html.twig`) now
