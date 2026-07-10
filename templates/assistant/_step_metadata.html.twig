@@ -79,9 +79,7 @@
                     {% endif %}
                 </select>
             </div>
-            {% if language_model.vars.help %}
-                <small class="text-text">{{ language_model.vars.help|trans }}</small>
-            {% endif %}
+            {{ form_help(language_model) }}
             {{ form_errors(language_model) }}
         </div>
         {# Manually rendered above — mark the child as rendered so form_end()

@@ -148,6 +148,38 @@
 }
 
 /*
+ * Choices.js combobox — normalise the vendor widget to sit
+ * alongside plain <select> inputs on the wizard's step 2 without
+ * visible drift. The vendor CSS ships with a boxier surface
+ * (`min-height: 44px`, asymmetric `7.5px 7.5px 3.75px` padding,
+ * `2.5px` radius) and a 24px bottom margin, so a Choices-enhanced
+ * field renders taller than an adjacent native <select> and pushes
+ * its help text further down. These overrides pin the enhanced
+ * widget to the form-input class shape (`px-3 py-2 rounded-lg
+ * bg-surface border-line`) so the language-model picker aligns
+ * with the organisation <select> when they share a row.
+ */
+.choices {
+    margin-bottom: 0;
+}
+.choices__inner {
+    min-height: 0;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+.is-focused .choices__inner,
+.is-open .choices__inner {
+    border-color: var(--color-primary);
+    outline: 2px solid
+        color-mix(in oklab, var(--color-primary) 40%, transparent);
+    outline-offset: 0;
+}
+
+/*
  * Component layer: small set of compound patterns that would be
  * unwieldy as inline utility lists. Each is named after its
  * prototype counterpart and only contains decorative bits that
