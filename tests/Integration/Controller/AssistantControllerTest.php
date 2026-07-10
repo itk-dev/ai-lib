@@ -19,7 +19,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * test's mutations are rolled back by DAMA at tearDown.
  *
  * The detail page renders four tabs (Beskrivelse / Modelkort /
- * Readme / JSON) driven by the `?tab=` query parameter. The tests
+ * Viden / JSON) driven by the `?tab=` query parameter. The tests
  * below walk each one so the tab-partial include paths are
  * covered.
  */
@@ -117,7 +117,7 @@ final class AssistantControllerTest extends WebTestCase
 
         $cases = [
             'modelkort' => ['heading' => 'Modelkort', 'tabLabel' => 'Modelkort'],
-            'readme' => ['heading' => 'Readme', 'tabLabel' => 'Readme'],
+            'viden' => ['heading' => 'Vidensopskrift', 'tabLabel' => 'Viden'],
             'json' => ['heading' => 'Eksportér konfiguration', 'tabLabel' => 'JSON'],
         ];
 
