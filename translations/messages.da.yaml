@@ -414,7 +414,7 @@ assistant:
         tab:
             beskrivelse: "Beskrivelse"
             modelkort: "Modelkort"
-            readme: "Readme"
+            viden: "Viden"
             json: "JSON"
         meta_heading: "Detaljer"
         meta_origin: "Oprindelseskommune"
@@ -434,8 +434,10 @@ assistant:
         modelkort:
             heading: "Modelkort"
             lead: "Sprogmodel %model% og hensyn ved brug af assistenten."
-        readme:
-            heading: "Readme"
+        viden:
+            heading: "Vidensopskrift"
+            intro: "Selve videns- og datafilerne kan ikke deles mellem kommuner. Hver kommune leverer sit eget grundlag efter denne opskrift."
+            empty: "Denne assistent har endnu ingen vidensopskrift."
         json:
             heading: "Eksportér konfiguration"
             lead: "Eksportér assistentens konfiguration til et understøttet format og importér den i dit eget system."

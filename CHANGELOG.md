@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Viden tab on the assistant details page replaces the Readme
+  placeholder tab. Renders **Vidensopskrift** as the heading, a
+  static intro paragraph clarifying that the recipe is shareable
+  between kommuner while the underlying videns- og datafiler are
+  not, and the assistant's `knowledgeDescription` beneath — using
+  the same `paragraphs` + `whitespace-pre-wrap` treatment the
+  Beskrivelse tab uses so line breaks stay visible. Empty
+  knowledge descriptions fall back to a muted italic "Denne
+  assistent har endnu ingen vidensopskrift." line so the heading
+  and intro still render. The tab id changes from `readme` →
+  `viden`
+  in `AssistantController::DETAIL_TABS`; `?tab=readme` no longer
+  resolves and silently falls back to Beskrivelse. Danish
+  translations under `assistant.detail.tab` and
+  `assistant.detail.viden.*` swap in accordingly; the unused
+  `assistant.detail.readme.*` block is dropped.
 - Assistant details page breadcrumb now renders the assistant's
   organisation name (or the "Ingen tilknyttet organisation"
   fallback copy when no organisation is attached) as the second
