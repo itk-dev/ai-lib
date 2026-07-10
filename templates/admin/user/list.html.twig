@@ -14,7 +14,7 @@
         {% endfor %}
 
         {% for flash in app.flashes('error') %}
-            <twig:Alert type="error" class="mb-4">
+            <twig:Alert type="danger" class="mb-4">
                 {{ flash|trans }}
             </twig:Alert>
         {% endfor %}
