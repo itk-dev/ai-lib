@@ -34,7 +34,7 @@
 
                 {% set flow_errors = flow.vars.errors %}
                 {% if flow_errors|length > 0 %}
-                    <twig:Alert type="error">
+                    <twig:Alert type="danger">
                         <ul class="space-y-1">
                             {% for error in flow_errors %}
                                 <li class="relative pl-4 before:absolute before:left-0 before:text-text before:content-['•']">
