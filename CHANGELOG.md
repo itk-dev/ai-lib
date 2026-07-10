@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Assistant details page breadcrumb now renders the assistant's
+  organisation name (or the "Ingen tilknyttet organisation"
+  fallback copy when no organisation is attached) as the second
+  segment, matching the eyebrow just below the breadcrumb. The
+  segment previously rendered the raw translation identifier
+  `assistant.detail.placeholder_origin` because the key was never
+  wired to a real translation entry.
 - Domain-scoped registration notification. When a user completes
   email confirmation and transitions from `AwaitingEmailConfirmation`
   to `Pending`, every Approved user carrying `ROLE_DOMAIN_MANAGER`
