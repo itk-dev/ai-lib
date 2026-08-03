@@ -13,7 +13,7 @@
                             {{ 'assistant.detail.breadcrumb_catalog'|trans }}
                         </a>
                         <span aria-hidden="true" class="px-2">/</span>
-                        <span class="text-text">{{ 'assistant.detail.placeholder_origin'|trans }}</span>
+                        <span class="text-text">{{ organization_name }}</span>
                     </nav>
                     {% if is_granted(constant('App\\Security\\Voter\\EditAssistantVoter::EDIT'), assistant) %}
                         <twig:Form:IconButton
@@ -42,7 +42,19 @@
                             {{ assistant.framework|framework_label }}
                         </span>
                         {% if assistant.dataSensitivity %}
-                            <span class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text"
+                            {# Map each DataSensitivity case to a semantic #}
+                            {# alert-palette class triple so ordinary reads #}
+                            {# as success (green), confidential as warning #}
+                            {# (yellow), and sensitive-personal as danger #}
+                            {# (red). The empty branch below deliberately #}
+                            {# stays on the neutral surface — "unknown" is #}
+                            {# not "safe". #}
+                            {% set sensitivityClasses = {
+                                ordinary_personal: 'bg-success-surface border-success-line text-success-ink',
+                                confidential: 'bg-warning-surface border-warning-line text-warning-ink',
+                                sensitive_personal: 'bg-danger-surface border-danger-line text-danger-ink',
+                            } %}
+                            <span class="inline-flex items-center rounded-full border px-3 py-1 text-sm {{ sensitivityClasses[assistant.dataSensitivity.value] }}"
                                   title="{{ assistant.dataSensitivity.description|trans }}">
                                 {{ assistant.dataSensitivity.label|trans }}
                             </span>

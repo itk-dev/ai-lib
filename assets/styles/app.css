@@ -67,6 +67,26 @@
     --color-accent-soft: #eef8e3; /* green-100 */
     --color-accent-deep: #315f17; /* green-800 */
 
+    /*
+     * Status hues for the shared Alert component. Each type carries a
+     * soft `surface` background, a mid-weight `line` for the border, and
+     * a deep `ink` for text — the deep value is picked to pass WCAG AA
+     * contrast against its own surface. Success leans cool (emerald) so
+     * it reads as a status hue and not as a second brand-green accent.
+     */
+    --color-info-surface: #eff6ff; /* sky-50 */
+    --color-info-line: #bfdbfe; /* sky-200 */
+    --color-info-ink: #1d4ed8; /* sky-700 */
+    --color-success-surface: #ecfdf5; /* emerald-50 */
+    --color-success-line: #a7f3d0; /* emerald-200 */
+    --color-success-ink: #065f46; /* emerald-800 */
+    --color-warning-surface: #fffbeb; /* amber-50 */
+    --color-warning-line: #fde68a; /* amber-200 */
+    --color-warning-ink: #92400e; /* amber-800 */
+    --color-danger-surface: #fef2f2; /* red-50 */
+    --color-danger-line: #fecaca; /* red-200 */
+    --color-danger-ink: #991b1b; /* red-800 */
+
     /* Typography */
     --font-display: "DM Serif Display", Georgia, "Times New Roman", serif;
     --font-sans:
@@ -125,6 +145,38 @@
         letter-spacing: -0.02em;
         line-height: 1.15;
     }
+}
+
+/*
+ * Choices.js combobox — normalise the vendor widget to sit
+ * alongside plain <select> inputs on the wizard's step 2 without
+ * visible drift. The vendor CSS ships with a boxier surface
+ * (`min-height: 44px`, asymmetric `7.5px 7.5px 3.75px` padding,
+ * `2.5px` radius) and a 24px bottom margin, so a Choices-enhanced
+ * field renders taller than an adjacent native <select> and pushes
+ * its help text further down. These overrides pin the enhanced
+ * widget to the form-input class shape (`px-3 py-2 rounded-lg
+ * bg-surface border-line`) so the language-model picker aligns
+ * with the organisation <select> when they share a row.
+ */
+.choices {
+    margin-bottom: 0;
+}
+.choices__inner {
+    min-height: 0;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+.is-focused .choices__inner,
+.is-open .choices__inner {
+    border-color: var(--color-primary);
+    outline: 2px solid
+        color-mix(in oklab, var(--color-primary) 40%, transparent);
+    outline-offset: 0;
 }
 
 /*

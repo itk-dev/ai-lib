@@ -20,6 +20,7 @@ assistant:
             invalid_config: "Filen er ikke en gyldig assistent-konfiguration:"
         step_metadata:
             title_required: "Angiv en titel."
+            tagline_required: "Angiv en kort beskrivelse."
             description_required: "Angiv en beskrivelse."
             language_model_required: "Angiv en sprogmodel."
             data_sensitivity_required: "Vælg en klassifikation af datafølsomhed."

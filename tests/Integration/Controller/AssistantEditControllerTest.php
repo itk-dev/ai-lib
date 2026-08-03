@@ -140,8 +140,13 @@ final class AssistantEditControllerTest extends WebTestCase
 
         // Step 2 with an unset dataSensitivity — the field's
         // NotNull constraint fires and the flow re-renders step 2.
+        // DomCrawler's radio ChoiceFormField rejects an empty-string
+        // assignment; disable its choice validation so we can force
+        // the "no radio selected" state the constraint guards
+        // against.
         $stepTwo = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
         $sensitivityField = $this->findFieldName($stepTwo->all(), '[dataSensitivity]');
+        $stepTwo->get($sensitivityField)->disableValidation();
         $stepTwo[$sensitivityField] = '';
         $this->client->submit($stepTwo);
 
@@ -197,9 +202,13 @@ final class AssistantEditControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/assistant/'.$assistant->getId().'/edit');
         $stepOne = $crawler->selectButton('assistant_create_flow[navigator][next]')->form();
         $crawler = $this->client->submit($stepOne);
+        // Filter down to the badge itself — the rich-radio cards on
+        // the data-sensitivity field also render `<label><span>…</span></label>`
+        // shapes, and the "(Ændret)" badge is the only `<span>`
+        // inside a `<label>` carrying `uppercase` styling.
         self::assertCount(
             0,
-            $crawler->filter('label span'),
+            $crawler->filter('label span.uppercase'),
             'no badge before any change lands on the derived fields',
         );
 
@@ -217,7 +226,7 @@ final class AssistantEditControllerTest extends WebTestCase
         // Step 2 now diverges from the entity — the badge appears as
         // a real `<label><span>Ændret</span></label>` structure, not
         // an escaped literal.
-        $badges = $crawler->filter('label span');
+        $badges = $crawler->filter('label span.uppercase');
         self::assertGreaterThan(0, $badges->count(), 'at least one label carries the changed badge');
         self::assertSame('Ændret', trim($badges->first()->text()));
     }
