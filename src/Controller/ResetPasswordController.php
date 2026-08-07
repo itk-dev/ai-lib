@@ -9,6 +9,7 @@ use App\Form\ChangePasswordFormType;
 use App\Form\ResetPasswordRequestFormType;
 use App\Notification\PasswordResetNotifier;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,6 +30,7 @@ class ResetPasswordController extends AbstractController
         private readonly ResetPasswordHelperInterface $resetPasswordHelper,
         private readonly EntityManagerInterface $entityManager,
         private readonly PasswordResetNotifier $notifier,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -67,7 +69,15 @@ class ResetPasswordController extends AbstractController
     #[Route('/reset/{token}', name: 'app_reset_password')]
     public function reset(Request $request, UserPasswordHasherInterface $passwordHasher, TranslatorInterface $translator, ?string $token = null): Response
     {
+        $sessionId = $request->hasSession() ? $request->getSession()->getId() : '(no-session)';
+
         if ($token) {
+            $this->logger->info('reset-password-debug: request A — token in URL, storing in session', [
+                'session_id' => $sessionId,
+                'token_length' => strlen($token),
+                'token_prefix' => substr($token, 0, 8),
+            ]);
+
             // We store the token in session and remove it from the URL, to avoid the URL being
             // loaded in a browser and potentially leaking the token to 3rd party JavaScript.
             $this->storeTokenInSession($token);
@@ -75,15 +85,27 @@ class ResetPasswordController extends AbstractController
             return $this->redirectToRoute('app_reset_password');
         }
 
-        $token = $this->getTokenFromSession();
-        if (null === $token) {
+        $sessionToken = $this->getTokenFromSession();
+        $this->logger->info('reset-password-debug: request B — reading token from session', [
+            'session_id' => $sessionId,
+            'token_present' => null !== $sessionToken,
+            'token_length' => null !== $sessionToken ? strlen($sessionToken) : 0,
+        ]);
+
+        if (null === $sessionToken) {
             throw $this->createNotFoundException('No reset password token found in the URL or in the session.');
         }
 
         try {
             /** @var User $user */
-            $user = $this->resetPasswordHelper->validateTokenAndFetchUser($token);
+            $user = $this->resetPasswordHelper->validateTokenAndFetchUser($sessionToken);
         } catch (ResetPasswordExceptionInterface $e) {
+            $this->logger->info('reset-password-debug: request B — bundle rejected token', [
+                'session_id' => $sessionId,
+                'exception_class' => $e::class,
+                'reason' => $e->getReason(),
+            ]);
+
             $this->addFlash('reset_password_error', sprintf(
                 '%s - %s',
                 $translator->trans(ResetPasswordExceptionInterface::MESSAGE_PROBLEM_VALIDATE, [], 'ResetPasswordBundle'),
@@ -93,13 +115,18 @@ class ResetPasswordController extends AbstractController
             return $this->redirectToRoute('app_forgot_password_request');
         }
 
+        $this->logger->info('reset-password-debug: request B — token validated, user resolved', [
+            'session_id' => $sessionId,
+            'user_id' => $user->getId(),
+        ]);
+
         // The token is valid; allow the user to change their password.
         $form = $this->createForm(ChangePasswordFormType::class);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             // A password reset token should be used only once, remove it.
-            $this->resetPasswordHelper->removeResetRequest($token);
+            $this->resetPasswordHelper->removeResetRequest($sessionToken);
 
             /** @var string $plainPassword */
             $plainPassword = $form->get('plainPassword')->getData();
