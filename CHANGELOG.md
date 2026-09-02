@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Removed the placeholder "Modelkort" tab from the assistant
+  detail page. The empty tab was never filled with substantive
+  content, so its markup, translation keys, and integration-test
+  case have been dropped. The detail page now renders three tabs:
+  Beskrivelse / Viden / JSON, defaulting to Beskrivelse as before.
 - Step 2 of the assistant create/edit wizard reorders its fields
   to narrate the assistant — identity (title, tagline) → what it
   does (description) → what it draws on (knowledge, language

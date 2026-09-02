@@ -413,7 +413,6 @@ assistant:
         tabs_label: "Assistentdetaljer"
         tab:
             beskrivelse: "Beskrivelse"
-            modelkort: "Modelkort"
             viden: "Viden"
             json: "JSON"
         meta_heading: "Detaljer"
@@ -431,9 +430,6 @@ assistant:
             edit: "Rediger assistent"
         flash:
             deleted: "Assistenten er slettet."
-        modelkort:
-            heading: "Modelkort"
-            lead: "Sprogmodel %model% og hensyn ved brug af assistenten."
         viden:
             heading: "Vidensopskrift"
             intro: "Selve videns- og datafilerne kan ikke deles mellem kommuner. Hver kommune leverer sit eget grundlag efter denne opskrift."
