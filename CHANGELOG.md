@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Unified the Danish terminology for fetching an assistant. The
+  interface previously alternated between "hjemtag", "eksportér",
+  and "download" for one and the same action; every occurrence is
+  now "download". The word "vidensopskrift" — which user testing
+  showed non-technical curators did not recognise — becomes
+  "vejledning", and the Viden tab heading follows. The front-page
+  lead no longer says "resten" about the other municipalities, the
+  "Mine assistenter" lead drops the unexplained "nye tilføjelser",
+  the share wizard's paste-field help is cut to what it actually
+  promises, and the responsibility notice names the guidance
+  instead of "en opskrift på datagrundlaget". The front-page
+  tagline and hero text are seeded settings as well as translation
+  defaults, so both are updated. The JSON tab now offers OpenWebUI
+  as the only download: curators were being asked to pick between
+  five interchange formats with no basis for choosing, and the
+  cross-format warning triangles that came with them went
+  unexplained. Other formats stay reachable through the export
+  route's `?format=` parameter, which is unchanged.
 - Removed the placeholder "Modelkort" tab from the assistant
   detail page. The empty tab was never filled with substantive
   content, so its markup, translation keys, and integration-test
