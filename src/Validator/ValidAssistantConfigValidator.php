@@ -9,7 +9,6 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Delegates {@see ValidAssistantConfig}'s check to the
@@ -20,22 +19,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class ValidAssistantConfigValidator extends ConstraintValidator
 {
     /**
-     * Translation domain the per-error strings are looked up in.
-     *
-     * Kept separate from the `validators` domain so the finite set of
-     * JSON-decoder messages can be localised without cluttering the
-     * general validator catalogue. Errors not present in the catalogue
-     * pass through verbatim.
-     */
-    public const string ERRORS_TRANSLATION_DOMAIN = 'assistant_validation';
-
-    /**
-     * @param FormatAdapterRegistry $formats    the registry whose adapters validate the payload
-     * @param TranslatorInterface   $translator localises each per-error string against the {@see self::ERRORS_TRANSLATION_DOMAIN} catalogue
+     * @param FormatAdapterRegistry $formats the registry whose adapters validate the payload
      */
     public function __construct(
         private readonly FormatAdapterRegistry $formats,
-        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -44,9 +31,16 @@ final class ValidAssistantConfigValidator extends ConstraintValidator
      *
      * Blank values pass (paired `NotBlank` owns that). When a format's
      * {@see \App\Assistant\Format\FormatAdapter::supports()} accepts
-     * the payload it is valid; otherwise the aggregated, deduped
-     * validation errors from every adapter are surfaced so the user
-     * sees why each candidate format rejected it.
+     * the payload it is valid; otherwise two violations are raised — a
+     * statement that the file was rejected, and a line naming the
+     * formats that would have been accepted.
+     *
+     * The adapters' own errors are deliberately not surfaced. They are
+     * emitted per adapter, so an almost-valid OpenWebUI export also drew
+     * complaints from the Ollama, LibreChat, and OpenAI adapters, about
+     * formats the curator never chose and in vocabulary they have no
+     * reason to know. The registry still decides what is valid; only the
+     * reporting changed.
      *
      * @param mixed      $value      the property value under validation
      * @param Constraint $constraint the constraint instance driving the check
@@ -72,22 +66,10 @@ final class ValidAssistantConfigValidator extends ConstraintValidator
             return;
         }
 
-        $errors = [];
-        foreach (array_keys($this->formats->all()) as $id) {
-            $errors = [...$errors, ...$this->formats->get($id)->validate($value)->getErrors()];
-        }
-
-        // First violation is the localised intro ("Filen er ikke en
-        // gyldig assistent-konfiguration."), then one violation per
-        // deduped detail line so the default `form_errors` template
-        // renders the whole thing as a `<ul>` with each reason on its
-        // own row instead of a `; `-joined single line.
+        // Two violations rather than one string: the wizard shell renders
+        // the flow's errors as a `<ul>`, so the statement and the
+        // what-to-do-next line land on their own rows.
         $this->context->buildViolation($constraint->message)->addViolation();
-
-        foreach (array_values(array_unique($errors)) as $error) {
-            $this->context->buildViolation(
-                $this->translator->trans($error, [], self::ERRORS_TRANSLATION_DOMAIN),
-            )->addViolation();
-        }
+        $this->context->buildViolation($constraint->helpMessage)->addViolation();
     }
 }

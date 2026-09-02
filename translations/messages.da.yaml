@@ -514,15 +514,22 @@ assistant:
             next: "Næste trin"
             save: "Gem ændringer"
     data_sensitivity:
+        no_personal:
+            label: "Ingen personoplysninger"
+            description: "Assistenten arbejder ikke med personoplysninger — kun offentligt eller rent fagligt materiale."
+            example: "Fx lovtekster, vejledninger, mødereferater uden navne eller åbne datasæt."
         ordinary_personal:
             label: "Almindelige personoplysninger"
-            description: "Beregnet til almindelige personoplysninger og ikke-følsomt indhold."
+            description: "Assistenten arbejder med almindelige personoplysninger efter databeskyttelsesforordningens artikel 6 — altså oplysninger der kan identificere en person, men som ikke er fortrolige eller følsomme."
+            example: "Fx navn, adresse, e-mail, telefonnummer eller sagsnummer på en borger."
         confidential:
             label: "Fortrolige data"
             description: "Beregnet til fortrolige data — kræver passende organisatoriske foranstaltninger."
+            example: "Fx udbudsmateriale, kontrakter, interne notater eller CPR-numre."
         sensitive_personal:
             label: "Personfølsomme data"
             description: "Beregnet til personfølsomme oplysninger (særlige kategorier) — kræver skærpet beskyttelse."
+            example: "Fx helbred, etnisk oprindelse, religiøs overbevisning, fagforeningsforhold eller strafbare forhold."
 
 frontpage:
     title: "%brand% – forhåndsvisning"
