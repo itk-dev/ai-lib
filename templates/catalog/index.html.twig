@@ -45,6 +45,33 @@
                         {% endfor %}
                     </twig:Filter:Group>
 
+                    <twig:Filter:Group label="catalog.filters.organization">
+                        {% for value, count in facets.organization %}
+                            <twig:Filter:FacetItem
+                                name="organization[]"
+                                value="{{ value }}"
+                                label="{{ value }}"
+                                count="{{ count }}"
+                                checked="{{ value in criteria.organizations }}"
+                            />
+                        {% endfor %}
+                    </twig:Filter:Group>
+
+                    {# Facet keys are the enum's backing values, so each is
+                       resolved to its translated label for display while the
+                       checkbox still submits the machine value. #}
+                    <twig:Filter:Group label="catalog.filters.data_sensitivity">
+                        {% for value, count in facets.data_sensitivity %}
+                            <twig:Filter:FacetItem
+                                name="data_sensitivity[]"
+                                value="{{ value }}"
+                                label="{{ ('assistant.data_sensitivity.' ~ value ~ '.label')|trans }}"
+                                count="{{ count }}"
+                                checked="{{ value in criteria.dataSensitivities }}"
+                            />
+                        {% endfor %}
+                    </twig:Filter:Group>
+
                     <twig:Filter:Group label="catalog.filters.tags">
                         {% for value, count in facets.tag %}
                             <twig:Filter:FacetItem
@@ -111,10 +138,15 @@
                         <ul role="list" class="flex flex-wrap gap-2">
                             {% for filter in criteria.activeFilters %}
                                 <li>
+                                    {# `|trans` is a no-op for the facets whose chip
+                                       label is already the raw value; the
+                                       data-sensitivity chip carries a
+                                       translation key instead. #}
+                                    {% set filter_label = filter.label|trans %}
                                     <twig:Filter:Chip
                                         href="{{ path('app_assistant_catalog', filter.removeQuery) }}"
-                                        label="{{ filter.label }}"
-                                        removeLabel="{{ 'catalog.filters.chip_remove'|trans({'%filter%': filter.label}) }}"
+                                        label="{{ filter_label }}"
+                                        removeLabel="{{ 'catalog.filters.chip_remove'|trans({'%filter%': filter_label}) }}"
                                     />
                                 </li>
                             {% endfor %}

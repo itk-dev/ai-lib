@@ -8,6 +8,7 @@ use App\Catalog\CatalogCriteria;
 use App\Catalog\CatalogSort;
 use App\Entity\Assistant;
 use App\Entity\User;
+use App\Enum\DataSensitivity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -155,6 +156,27 @@ class AssistantRepository extends ServiceEntityRepository
             ))->setParameter('tags', $criteria->tags);
         }
 
+        if ([] !== $criteria->organizations) {
+            // Same `IN (subquery)` shape as the tag filter: the
+            // organisation is a to-one relation, so a join here would not
+            // multiply rows, but keeping the form consistent means the
+            // paginator's LIMIT/OFFSET maths never has to care which
+            // filters happen to be active.
+            $qb->andWhere($qb->expr()->in(
+                'a.id',
+                $this->createQueryBuilder('a3')
+                    ->select('a3.id')
+                    ->join('a3.organization', 'o')
+                    ->andWhere('o.name IN (:organizations)')
+                    ->getDQL(),
+            ))->setParameter('organizations', $criteria->organizations);
+        }
+
+        if ([] !== $criteria->dataSensitivities) {
+            $qb->andWhere('a.dataSensitivity IN (:dataSensitivities)')
+                ->setParameter('dataSensitivities', $criteria->dataSensitivities);
+        }
+
         $qb->setFirstResult(($page - 1) * $perPage)
             ->setMaxResults($perPage);
 
@@ -248,6 +270,81 @@ class AssistantRepository extends ServiceEntityRepository
         $counts = [];
         foreach ($rows as $row) {
             $counts[(string) $row['value']] = (int) $row['count'];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Count assistants grouped by their organisation's name.
+     *
+     * Powers the catalogue's "Kommune" facet. Joins the to-one
+     * `organization` relation and groups on the name, so the facet keys
+     * are the strings the user actually recognises rather than opaque
+     * ids. Counts span the full catalogue, not the active filter set,
+     * for the reason documented on {@see self::languageModelFacetCounts()}.
+     *
+     * Assistants with no organisation are dropped by the inner join and
+     * so contribute to no bucket — matching how the tag facet treats an
+     * untagged assistant, and leaving "no kommune" a state you reach by
+     * clearing the facet rather than by selecting a bucket.
+     *
+     * @return array<string, int> ordered by count DESC then name ASC; key is the organisation name
+     *
+     * @throws \Doctrine\DBAL\Exception when the underlying connection or query execution fails
+     */
+    public function organizationFacetCounts(): array
+    {
+        /** @var list<array{value: string, count: int|string}> $rows */
+        $rows = $this->createQueryBuilder('a')
+            ->select('o.name AS value, COUNT(DISTINCT a.id) AS count')
+            ->join('a.organization', 'o')
+            ->groupBy('o.name')
+            ->orderBy('count', 'DESC')
+            ->addOrderBy('value', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(string) $row['value']] = (int) $row['count'];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Count assistants grouped by their data-sensitivity classification.
+     *
+     * Powers the catalogue's "Datafølsomhed" facet. Keys are the enum's
+     * backing values, so the template resolves each to a label through
+     * {@see \App\Enum\DataSensitivity::label()} rather than showing
+     * `ordinary_personal` to a curator. Unclassified assistants carry
+     * `null` and are skipped, since there is no bucket to put them in.
+     *
+     * @return array<string, int> ordered by count DESC then value ASC; key is the enum backing value
+     *
+     * @throws \Doctrine\DBAL\Exception when the underlying connection or query execution fails
+     */
+    public function dataSensitivityFacetCounts(): array
+    {
+        /** @var list<array{value: DataSensitivity|string|null, count: int|string}> $rows */
+        $rows = $this->createQueryBuilder('a')
+            ->select('a.dataSensitivity AS value, COUNT(a.id) AS count')
+            ->andWhere('a.dataSensitivity IS NOT NULL')
+            ->groupBy('a.dataSensitivity')
+            ->orderBy('count', 'DESC')
+            ->addOrderBy('value', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            // Array hydration of an `enumType` column has returned both
+            // the case and its backing string across ORM versions, so
+            // normalise rather than assume either.
+            $value = $row['value'];
+            $counts[$value instanceof DataSensitivity ? $value->value : (string) $value] = (int) $row['count'];
         }
 
         return $counts;

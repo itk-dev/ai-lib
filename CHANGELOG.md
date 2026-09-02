@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Kommune and Datafølsomhed facets on the catalogue. Kommune is the
+  most obvious way in — a caseworker looks for what a comparable
+  municipality already solved — and data sensitivity was shown on every
+  assistant without being filterable. Both follow the recipe
+  `CatalogCriteria` documents on itself (property, `fromRequest()`,
+  `isEmpty()`, `activeFilters()`, `toQueryArray()`) and are appended
+  after the tag facet, so existing chip positions and the tests pinning
+  them are untouched. The kommune facet groups on the organisation name
+  so URLs stay readable; assistants with no organisation fall out of the
+  inner join and contribute to no bucket, matching how an untagged
+  assistant behaves in the tag facet. The sensitivity facet keys on the
+  enum's backing value and resolves each to its label for display, so
+  nobody is shown `ordinary_personal`. Chip labels now pass through
+  `|trans`, a no-op for the facets whose label is already the raw value.
+- Removed the framework and data-sensitivity chips from the assistant
+  detail header. Both values are already spelled out in the meta aside
+  a few hundred pixels to the right, so the header was repeating itself.
+  The assistant's own tags are unaffected and still render in the
+  Beskrivelse tab.
 - Removed the placeholder "Modelkort" tab from the assistant
   detail page. The empty tab was never filled with substantive
   content, so its markup, translation keys, and integration-test

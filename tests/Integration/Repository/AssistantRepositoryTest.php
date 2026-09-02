@@ -8,6 +8,7 @@ use App\Catalog\CatalogCriteria;
 use App\Catalog\CatalogSort;
 use App\Entity\Assistant;
 use App\Entity\Tag;
+use App\Enum\DataSensitivity;
 use App\Repository\AssistantRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -196,6 +197,78 @@ final class AssistantRepositoryTest extends KernelTestCase
         $sorted = $counts;
         rsort($sorted);
         self::assertSame($sorted, $counts, 'buckets are ordered by count DESC');
+    }
+
+    // Ensures the kommune facet narrows to assistants shared by the named organisation.
+    public function testFindPaginatedFiltersByOrganization(): void
+    {
+        $criteria = new CatalogCriteria(organizations: ['Aarhus Kommune']);
+
+        $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
+
+        self::assertCount(3, $paginator);
+        foreach ($paginator as $assistant) {
+            self::assertNotNull($assistant->getOrganization());
+            self::assertSame('Aarhus Kommune', $assistant->getOrganization()->getName());
+        }
+    }
+
+    // Ensures multiple kommuner OR within the facet, one row per assistant.
+    public function testFindPaginatedOrganizationsOrWithinFacet(): void
+    {
+        $criteria = new CatalogCriteria(organizations: ['Aarhus Kommune', 'Odense Kommune']);
+
+        $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
+
+        self::assertCount(6, $paginator, 'three rows per kommune, unioned');
+        $ids = array_map(static fn (Assistant $a) => (string) $a->getId(), iterator_to_array($paginator->getIterator()));
+        self::assertSame($ids, array_values(array_unique($ids)), 'no assistant appears twice');
+    }
+
+    // Ensures the datafølsomhed facet narrows to assistants carrying that classification.
+    public function testFindPaginatedFiltersByDataSensitivity(): void
+    {
+        $criteria = new CatalogCriteria(dataSensitivities: [DataSensitivity::Confidential->value]);
+
+        $paginator = $this->repository->findPaginated($criteria, page: 1, perPage: 100);
+
+        self::assertCount(7, $paginator);
+        foreach ($paginator as $assistant) {
+            self::assertSame(DataSensitivity::Confidential, $assistant->getDataSensitivity());
+        }
+    }
+
+    /**
+     * Assistants with no organisation are dropped by the inner join, so
+     * the bucket total is deliberately below the catalogue size — the
+     * facet offers kommuner to pick, not a census of every row.
+     */
+    // Verifies organizationFacetCounts() reflects the fixture baseline and excludes unattached rows.
+    public function testOrganizationFacetCountsReflectFixtureBaseline(): void
+    {
+        $organizations = $this->repository->organizationFacetCounts();
+
+        self::assertCount(3, $organizations, 'three kommuner carry at least one assistant');
+        self::assertSame(9, array_sum($organizations));
+        self::assertSame(3, $organizations['Aarhus Kommune']);
+        self::assertLessThan(
+            $this->repository->count([]),
+            array_sum($organizations),
+            'assistants without an organisation contribute to no bucket',
+        );
+    }
+
+    // Verifies dataSensitivityFacetCounts() keys on the enum backing value and orders by count DESC.
+    public function testDataSensitivityFacetCountsReflectFixtureBaseline(): void
+    {
+        $sensitivities = $this->repository->dataSensitivityFacetCounts();
+
+        self::assertSame(
+            [DataSensitivity::OrdinaryPersonal->value, DataSensitivity::Confidential->value, DataSensitivity::SensitivePersonal->value],
+            array_keys($sensitivities),
+            'keys are enum backing values, ordered by count DESC',
+        );
+        self::assertSame($this->repository->count([]), array_sum($sensitivities), 'every fixture row is classified');
     }
 
     // Tests that name-ascending orders by title A→Å, and name-descending is its exact reverse (titles are unique).
