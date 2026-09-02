@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Strengthened the status colour palette so alert, warning, and error
+  boxes actually register. The four semantic token triples in
+  `assets/styles/app.css` move their surfaces from the 50 step to 100
+  and their borders from 200 to 500/600; every border now clears the
+  3:1 non-text contrast bar against the page (amber tops out nearest,
+  at 3.19:1, since a darker amber stops reading as amber), where the
+  old 200-step borders sat at roughly 1.2–1.3:1 and let the whole box
+  recede. Text keeps WCAG AA against its own surface throughout —
+  6.37:1 at the tightest. The responsibility notice on the assistant
+  share and edit pages moves off the neutral surface onto the warning
+  palette, which is what user testing asked for: it carries a caution
+  people need to read at exactly the moment they share. Colour values
+  and colour classes only — no markup, ARIA role, border-width, icon,
+  or typography change, so the `Alert` component's class contract and
+  `AlertRenderTest` are untouched. The data-sensitivity pills on the
+  assistant detail page reuse these tokens and deepen with them, which
+  is the same signal at the same strength.
 - Removed the placeholder "Modelkort" tab from the assistant
   detail page. The empty tab was never filled with substantive
   content, so its markup, translation keys, and integration-test
