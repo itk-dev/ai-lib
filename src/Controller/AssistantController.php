@@ -25,6 +25,15 @@ final class AssistantController extends AbstractController
     private const array DETAIL_TABS = ['beskrivelse', 'viden', 'json'];
     private const string DEFAULT_TAB = 'beskrivelse';
 
+    /**
+     * The only format offered as a download on the detail page.
+     *
+     * Curators are not expected to weigh five interchange formats against
+     * each other, so the tab offers the one the catalogue is built around.
+     * The export route still accepts any registered `?format=`.
+     */
+    private const string DOWNLOAD_FORMAT = 'openwebui';
+
     #[Route(path: '/assistant/{id}', name: 'app_assistant_show', requirements: ['id' => Requirement::ULID], methods: ['GET'])]
     public function show(Assistant $assistant, Request $request, AssistantExporter $exporter, FormatAdapterRegistry $formats): Response
     {
@@ -37,8 +46,8 @@ final class AssistantController extends AbstractController
             'assistant' => $assistant,
             'tab' => $tab,
             'tabs' => self::DETAIL_TABS,
-            'exportFormats' => $formats->all(),
-            'exportWarnings' => $exporter->warningsByFormat($assistant),
+            'exportFormats' => [self::DOWNLOAD_FORMAT => $formats->label(self::DOWNLOAD_FORMAT)],
+            'exportWarnings' => $exporter->warningsByFormat($assistant)[self::DOWNLOAD_FORMAT] ?? [],
         ]);
     }
 

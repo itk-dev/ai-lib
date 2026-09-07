@@ -63,11 +63,11 @@ final class SettingFixtures extends Fixture implements FixtureGroupInterface
         $this->settingsManager->setAdminRecipient('admin@example.test');
 
         $this->settingsManager->setBrandName('AI Reolen');
-        $this->settingsManager->setBrandTagline('Del & hjemtag · dansk offentlig AI');
+        $this->settingsManager->setBrandTagline('Del & download · dansk offentlig AI');
         $this->settingsManager->setBrandInitials('AR');
 
         $this->settingsManager->setHeroText(
-            'Find, del og hjemtag AI-assistenter bygget af danske myndigheder. Når én kommune løser en opgave, kan resten hjemtage assistenten, eksportere konfigurationen og køre den lokalt — så gode løsninger skalerer nationalt.',
+            'Find, del og download AI-assistenter bygget af danske myndigheder. Når en kommune løser en opgave, kan andre kommuner downloade assistenten og køre den lokalt — så gode løsninger skalerer nationalt.',
         );
 
         $this->settingsManager->setAdminNotificationSubject('Ny bruger venter godkendelse — %brand_name%');

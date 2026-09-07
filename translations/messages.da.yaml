@@ -294,8 +294,8 @@ catalog:
         heading: "Seneste søgninger"
         empty: "Ingen søgninger endnu."
     export:
-        heading: "Klar til hjemtagning"
-        body: "Alle %count% resultater kan eksporteres som OpenWebUI-JSON og køres lokalt."
+        heading: "Klar til download"
+        body: "Alle %count% resultater kan downloades som OpenWebUI-JSON og køres lokalt."
     results:
         label: "Søgeresultater"
     filters:
@@ -413,7 +413,7 @@ user:
         title: "Mine assistenter – %brand%"
         eyebrow: "Mine assistenter"
         heading: "Assistenter du har delt"
-        lead: "Assistenter du har uploadet til biblioteket. Nye tilføjelser via »Del assistent« vises her."
+        lead: "På denne side kan du se assistenter, du har uploadet til biblioteket."
         list_label: "Mine assistenter"
         updated_at: "Opdateret %date%"
         action:
@@ -453,17 +453,17 @@ assistant:
         no_data_sensitivity: "Ikke klassificeret"
         actions_heading: "Handlinger"
         action:
-            export: "Hjemtag konfiguration"
+            export: "Download konfiguration"
             edit: "Rediger assistent"
         flash:
             deleted: "Assistenten er slettet."
         viden:
-            heading: "Vidensopskrift"
-            intro: "Selve videns- og datafilerne kan ikke deles mellem kommuner. Hver kommune leverer sit eget grundlag efter denne opskrift."
-            empty: "Denne assistent har endnu ingen vidensopskrift."
+            heading: "Vejledning"
+            intro: "Selve videns- og datafilerne kan ikke deles mellem kommuner. Hver kommune leverer sit eget grundlag efter denne vejledning."
+            empty: "Denne assistent har endnu ingen vejledning."
         json:
-            heading: "Eksportér konfiguration"
-            lead: "Eksportér assistentens konfiguration til et understøttet format og importér den i dit eget system."
+            heading: "Download konfiguration"
+            lead: "Download assistentens konfiguration som OpenWebUI-JSON og importér den i din egen OpenWebUI."
             empty: "Ingen konfiguration gemt for denne assistent."
         placeholder_versions: "Versionsvalg kommer senere."
         placeholder_body: "Indholdet for dette faneblad tilføjes, når det pågældende felt er en del af assistentens datamodel."
@@ -480,7 +480,7 @@ assistant:
             dropzone_prompt: "Slip en fil her, eller klik for at vælge"
             dropzone_hint: "OpenWebUI, OpenAI, LibreChat eller AI-reolen (.json) · Ollama (.modelfile)"
             textarea_label: "…eller indsæt konfiguration direkte"
-            textarea_help: "Indholdet af assistentens konfiguration. Vi genkender formatet automatisk og foreslår metadata i næste trin."
+            textarea_help: "Formatet genkendes automatisk og der foreslås metadata i næste trin."
             unrecognised_format: "Konfigurationen matcher ingen af de kendte formater."
             config_help: "Slip en fil på feltet, eller indsæt konfigurationen direkte i tekstfeltet."
             config_validating: "Validerer konfiguration…"
@@ -507,13 +507,13 @@ assistant:
             data_sensitivity_placeholder: "Vælg klassifikation …"
             tags_label: "Tags"
             tags_help: "Komma-separeret. Fx borgerservice, jura."
-            experimental_notice: "%format% er et eksperimentelt format. Import og eksport er endnu ikke manuelt testet, så kontrollér resultatet før du deler."
+            experimental_notice: "%format% er et eksperimentelt format. Import og download er endnu ikke manuelt testet, så kontrollér resultatet før du deler."
             changed_badge: "Ændret"
         step_receipt:
             rail_label: "Kvittering"
             rail_hint: "Permalink til din assistent"
             heading: "Assistenten er delt"
-            body: '"%title%" er nu tilgængelig i biblioteket og kan hjemtages af andre kommuner.'
+            body: '"%title%" er nu tilgængelig i biblioteket og kan downloades af andre kommuner.'
             permalink_label: "Permalink:"
             go_to_assistant: "Gå til assistent"
             back_to_catalog: "Tilbage til kataloget"
@@ -524,7 +524,7 @@ assistant:
             share_another: "Del en til"
         responsibility:
             heading: "Ansvar"
-            body: "Du har som deler ansvaret for, at assistenten kan deles, og at det beskrevne datagrundlag ikke indeholder data, der ikke må deles. Selve videns- og datafiler deles ikke — kun konfigurationen og en opskrift på datagrundlaget."
+            body: "Du har som deler ansvaret for, at assistenten kan deles, og at det beskrevne datagrundlag ikke indeholder data, der ikke må deles. Selve videns- og datafiler deles ikke — kun konfiguration og vejledning der beskriver hvilke data du selv skal levere."
     edit:
         title: "Rediger assistent – %brand%"
         eyebrow: "Rediger assistent"
@@ -561,9 +561,9 @@ assistant:
 frontpage:
     title: "%brand% – forhåndsvisning"
     hero:
-        eyebrow: "Del & hjemtag · dansk offentlig AI"
+        eyebrow: "Del & download · dansk offentlig AI"
         heading_html: 'Et fælles bibliotek over <em class="italic text-primary">kommunale</em> AI-assistenter.'
-        lead: "Find, del og hjemtag AI-assistenter bygget af danske myndigheder. Når én kommune løser en opgave, kan resten hjemtage assistenten, eksportere konfigurationen og køre den lokalt — så gode løsninger skalerer nationalt."
+        lead: "Find, del og download AI-assistenter bygget af danske myndigheder. Når en kommune løser en opgave, kan andre kommuner downloade assistenten og køre den lokalt — så gode løsninger skalerer nationalt."
     stats:
         assistants: "Assistenter"
         organizations: "Kommuner"
@@ -581,8 +581,8 @@ frontpage:
             lead: "Find en assistent"
             body: " – søg og filtrér på kommune, sprogmodel og datafølsomhed."
         "3":
-            lead: "Hjemtag"
-            body: " – eksportér assistentens JSON og følg vidensopskriften, der beskriver hvilke data du selv skal levere."
+            lead: "Download"
+            body: " – download assistentens JSON og følg vejledningen, der beskriver hvilke data du selv skal levere."
         "4":
             lead: "Tilpas lokalt"
             body: " – importér i din egen OpenWebUI, tilføj kommunens viden og tag den i brug."

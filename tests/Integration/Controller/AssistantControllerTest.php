@@ -116,8 +116,8 @@ final class AssistantControllerTest extends WebTestCase
         $base = '/assistant/'.$assistant->getId();
 
         $cases = [
-            'viden' => ['heading' => 'Vidensopskrift', 'tabLabel' => 'Viden'],
-            'json' => ['heading' => 'Eksportér konfiguration', 'tabLabel' => 'JSON'],
+            'viden' => ['heading' => 'Vejledning', 'tabLabel' => 'Viden'],
+            'json' => ['heading' => 'Download konfiguration', 'tabLabel' => 'JSON'],
         ];
 
         foreach ($cases as $tab => $expected) {

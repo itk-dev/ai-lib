@@ -293,7 +293,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
         self::assertSame('borgerservice', trim($link->text()));
     }
 
-    // Verifies the "Klar til hjemtagning" box reports the current result count.
+    // Verifies the "Klar til download" box reports the current result count.
     public function testReadyForExportBoxReportsResultCount(): void
     {
         $total = self::getContainer()->get(AssistantRepository::class)->frameworkFacetCounts()['openwebui'] ?? 0;
@@ -303,7 +303,7 @@ final class AssistantCatalogControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains(
-            'aside[aria-label="Klar til hjemtagning"]',
+            'aside[aria-label="Klar til download"]',
             sprintf('Alle %d resultater', $total),
         );
     }
