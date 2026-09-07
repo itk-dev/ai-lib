@@ -16,9 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   first, since declaration order is the order the wizard's radio cards
   render in and the scale now runs least-sensitive downward; the column
   is a nullable `STRING(32)` with `enumType`, so no migration is needed.
-  The detail-page pill maps it to info (blue) rather than a second
-  green, keeping one "handled personal data correctly" step on the
-  scale. "Almindelige personoplysninger" is rewritten to say what it
+  "Almindelige personoplysninger" is rewritten to say what it
   covers — GDPR article 6, identifying but neither confidential nor
   sensitive — instead of the circular "almindelige personoplysninger og
   ikke-følsomt indhold". A new `DataSensitivity::example()` accessor
