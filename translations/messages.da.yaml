@@ -305,6 +305,8 @@ catalog:
         search: "Søg"
         language_model: "Sprogmodel"
         framework: "Rammeværk"
+        organization: "Kommune"
+        data_sensitivity: "Datafølsomhed"
         tags: "Tags"
         apply: "Anvend filtre"
         reset: "Nulstil filtre"

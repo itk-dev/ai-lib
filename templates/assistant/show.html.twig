@@ -37,33 +37,14 @@
                         <p class="text-sm text-text-muted">{{ assistant.tagline }}</p>
                     {% endif %}
 
-                    <div class="flex flex-wrap gap-2">
-                        <span class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text">
-                            {{ assistant.framework|framework_label }}
-                        </span>
-                        {% if assistant.dataSensitivity %}
-                            {# Map each DataSensitivity case to a semantic #}
-                            {# alert-palette class triple so ordinary reads #}
-                            {# as success (green), confidential as warning #}
-                            {# (yellow), and sensitive-personal as danger #}
-                            {# (red). The empty branch below deliberately #}
-                            {# stays on the neutral surface — "unknown" is #}
-                            {# not "safe". #}
-                            {% set sensitivityClasses = {
-                                ordinary_personal: 'bg-success-surface border-success-line text-success-ink',
-                                confidential: 'bg-warning-surface border-warning-line text-warning-ink',
-                                sensitive_personal: 'bg-danger-surface border-danger-line text-danger-ink',
-                            } %}
-                            <span class="inline-flex items-center rounded-full border px-3 py-1 text-sm {{ sensitivityClasses[assistant.dataSensitivity.value] }}"
-                                  title="{{ assistant.dataSensitivity.description|trans }}">
-                                {{ assistant.dataSensitivity.label|trans }}
-                            </span>
-                        {% else %}
-                            <span class="inline-flex items-center rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-text-muted italic">
-                                {{ 'assistant.detail.no_data_sensitivity'|trans }}
-                            </span>
-                        {% endif %}
-                    </div>
+                    {#
+                        The framework and data-sensitivity chips that used to
+                        sit here are gone: both values are already spelled out
+                        in the meta aside (`meta_framework`, `meta_sensitivity`)
+                        a few hundred pixels to the right, so the header was
+                        repeating itself. The assistant's own tags still render
+                        further down, in the Beskrivelse tab.
+                    #}
                 </header>
 
                 <twig:Tabs ariaLabel="assistant.detail.tabs_label" class="mt-2">
