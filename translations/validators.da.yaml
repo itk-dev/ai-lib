@@ -17,7 +17,8 @@ assistant:
     new:
         step_json:
             required: "Indsæt eller upload en assistent-konfiguration."
-            invalid_config: "Filen er ikke en gyldig assistent-konfiguration:"
+            invalid_config: "Filen er ikke en gyldig assistent-konfiguration."
+            invalid_config_help: "Vi genkender OpenWebUI, OpenAI, LibreChat og AI-reolen (.json) samt Ollama (.modelfile). Sammenlign din fil med eksemplet i feltet nedenfor, og kontrollér at den er gyldig JSON."
         step_metadata:
             title_required: "Angiv en titel."
             tagline_required: "Angiv en kort beskrivelse."

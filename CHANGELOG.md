@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Fourth data-sensitivity classification, "Ingen personoplysninger",
+  for assistants that touch no personal data at all. User testing found
+  curators with purely factual material had no honest option and were
+  confused by the topmost one. `DataSensitivity::NoPersonal` is declared
+  first, since declaration order is the order the wizard's radio cards
+  render in and the scale now runs least-sensitive downward; the column
+  is a nullable `STRING(32)` with `enumType`, so no migration is needed.
+  "Almindelige personoplysninger" is rewritten to say what it
+  covers — GDPR article 6, identifying but neither confidential nor
+  sensitive — instead of the circular "almindelige personoplysninger og
+  ikke-følsomt indhold". A new `DataSensitivity::example()` accessor
+  adds a third line to every card naming concrete documents, so the
+  choice can be made by recognition rather than by interpreting
+  data-protection vocabulary.
+- Rejected assistant configurations now explain themselves. The share
+  wizard's paste field carries a minimal OpenWebUI export as its
+  placeholder, so a first-time curator can see the expected shape before
+  submitting anything. When a config is rejected,
+  `ValidAssistantConfigValidator` states that plainly and names the
+  accepted formats, instead of aggregating every adapter's schema errors
+  — an almost-valid OpenWebUI export previously also drew "A Modelfile
+  must contain a FROM instruction.", untranslated, about a format the
+  curator never chose. The live check endpoint's errors now route
+  through the `assistant_validation` catalogue too, which gains a
+  Danish rendering of that Modelfile line for the case where somebody
+  really is pasting one. What counts as valid is unchanged; only the
+  reporting is.
 - Kommune and Datafølsomhed facets on the catalogue. Kommune is the
   most obvious way in — a caseworker looks for what a comparable
   municipality already solved — and data sensitivity was shown on every
