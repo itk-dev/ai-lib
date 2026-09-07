@@ -38,6 +38,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Danish rendering of that Modelfile line for the case where somebody
   really is pasting one. What counts as valid is unchanged; only the
   reporting is.
+- Kommune and Datafølsomhed facets on the catalogue. Kommune is the
+  most obvious way in — a caseworker looks for what a comparable
+  municipality already solved — and data sensitivity was shown on every
+  assistant without being filterable. Both follow the recipe
+  `CatalogCriteria` documents on itself (property, `fromRequest()`,
+  `isEmpty()`, `activeFilters()`, `toQueryArray()`) and are appended
+  after the tag facet, so existing chip positions and the tests pinning
+  them are untouched. The kommune facet groups on the organisation name
+  so URLs stay readable; assistants with no organisation fall out of the
+  inner join and contribute to no bucket, matching how an untagged
+  assistant behaves in the tag facet. The sensitivity facet keys on the
+  enum's backing value and resolves each to its label for display, so
+  nobody is shown `ordinary_personal`. Chip labels now pass through
+  `|trans`, a no-op for the facets whose label is already the raw value.
+- Removed the framework and data-sensitivity chips from the assistant
+  detail header. Both values are already spelled out in the meta aside
+  a few hundred pixels to the right, so the header was repeating itself.
+  The assistant's own tags are unaffected and still render in the
+  Beskrivelse tab.
+- Admin screen at `/admin/assistants` listing the assistants an
+  organisation has shared, with bulk reassignment of ownership from
+  one member to another. Ownership is the `createdBy` blame stamp,
+  which the edit/delete voter reads, so a transfer moves maintenance
+  rights with it — letting a municipality keep hold of its assistants
+  when the original curator leaves. Reachable for
+  `ROLE_DOMAIN_MANAGER` and `ROLE_ADMIN`; a domain manager is scoped
+  to the organisation their e-mail domain resolves to, a site admin
+  picks which organisation to manage. The new-owner picker offers only
+  approved users on that organisation's e-mail domains, for admins
+  too, so an assistant cannot leave the municipality that shared it.
+  Domain managers may now also edit and delete assistants belonging to
+  their own organisation, via an additive
+  `OrganizationAssistantVoter` that composes with the existing
+  authorship rule rather than replacing it.
+
 - Removed the placeholder "Modelkort" tab from the assistant
   detail page. The empty tab was never filled with substantive
   content, so its markup, translation keys, and integration-test

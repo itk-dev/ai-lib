@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Catalog;
 
+use App\Enum\DataSensitivity;
 use App\Http\QueryStringList;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -25,17 +26,21 @@ final class CatalogCriteria
      * ordering; it is orthogonal to the filters and so does not count
      * towards {@see self::isEmpty()} or appear in {@see self::activeFilters()}.
      *
-     * @param string|null  $q              optional free-text search query, trimmed and null when empty
-     * @param list<string> $languageModels exact `languageModel` values to keep; empty list means no narrowing on this facet
-     * @param list<string> $frameworks     exact `framework` values to keep; empty list means no narrowing on this facet
-     * @param list<string> $tags           exact tag names to keep; empty list means no narrowing on this facet
-     * @param CatalogSort  $sort           the ordering applied to the result set; defaults to newest-first
+     * @param string|null  $q                 optional free-text search query, trimmed and null when empty
+     * @param list<string> $languageModels    exact `languageModel` values to keep; empty list means no narrowing on this facet
+     * @param list<string> $frameworks        exact `framework` values to keep; empty list means no narrowing on this facet
+     * @param list<string> $tags              exact tag names to keep; empty list means no narrowing on this facet
+     * @param list<string> $organizations     exact organisation names to keep; empty list means no narrowing on this facet
+     * @param list<string> $dataSensitivities exact {@see \App\Enum\DataSensitivity} backing values to keep; empty list means no narrowing on this facet
+     * @param CatalogSort  $sort              the ordering applied to the result set; defaults to newest-first
      */
     public function __construct(
         public readonly ?string $q = null,
         public readonly array $languageModels = [],
         public readonly array $frameworks = [],
         public readonly array $tags = [],
+        public readonly array $organizations = [],
+        public readonly array $dataSensitivities = [],
         public readonly CatalogSort $sort = CatalogSort::Newest,
     ) {
     }
@@ -43,7 +48,8 @@ final class CatalogCriteria
     /**
      * Named constructor — parse a `CatalogCriteria` out of an HTTP request.
      *
-     * Reads `?q=`, `?language_model[]=`, `?framework[]=`, `?tag[]=` and
+     * Reads `?q=`, `?language_model[]=`, `?framework[]=`, `?tag[]=`,
+     * `?organization[]=`, `?data_sensitivity[]=` and
      * `?sort=` from the query string. Empty values are normalised away so
      * callers can trust the constructed object: a missing query becomes
      * `null`, missing facet selections become `[]`, and a missing or
@@ -63,6 +69,8 @@ final class CatalogCriteria
             languageModels: $lists->fromRequest($request, 'language_model'),
             frameworks: $lists->fromRequest($request, 'framework'),
             tags: $lists->fromRequest($request, 'tag'),
+            organizations: $lists->fromRequest($request, 'organization'),
+            dataSensitivities: $lists->fromRequest($request, 'data_sensitivity'),
             sort: CatalogSort::fromString($request->query->get('sort')),
         );
     }
@@ -80,15 +88,19 @@ final class CatalogCriteria
         return null === $this->q
             && [] === $this->languageModels
             && [] === $this->frameworks
-            && [] === $this->tags;
+            && [] === $this->tags
+            && [] === $this->organizations
+            && [] === $this->dataSensitivities;
     }
 
     /**
      * Yield one {@see ActiveFilter} per applied filter value.
      *
      * The search query (if any) comes first, followed by each
-     * Sprogmodel value, then each Rammeværk value, then each Tag value —
-     * in the order they appear on the criteria. Each entry's
+     * Sprogmodel value, then each Rammeværk value, each Tag value, each
+     * Kommune value, and finally each Datafølsomhed value — in the order
+     * they appear on the criteria. New facets are appended rather than
+     * interleaved so existing chip positions stay put. Each entry's
      * `removeQuery` is precomputed so the template can hand it straight
      * to `path()`.
      *
@@ -134,6 +146,30 @@ final class CatalogCriteria
             );
         }
 
+        foreach ($this->organizations as $value) {
+            $filters[] = new ActiveFilter(
+                type: 'organization',
+                value: $value,
+                label: $value,
+                removeQuery: $this->without('organization', $value),
+            );
+        }
+
+        foreach ($this->dataSensitivities as $value) {
+            // The backing value (`ordinary_personal`) is not readable, so
+            // the chip carries the enum's translation key instead — the
+            // template runs every chip label through `|trans`, which is a
+            // no-op for the facets whose label is already the raw value.
+            // An unrecognised value (hand-edited query string) falls back
+            // to itself rather than blanking the chip.
+            $filters[] = new ActiveFilter(
+                type: 'data_sensitivity',
+                value: $value,
+                label: DataSensitivity::tryFrom($value)?->label() ?? $value,
+                removeQuery: $this->without('data_sensitivity', $value),
+            );
+        }
+
         return $filters;
     }
 
@@ -164,6 +200,12 @@ final class CatalogCriteria
         if ([] !== $this->tags) {
             $query['tag'] = $this->tags;
         }
+        if ([] !== $this->organizations) {
+            $query['organization'] = $this->organizations;
+        }
+        if ([] !== $this->dataSensitivities) {
+            $query['data_sensitivity'] = $this->dataSensitivities;
+        }
         if (CatalogSort::default() !== $this->sort) {
             $query['sort'] = $this->sort->value;
         }
@@ -179,7 +221,7 @@ final class CatalogCriteria
      * facet the matching value is filtered out; if the resulting list
      * is empty the key is dropped entirely.
      *
-     * @param string $type  filter kind being narrowed (`q`, `language_model`, `framework`, `tag`)
+     * @param string $type  filter kind being narrowed (`q`, `language_model`, `framework`, `tag`, `organization`, `data_sensitivity`)
      * @param string $value the specific value to remove from that filter
      *
      * @return array<string, mixed> query map suitable for `path()`

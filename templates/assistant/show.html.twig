@@ -42,16 +42,6 @@
                             {{ assistant.framework|framework_label }}
                         </span>
                         {% if assistant.dataSensitivity %}
-                            {# Map each DataSensitivity case to a semantic #}
-                            {# alert-palette class triple so no-personal #}
-                            {# reads as info (blue), ordinary as success #}
-                            {# (green), confidential as warning (yellow), #}
-                            {# and sensitive-personal as danger (red). #}
-                            {# No-personal is blue rather than a second #}
-                            {# green so the scale still has one "handled #}
-                            {# personal data correctly" step. The empty #}
-                            {# branch below deliberately stays on the #}
-                            {# neutral surface — "unknown" is not "safe". #}
                             {% set sensitivityClasses = {
                                 no_personal: 'bg-info-surface border-info-line text-info-ink',
                                 ordinary_personal: 'bg-success-surface border-success-line text-success-ink',
