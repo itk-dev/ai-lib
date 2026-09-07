@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Organization;
 use App\Entity\User;
 use App\Enum\UserStatus;
 use App\Security\EmailDomain;
@@ -118,6 +119,54 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->setParameter('status', UserStatus::Approved->value)
             ->setParameter('domainSuffix', '%@'.strtolower($domain))
             ->orderBy('u.id', 'ASC');
+
+        /** @var list<User> $result */
+        $result = $qb->getQuery()->getResult();
+
+        return $result;
+    }
+
+    /**
+     * Find every Approved user belonging to the given organisation.
+     *
+     * Membership is derived the same way it is everywhere else on the
+     * project: a user belongs to the organisation that claims the
+     * domain on the right-hand side of their e-mail. The
+     * `email_domains` list is a JSON column, so the match is expressed
+     * as an OR of `LIKE '%@<domain>'` suffix comparisons — one per
+     * declared domain — rather than a join.
+     *
+     * Powers the new-owner picker on the admin ownership screen. Only
+     * `Approved` users are offered: handing an assistant to a Pending
+     * or Blocked account would park it with someone who cannot log in
+     * and act on it, which is the very problem the screen exists to
+     * fix. An organisation declaring no domains yields an empty list
+     * rather than every user in the install.
+     *
+     * @param Organization $organization the organisation whose members to list
+     *
+     * @return list<User> approved members, A→Z by name
+     */
+    public function findApprovedForOrganization(Organization $organization): array
+    {
+        $domains = $organization->getEmailDomains();
+        if ([] === $domains) {
+            return [];
+        }
+
+        $qb = $this->createQueryBuilder('u')
+            ->andWhere('u.status = :status')
+            ->setParameter('status', UserStatus::Approved->value)
+            ->orderBy('u.name', 'ASC')
+            ->addOrderBy('u.id', 'ASC');
+
+        $clauses = [];
+        foreach (array_values($domains) as $index => $domain) {
+            $parameter = 'domain'.$index;
+            $clauses[] = 'LOWER(u.email) LIKE :'.$parameter;
+            $qb->setParameter($parameter, '%@'.strtolower(trim($domain)));
+        }
+        $qb->andWhere('('.implode(' OR ', $clauses).')');
 
         /** @var list<User> $result */
         $result = $qb->getQuery()->getResult();
