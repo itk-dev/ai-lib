@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Catalog\CatalogCriteria;
 use App\Catalog\CatalogSort;
 use App\Entity\Assistant;
+use App\Entity\Organization;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
@@ -50,6 +51,33 @@ class AssistantRepository extends ServiceEntityRepository
             ->setParameter('userId', $user->getId(), 'ulid')
             ->orderBy('a.createdAt', 'DESC')
             ->addOrderBy('a.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $rows;
+    }
+
+    /**
+     * List every assistant shared by the given organisation.
+     *
+     * Backs the admin ownership screen, where a domain manager
+     * reviews and reassigns the assistants their municipality owns.
+     * Ordered by title so the operator scans an alphabetical list
+     * rather than an upload-order one; `id` ASC breaks ties
+     * deterministically when two assistants share a title.
+     *
+     * @param Organization $organization the organisation whose assistants to list
+     *
+     * @return list<Assistant> assistants stamped with `organization = $organization`, A→Z by title
+     */
+    public function findByOrganization(Organization $organization): array
+    {
+        /** @var list<Assistant> $rows */
+        $rows = $this->createQueryBuilder('a')
+            ->andWhere('IDENTITY(a.organization) = :organizationId')
+            ->setParameter('organizationId', $organization->getId(), 'ulid')
+            ->orderBy('a.title', 'ASC')
+            ->addOrderBy('a.id', 'ASC')
             ->getQuery()
             ->getResult();
 
