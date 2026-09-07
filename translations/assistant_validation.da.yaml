@@ -1,16 +1,20 @@
-# Danish translations for per-error strings emitted by
-# App\Validator\ValidAssistantConfigValidator when a step-1 upload
-# fails validation. The wrapper "Filen er ikke en gyldig
-# assistent-konfiguration:" lives in validators.da.yaml under the
-# `validators` domain — this file holds only the technical detail
-# lines each violation carries.
+# Danish translations for per-error strings emitted by the format
+# adapters and surfaced by the live check endpoint
+# (App\Controller\AssistantCreateController::validateConfig), which the
+# `assistant-config-upload` Stimulus controller renders as the user
+# pastes. The form-submit path no longer shows these lines at all — it
+# raises one plain statement plus the accepted-format list from
+# validators.da.yaml — because the adapters each reported separately
+# and a near-valid file drew complaints from every format the curator
+# had not chosen.
 #
-# Only PHP's JsonException family is translated here (finite,
-# stable). Opis JsonSchema errors carry interpolated
-# `{property}`/`{path}` context and fall through this catalogue as
-# English, since a keyword-level mapping would need re-visiting
-# whenever the library bumps.
+# Only PHP's JsonException family and the adapters' own fixed strings
+# are translated here (finite, stable). Opis JsonSchema errors carry
+# interpolated `{property}`/`{path}` context and fall through this
+# catalogue as English, since a keyword-level mapping would need
+# re-visiting whenever the library bumps.
 
+"A Modelfile must contain a FROM instruction.": "En Ollama-konfiguration skal starte med en FROM-linje, der angiver hvilken model den bygger på."
 "Syntax error": "JSON-syntaksfejl."
 "State mismatch (invalid or malformed JSON)": "Ugyldigt eller misdannet JSON."
 "Control character error, possibly incorrectly encoded": "Fejl i kontroltegn — filen er muligvis forkert enkodet."

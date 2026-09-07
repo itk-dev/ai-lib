@@ -48,6 +48,8 @@ final class AssistantCatalogController extends AbstractController
                 'language_model' => $this->assistants->languageModelFacetCounts(),
                 'framework' => $this->assistants->frameworkFacetCounts(),
                 'tag' => $this->assistants->tagFacetCounts(),
+                'organization' => $this->assistants->organizationFacetCounts(),
+                'data_sensitivity' => $this->assistants->dataSensitivityFacetCounts(),
             ],
         ]);
     }

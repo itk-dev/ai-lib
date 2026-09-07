@@ -19,6 +19,13 @@ namespace App\Enum;
 enum DataSensitivity: string
 {
     /**
+     * No personal data at all — public or purely factual material that
+     * identifies nobody. Declared first so the least sensitive option
+     * heads the radio-card list a curator reads top-down.
+     */
+    case NoPersonal = 'no_personal';
+
+    /**
      * Ordinary personal information covered by GDPR articles 6 and 7 —
      * routine, non-sensitive personal data.
      */
@@ -54,5 +61,21 @@ enum DataSensitivity: string
     public function description(): string
     {
         return 'assistant.data_sensitivity.'.$this->value.'.description';
+    }
+
+    /**
+     * Translation key for this case's concrete example.
+     *
+     * The label names the category and the description states the rule;
+     * neither tells a curator which bucket their own material falls in.
+     * The example does, by naming the kind of document the category is
+     * meant for, so the choice can be made by recognition rather than by
+     * interpreting data-protection vocabulary.
+     *
+     * @return string a translator id under the default catalogue
+     */
+    public function example(): string
+    {
+        return 'assistant.data_sensitivity.'.$this->value.'.example';
     }
 }

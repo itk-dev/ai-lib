@@ -189,4 +189,99 @@ final class CatalogCriteriaTest extends TestCase
 
         self::assertSame(['q' => 'borger', 'sort' => 'name_desc'], $criteria->toQueryArray());
     }
+
+    // Ensures `?organization[]=` and `?data_sensitivity[]=` are read and round-trip through toQueryArray().
+    public function testFromRequestReadsOrganizationAndDataSensitivityFacets(): void
+    {
+        $criteria = CatalogCriteria::fromRequest(
+            Request::create('/search', 'GET', [
+                'organization' => ['Aarhus Kommune', 'Odense Kommune'],
+                'data_sensitivity' => ['confidential'],
+            ]),
+            $this->lists,
+        );
+
+        self::assertSame(['Aarhus Kommune', 'Odense Kommune'], $criteria->organizations);
+        self::assertSame(['confidential'], $criteria->dataSensitivities);
+        self::assertFalse($criteria->isEmpty(), 'either new facet alone makes the criteria non-empty');
+        self::assertSame(
+            [
+                'organization' => ['Aarhus Kommune', 'Odense Kommune'],
+                'data_sensitivity' => ['confidential'],
+            ],
+            $criteria->toQueryArray(),
+        );
+    }
+
+    /**
+     * The two facets were appended rather than interleaved, so the
+     * pre-existing chips keep their positions — this pins that.
+     */
+    // Ensures the new facets' chips follow the tag chips, in declaration order.
+    public function testActiveFiltersAppendsOrganizationThenDataSensitivityAfterTags(): void
+    {
+        $criteria = new CatalogCriteria(
+            tags: ['jura'],
+            organizations: ['Aarhus Kommune'],
+            dataSensitivities: ['confidential'],
+        );
+
+        $types = array_map(static fn ($f) => $f->type, $criteria->activeFilters());
+
+        self::assertSame(['tag', 'organization', 'data_sensitivity'], $types);
+    }
+
+    // Ensures a data-sensitivity chip carries the enum's translation key so the template can render a human label.
+    public function testDataSensitivityChipLabelIsTheEnumTranslationKey(): void
+    {
+        $criteria = new CatalogCriteria(dataSensitivities: ['confidential']);
+
+        $chip = $criteria->activeFilters()[0];
+
+        self::assertSame('confidential', $chip->value, 'the machine value stays on the chip for removal maths');
+        self::assertSame('assistant.data_sensitivity.confidential.label', $chip->label);
+    }
+
+    /**
+     * A hand-edited query string can carry anything; the chip must still
+     * render something rather than collapsing to an empty label.
+     */
+    // Ensures an unrecognised data-sensitivity value falls back to displaying itself.
+    public function testUnknownDataSensitivityChipFallsBackToItsRawValue(): void
+    {
+        $criteria = new CatalogCriteria(dataSensitivities: ['not-a-case']);
+
+        self::assertSame('not-a-case', $criteria->activeFilters()[0]->label);
+    }
+
+    // Ensures removing one kommune chip preserves the other selections on both new facets.
+    public function testOrganizationChipRemoveQueryDropsOnlyTargetedValue(): void
+    {
+        $criteria = new CatalogCriteria(
+            organizations: ['Aarhus Kommune', 'Odense Kommune'],
+            dataSensitivities: ['confidential'],
+        );
+
+        $filters = $criteria->activeFilters();
+
+        self::assertSame('Aarhus Kommune', $filters[0]->value);
+        self::assertSame(
+            [
+                'organization' => ['Odense Kommune'],
+                'data_sensitivity' => ['confidential'],
+            ],
+            $filters[0]->removeQuery,
+        );
+    }
+
+    // Ensures removing the last data-sensitivity value drops the key entirely.
+    public function testDataSensitivityChipRemoveQueryDropsKeyWhenLastValueRemoved(): void
+    {
+        $criteria = new CatalogCriteria(tags: ['jura'], dataSensitivities: ['confidential']);
+
+        $filters = $criteria->activeFilters();
+
+        self::assertSame('data_sensitivity', $filters[1]->type);
+        self::assertSame(['tag' => ['jura']], $filters[1]->removeQuery);
+    }
 }

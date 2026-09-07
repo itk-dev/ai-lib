@@ -27,4 +27,9 @@ final class ValidAssistantConfig extends Constraint
      * @var string translation key rendered when no registered format accepts the payload
      */
     public string $message = 'assistant.new.step_json.invalid_config';
+
+    /**
+     * @var string translation key for the follow-up line naming the accepted formats
+     */
+    public string $helpMessage = 'assistant.new.step_json.invalid_config_help';
 }

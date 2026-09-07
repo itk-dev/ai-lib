@@ -57,10 +57,11 @@ final class AssistantControllerTest extends WebTestCase
         self::assertStringContainsString('Aarhus Kommune', $article, 'header + breadcrumb render the real organisation name');
         self::assertStringContainsString($assistant->getTagline(), $article, 'tagline paragraph renders');
 
-        // Data-sensitivity chip in the header + sidebar uses the
-        // translated label from the DataSensitivity enum, not a
-        // placeholder. Fortrolige data == DataSensitivity::Confidential.
-        self::assertStringContainsString('Fortrolige data', $article);
+        // The header's framework and data-sensitivity chips were removed:
+        // the meta aside (asserted below) already carries both, so the
+        // article must not repeat either.
+        self::assertStringNotContainsString('Fortrolige data', $article, 'data-sensitivity is the aside\'s job, not the header\'s');
+        self::assertStringNotContainsString('Open WebUI', $article, 'framework is the aside\'s job, not the header\'s');
 
         // Meta aside carries the same real values.
         $runtime = $crawler->filter('.layout-content-with-asides dl')->text();
