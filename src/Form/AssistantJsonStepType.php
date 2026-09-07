@@ -33,6 +33,33 @@ final class AssistantJsonStepType extends AbstractType
     private const string LABEL_CLASS = 'block font-medium text-ink';
     private const string ROW_CLASS = 'grid gap-1 text-sm';
 
+    /**
+     * A minimal OpenWebUI export shown as the textarea's placeholder.
+     *
+     * First-time curators had no way to see what the field expects
+     * before submitting something and being told it was wrong. The
+     * shape is the OpenWebUI array-of-one-model envelope the catalogue
+     * is built around, trimmed to the fields the wizard actually reads,
+     * so it doubles as the reference the rejection message points at.
+     * Placeholder only — it is never submitted as data.
+     */
+    private const string EXAMPLE_CONFIG = <<<'JSON'
+        [
+          {
+            "id": "borgerservice-vejviser",
+            "name": "Borgerservice-vejviser",
+            "base_model_id": "gpt-4o",
+            "params": {
+              "system": "Du hjælper sagsbehandlere med at finde den rigtige paragraf."
+            },
+            "meta": {
+              "description": "Finder relevante lovhjemler ud fra en kort sagsbeskrivelse.",
+              "tags": [{ "name": "borgerservice" }, { "name": "jura" }]
+            }
+          }
+        ]
+        JSON;
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('sourceConfig', TextareaType::class, [
@@ -58,6 +85,7 @@ final class AssistantJsonStepType extends AbstractType
                 'class' => self::INPUT_CLASS,
                 'rows' => 10,
                 'spellcheck' => 'false',
+                'placeholder' => self::EXAMPLE_CONFIG,
             ],
             'label_attr' => ['class' => self::LABEL_CLASS],
             'row_attr' => ['class' => self::ROW_CLASS],

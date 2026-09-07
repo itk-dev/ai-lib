@@ -175,6 +175,7 @@ final class AssistantMetadataStepType extends AbstractType
                 // not the case itself).
                 'choice_attr' => static fn (DataSensitivity $case): array => [
                     'data-description-key' => $case->description(),
+                    'data-example-key' => $case->example(),
                 ],
                 'constraints' => [
                     new Assert\NotNull(

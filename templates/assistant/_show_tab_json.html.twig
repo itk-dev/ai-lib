@@ -1,9 +1,10 @@
 {#
-    JSON tab — pretty-printed config + a download link per target format.
+    JSON tab — pretty-printed config + the OpenWebUI download link.
 
-    Exporting to a different format than the assistant's own produces a
-    cross-format download; any note about a model that won't map cleanly
-    is shown beneath the buttons (the download still succeeds).
+    Only OpenWebUI is offered here; other registered formats stay
+    reachable through the export route's ?format= parameter. Any note
+    about a model that won't map cleanly is shown beneath the button
+    (the download still succeeds).
 #}
 <div class="grid gap-4">
     <twig:Heading level="2" size="xs">
@@ -22,10 +23,8 @@
                 </twig:Form:Button>
             {% endfor %}
         </div>
-        {% for warnings in exportWarnings %}
-            {% for warning in warnings %}
-                <p class="text-xs text-text-muted italic">⚠ {{ warning }}</p>
-            {% endfor %}
+        {% for warning in exportWarnings %}
+            <p class="text-xs text-text-muted italic">⚠ {{ warning }}</p>
         {% endfor %}
     </div>
 

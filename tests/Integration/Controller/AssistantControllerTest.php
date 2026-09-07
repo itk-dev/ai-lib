@@ -18,10 +18,9 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * `tests/bootstrap_integration.php` (see `AssistantFixtures`); each
  * test's mutations are rolled back by DAMA at tearDown.
  *
- * The detail page renders four tabs (Beskrivelse / Modelkort /
- * Viden / JSON) driven by the `?tab=` query parameter. The tests
- * below walk each one so the tab-partial include paths are
- * covered.
+ * The detail page renders three tabs (Beskrivelse / Viden / JSON)
+ * driven by the `?tab=` query parameter. The tests below walk each
+ * one so the tab-partial include paths are covered.
  */
 final class AssistantControllerTest extends WebTestCase
 {
@@ -58,10 +57,11 @@ final class AssistantControllerTest extends WebTestCase
         self::assertStringContainsString('Aarhus Kommune', $article, 'header + breadcrumb render the real organisation name');
         self::assertStringContainsString($assistant->getTagline(), $article, 'tagline paragraph renders');
 
-        // Data-sensitivity chip in the header + sidebar uses the
-        // translated label from the DataSensitivity enum, not a
-        // placeholder. Fortrolige data == DataSensitivity::Confidential.
-        self::assertStringContainsString('Fortrolige data', $article);
+        // The header's framework and data-sensitivity chips were removed:
+        // the meta aside (asserted below) already carries both, so the
+        // article must not repeat either.
+        self::assertStringNotContainsString('Fortrolige data', $article, 'data-sensitivity is the aside\'s job, not the header\'s');
+        self::assertStringNotContainsString('Open WebUI', $article, 'framework is the aside\'s job, not the header\'s');
 
         // Meta aside carries the same real values.
         $runtime = $crawler->filter('.layout-content-with-asides dl')->text();
@@ -116,9 +116,8 @@ final class AssistantControllerTest extends WebTestCase
         $base = '/assistant/'.$assistant->getId();
 
         $cases = [
-            'modelkort' => ['heading' => 'Modelkort', 'tabLabel' => 'Modelkort'],
-            'viden' => ['heading' => 'Vidensopskrift', 'tabLabel' => 'Viden'],
-            'json' => ['heading' => 'Eksportér konfiguration', 'tabLabel' => 'JSON'],
+            'viden' => ['heading' => 'Vejledning', 'tabLabel' => 'Viden'],
+            'json' => ['heading' => 'Download konfiguration', 'tabLabel' => 'JSON'],
         ];
 
         foreach ($cases as $tab => $expected) {

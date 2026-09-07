@@ -18,6 +18,16 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class AssistantCreateController extends AbstractController
 {
+    /**
+     * Catalogue the adapters' technical error strings are looked up in.
+     *
+     * Kept apart from the `validators` domain so the finite set of
+     * decoder and schema messages can be localised without cluttering
+     * the general validator catalogue. Anything absent from the
+     * catalogue passes through verbatim.
+     */
+    private const string ERRORS_TRANSLATION_DOMAIN = 'assistant_validation';
+
     public function __construct(
         private readonly FormatAdapterRegistry $formats,
         private readonly AssistantCreator $creator,
@@ -133,7 +143,10 @@ final class AssistantCreateController extends AbstractController
 
         return new JsonResponse([
             'valid' => $result->isValid(),
-            'errors' => $result->getErrors(),
+            'errors' => array_map(
+                fn (string $error): string => $this->translator->trans($error, [], self::ERRORS_TRANSLATION_DOMAIN),
+                $result->getErrors(),
+            ),
         ]);
     }
 

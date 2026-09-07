@@ -9,6 +9,108 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Unified the Danish terminology for fetching an assistant. The
+  interface previously alternated between "hjemtag", "eksportér",
+  and "download" for one and the same action; every occurrence is
+  now "download". The word "vidensopskrift" — which user testing
+  showed non-technical curators did not recognise — becomes
+  "vejledning", and the Viden tab heading follows. The front-page
+  lead no longer says "resten" about the other municipalities, the
+  "Mine assistenter" lead drops the unexplained "nye tilføjelser",
+  the share wizard's paste-field help is cut to what it actually
+  promises, and the responsibility notice names the guidance
+  instead of "en opskrift på datagrundlaget". The front-page
+  tagline and hero text are seeded settings as well as translation
+  defaults, so both are updated. The JSON tab now offers OpenWebUI
+  as the only download: curators were being asked to pick between
+  five interchange formats with no basis for choosing, and the
+  cross-format warning triangles that came with them went
+  unexplained. Other formats stay reachable through the export
+  route's `?format=` parameter, which is unchanged.
+- Strengthened the status colour palette so alert, warning, and error
+  boxes actually register. The four semantic token triples in
+  `assets/styles/app.css` move their surfaces from the 50 step to 100
+  and their borders from 200 to 500/600; every border now clears the
+  3:1 non-text contrast bar against the page (amber tops out nearest,
+  at 3.19:1, since a darker amber stops reading as amber), where the
+  old 200-step borders sat at roughly 1.2–1.3:1 and let the whole box
+  recede. Text keeps WCAG AA against its own surface throughout —
+  6.37:1 at the tightest. The responsibility notice on the assistant
+  share and edit pages moves off the neutral surface onto the warning
+  palette, which is what user testing asked for: it carries a caution
+  people need to read at exactly the moment they share. Colour values
+  and colour classes only — no markup, ARIA role, border-width, icon,
+  or typography change, so the `Alert` component's class contract and
+  `AlertRenderTest` are untouched. The data-sensitivity pills on the
+  assistant detail page reuse these tokens and deepen with them, which
+  is the same signal at the same strength.
+- Fourth data-sensitivity classification, "Ingen personoplysninger",
+  for assistants that touch no personal data at all. User testing found
+  curators with purely factual material had no honest option and were
+  confused by the topmost one. `DataSensitivity::NoPersonal` is declared
+  first, since declaration order is the order the wizard's radio cards
+  render in and the scale now runs least-sensitive downward; the column
+  is a nullable `STRING(32)` with `enumType`, so no migration is needed.
+  "Almindelige personoplysninger" is rewritten to say what it
+  covers — GDPR article 6, identifying but neither confidential nor
+  sensitive — instead of the circular "almindelige personoplysninger og
+  ikke-følsomt indhold". A new `DataSensitivity::example()` accessor
+  adds a third line to every card naming concrete documents, so the
+  choice can be made by recognition rather than by interpreting
+  data-protection vocabulary.
+- Rejected assistant configurations now explain themselves. The share
+  wizard's paste field carries a minimal OpenWebUI export as its
+  placeholder, so a first-time curator can see the expected shape before
+  submitting anything. When a config is rejected,
+  `ValidAssistantConfigValidator` states that plainly and names the
+  accepted formats, instead of aggregating every adapter's schema errors
+  — an almost-valid OpenWebUI export previously also drew "A Modelfile
+  must contain a FROM instruction.", untranslated, about a format the
+  curator never chose. The live check endpoint's errors now route
+  through the `assistant_validation` catalogue too, which gains a
+  Danish rendering of that Modelfile line for the case where somebody
+  really is pasting one. What counts as valid is unchanged; only the
+  reporting is.
+- Kommune and Datafølsomhed facets on the catalogue. Kommune is the
+  most obvious way in — a caseworker looks for what a comparable
+  municipality already solved — and data sensitivity was shown on every
+  assistant without being filterable. Both follow the recipe
+  `CatalogCriteria` documents on itself (property, `fromRequest()`,
+  `isEmpty()`, `activeFilters()`, `toQueryArray()`) and are appended
+  after the tag facet, so existing chip positions and the tests pinning
+  them are untouched. The kommune facet groups on the organisation name
+  so URLs stay readable; assistants with no organisation fall out of the
+  inner join and contribute to no bucket, matching how an untagged
+  assistant behaves in the tag facet. The sensitivity facet keys on the
+  enum's backing value and resolves each to its label for display, so
+  nobody is shown `ordinary_personal`. Chip labels now pass through
+  `|trans`, a no-op for the facets whose label is already the raw value.
+- Removed the framework and data-sensitivity chips from the assistant
+  detail header. Both values are already spelled out in the meta aside
+  a few hundred pixels to the right, so the header was repeating itself.
+  The assistant's own tags are unaffected and still render in the
+  Beskrivelse tab.
+- Admin screen at `/admin/assistants` listing the assistants an
+  organisation has shared, with bulk reassignment of ownership from
+  one member to another. Ownership is the `createdBy` blame stamp,
+  which the edit/delete voter reads, so a transfer moves maintenance
+  rights with it — letting a municipality keep hold of its assistants
+  when the original curator leaves. Reachable for
+  `ROLE_DOMAIN_MANAGER` and `ROLE_ADMIN`; a domain manager is scoped
+  to the organisation their e-mail domain resolves to, a site admin
+  picks which organisation to manage. The new-owner picker offers only
+  approved users on that organisation's e-mail domains, for admins
+  too, so an assistant cannot leave the municipality that shared it.
+  Domain managers may now also edit and delete assistants belonging to
+  their own organisation, via an additive
+  `OrganizationAssistantVoter` that composes with the existing
+  authorship rule rather than replacing it.
+
+- Removed the placeholder "Modelkort" tab from the assistant
+  detail page. The empty tab was never filled with substantive
+  content, so its markup, translation keys, and integration-test
+  case have been dropped. The detail page now renders three tabs:
+  Beskrivelse / Viden / JSON, defaulting to Beskrivelse as before.
 - Step 2 of the assistant create/edit wizard reorders its fields
   to narrate the assistant — identity (title, tagline) → what it
   does (description) → what it draws on (knowledge, language
