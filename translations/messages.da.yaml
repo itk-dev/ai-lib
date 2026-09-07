@@ -28,6 +28,7 @@ nav:
         logout: "Log ud"
         admin_organization: "Administrér organisationer"
         admin_users: "Administrér brugere"
+        admin_assistants: "Organisationens assistenter"
         admin_settings: "Indstillinger"
 
 search:
@@ -120,6 +121,30 @@ admin:
             created: "Organisationen er oprettet."
             updated: "Ændringerne er gemt."
             deleted: "Organisationen er slettet."
+    assistants:
+        title: "Organisationens assistenter – %brand%"
+        eyebrow: "Administration"
+        heading: "Organisationens assistenter"
+        lead: "Skift ejerskab på assistenter, så organisationen bevarer rådigheden over dem — også når en medarbejder stopper. Den nye ejer overtager retten til at redigere og slette."
+        organization_label: "Organisation"
+        owner_label: "Ny ejer"
+        select_all: "Vælg alle assistenter"
+        no_owner: "Ingen ejer"
+        no_organization: "Din e-mailadresse hører ikke til en registreret organisation, så der er ingen assistenter at vise."
+        empty: "%organization% har ikke delt nogen assistenter endnu."
+        no_candidates: "%organization% har ingen godkendte brugere, som ejerskabet kan overdrages til."
+        columns:
+            title: "Assistent"
+            owner: "Nuværende ejer"
+            language_model: "Sprogmodel"
+        action:
+            show: "Vis"
+            reassign: "Skift ejer"
+        flash:
+            reassigned: "{1}Ejerskabet er skiftet på én assistent.|]1,Inf[Ejerskabet er skiftet på %count% assistenter."
+            error_no_selection: "Vælg mindst én assistent, før du skifter ejer."
+            error_owner: "Den valgte bruger kan ikke overtage assistenter i denne organisation."
+            error_assistant: "En af de valgte assistenter hører ikke til denne organisation. Ingen ændringer er gemt."
     users:
         title: "Brugere – %brand%"
         eyebrow: "Administration"

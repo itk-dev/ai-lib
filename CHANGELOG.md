@@ -28,6 +28,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a few hundred pixels to the right, so the header was repeating itself.
   The assistant's own tags are unaffected and still render in the
   Beskrivelse tab.
+- Admin screen at `/admin/assistants` listing the assistants an
+  organisation has shared, with bulk reassignment of ownership from
+  one member to another. Ownership is the `createdBy` blame stamp,
+  which the edit/delete voter reads, so a transfer moves maintenance
+  rights with it — letting a municipality keep hold of its assistants
+  when the original curator leaves. Reachable for
+  `ROLE_DOMAIN_MANAGER` and `ROLE_ADMIN`; a domain manager is scoped
+  to the organisation their e-mail domain resolves to, a site admin
+  picks which organisation to manage. The new-owner picker offers only
+  approved users on that organisation's e-mail domains, for admins
+  too, so an assistant cannot leave the municipality that shared it.
+  Domain managers may now also edit and delete assistants belonging to
+  their own organisation, via an additive
+  `OrganizationAssistantVoter` that composes with the existing
+  authorship rule rather than replacing it.
+
 - Removed the placeholder "Modelkort" tab from the assistant
   detail page. The empty tab was never filled with substantive
   content, so its markup, translation keys, and integration-test
