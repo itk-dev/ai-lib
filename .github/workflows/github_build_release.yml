@@ -23,9 +23,9 @@ jobs:
                   docker network create frontend
                   docker compose run --rm --user=root --env APP_ENV=prod phpfpm composer install --no-dev -o --classmap-authoritative
                   docker compose run --rm --user=root --env APP_ENV=prod phpfpm composer clear-cache
-            # https://symfony.com/bundles/TailwindBundle/current/index.html
+                  # https://symfony.com/bundles/TailwindBundle/current/index.html
                   docker compose run --rm --user=root --env APP_ENV=prod phpfpm php bin/console tailwind:build --minify
-            # https://symfony.com/doc/current/frontend/asset_mapper.html#serving-assets-in-dev-vs-prod
+                  # https://symfony.com/doc/current/frontend/asset_mapper.html#serving-assets-in-dev-vs-prod
                   docker compose run --rm --user=root --env APP_ENV=prod phpfpm php bin/console asset-map:compile
             - name: Make assets dir
               run: |
