@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added woodpecker prod setup.
 - Unified the Danish terminology for fetching an assistant. The
   interface previously alternated between "hjemtag", "eksportér",
   and "download" for one and the same action; every occurrence is
